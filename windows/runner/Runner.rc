@@ -1,0 +1,6 @@
+// Placeholder Windows runner resource file.
+//
+// The Flutter SDK is not available in this environment, so the full Windows
+// runner could not be generated with `flutter create --platforms=windows .`.
+// Run that command on a machine with Flutter installed to create the complete
+// platform runner before building the desktop application.

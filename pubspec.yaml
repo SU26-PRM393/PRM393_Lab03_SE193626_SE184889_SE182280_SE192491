@@ -1,0 +1,24 @@
+name: vietnam_map_flutter
+description: Desktop Viet Nam map UI built with Flutter and Material 3.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_map: ^8.3.0
+  geolocator: ^14.0.2
+  latlong2: ^0.9.1
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/maps/boundaries/
+    - assets/maps/offline_tiles/
+    - assets/images/
