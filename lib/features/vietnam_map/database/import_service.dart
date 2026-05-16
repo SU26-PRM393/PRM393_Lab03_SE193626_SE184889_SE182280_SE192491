@@ -77,7 +77,93 @@ class ImportService {
     });
   }
 
-  static Future<void> importCommunes() async {}
+  static Future<void> importCommunes([String? path]) async {
+    final String jsonString;
 
-  static Future<void> importCommittees() async {}
+    if (path != null) {
+      final file = File(path);
+      jsonString = await file.readAsString();
+    } else {
+      jsonString = await rootBundle.loadString(
+        'lib/features/vietnam_map/assets/data/communes.json',
+      );
+    }
+
+    final List<dynamic> data = json.decode(jsonString);
+
+    final items = data.map((e) {
+      return Commune()
+        ..dataId = e['id']
+        ..ma = e['ma'] ?? ''
+        ..ten = e['ten'] ?? ''
+        ..type = e['type']
+        ..tenShort = e['ten_short']
+        ..areaKm2 = (e['area_km2'] as num?)?.toDouble()
+        ..population = e['population']
+        ..density = (e['density'] as num?)?.toDouble()
+        ..capital = e['capital']
+        ..decree = e['decree']
+        ..decreeUrl = e['decree_url']
+        ..predecessors = e['predecessors']
+        ..parentMa = e['parent_ma']
+        ..parentTen = e['parent_ten']
+        ..centroidLon = (e['centroid_lon'] as num?)?.toDouble()
+        ..centroidLat = (e['centroid_lat'] as num?)?.toDouble()
+        ..geomType = e['geom_type']
+        ..nVertices = e['n_vertices']
+        ..macroRegion = e['macro_region']
+        ..embedText = e['embed_text']
+        ..parentTenXa = e['parent_ten_xa']
+        ..bbox = (e['bbox'] as List<dynamic>?)
+            ?.map((x) => (x as num).toDouble())
+            .toList()
+        ..predecessorsList = (e['predecessors_list'] as List<dynamic>?)
+            ?.map((x) => x.toString())
+            .toList()
+        ..keywords = (e['keywords'] as List<dynamic>?)
+            ?.map((x) => x.toString())
+            .toList();
+    }).toList();
+
+    await IsarService.isar.writeTxn(() async {
+      await IsarService.isar.communes.putAll(items);
+    });
+  }
+
+  static Future<void> importCommittees([String? path]) async {
+    final String jsonString;
+
+    if (path != null) {
+      final file = File(path);
+      jsonString = await file.readAsString();
+    } else {
+      jsonString = await rootBundle.loadString(
+        'lib/features/vietnam_map/assets/data/committees.json',
+      );
+    }
+
+    final List<dynamic> data = json.decode(jsonString);
+
+    final items = data.map((e) {
+      return Committee()
+        ..dataId = e['id']
+        ..ten = e['ten'] ?? ''
+        ..type = e['type']
+        ..tenShort = e['ten_short']
+        ..parentMa = e['parent_ma']
+        ..parentTen = e['parent_ten']
+        ..centroidLon = (e['centroid_lon'] as num?)?.toDouble()
+        ..centroidLat = (e['centroid_lat'] as num?)?.toDouble()
+        ..geomType = e['geom_type']
+        ..macroRegion = e['macro_region']
+        ..embedText = e['embed_text']
+        ..keywords = (e['keywords'] as List<dynamic>?)
+            ?.map((x) => x.toString())
+            .toList();
+    }).toList();
+
+    await IsarService.isar.writeTxn(() async {
+      await IsarService.isar.committees.putAll(items);
+    });
+  }
 }

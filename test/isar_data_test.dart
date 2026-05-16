@@ -115,5 +115,45 @@ void main() {
         print('Province: ${p.ten} (${p.ma})');
       }
     });
+    test('Can import and verify all real Communes', () async {
+      final jsonPath = 'lib/features/vietnam_map/assets/data/communes.json';
+
+      await ImportService.importCommunes(jsonPath);
+
+      final count = await IsarService.isar.communes.count();
+
+      print('Total communes imported from JSON: $count');
+
+      expect(count, greaterThan(0));
+
+      final baDinh = await IsarService.isar.communes
+          .filter()
+          .tenEqualTo('Phường Ba Đình')
+          .findFirst();
+
+      if (baDinh != null) {
+        print('Verified commune: ${baDinh.ten}');
+      }
+    });
+    test('Can import and verify all real Committees', () async {
+      final jsonPath = 'lib/features/vietnam_map/assets/data/committees.json';
+
+      await ImportService.importCommittees(jsonPath);
+
+      final count = await IsarService.isar.committees.count();
+
+      print('Total committees imported from JSON: $count');
+
+      expect(count, greaterThan(0));
+
+      final phuQuoc = await IsarService.isar.committees
+          .filter()
+          .tenEqualTo('Đặc khu Phú Quốc')
+          .findFirst();
+
+      if (phuQuoc != null) {
+        print('Verified committee: ${phuQuoc.ten}');
+      }
+    });
   });
 }
