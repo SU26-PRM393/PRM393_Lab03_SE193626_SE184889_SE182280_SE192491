@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -42,10 +43,11 @@ class GeolocatorLocationRepository implements LocationRepository {
         );
       }
 
+      final isWindows = defaultTargetPlatform == TargetPlatform.windows;
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 8),
+        locationSettings: LocationSettings(
+          accuracy: isWindows ? LocationAccuracy.low : LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 15),
         ),
       );
 

@@ -312,6 +312,13 @@ class _LocationDetailsView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (selectedProvince != null) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: _CommuneVisibilityToggle(controller: controller),
+          ),
+          const SizedBox(height: 16),
+        ],
 
         if (controller.isLoadingDetails)
           const Padding(
@@ -755,4 +762,74 @@ String _formatNumber(int? value) {
 String _formatDouble(double? value, {int decimalPlaces = 1}) {
   if (value == null) return 'N/A';
   return value.toStringAsFixed(decimalPlaces);
+}
+
+class _CommuneVisibilityToggle extends StatelessWidget {
+  const _CommuneVisibilityToggle({required this.controller});
+
+  final VietnamMapController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final hasChosenCommune = controller.selectedLowerLevelPlace != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.layers_outlined, size: 16, color: colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(
+              'Map Layer View',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: SegmentedButton<CommuneVisibilityMode>(
+            style: const ButtonStyle(
+              visualDensity: VisualDensity.compact,
+            ),
+            segments: [
+              const ButtonSegment<CommuneVisibilityMode>(
+                value: CommuneVisibilityMode.details,
+                icon: Icon(Icons.grid_view_outlined, size: 16),
+                label: Text('Show Details', style: TextStyle(fontSize: 11)),
+                tooltip: 'Show all communes on the map with labels (at appropriate zoom)',
+              ),
+              ButtonSegment<CommuneVisibilityMode>(
+                value: CommuneVisibilityMode.dots,
+                icon: Icon(
+                  hasChosenCommune ? Icons.gps_fixed_outlined : Icons.blur_on_outlined,
+                  size: 16,
+                ),
+                label: const Text('Show Dots', style: TextStyle(fontSize: 11)),
+                tooltip: hasChosenCommune
+                    ? 'Show details for the chosen commune, other communes as dots'
+                    : 'Show all communes as dots (hide all labels)',
+              ),
+              const ButtonSegment<CommuneVisibilityMode>(
+                value: CommuneVisibilityMode.hide,
+                icon: Icon(Icons.visibility_off_outlined, size: 16),
+                label: Text('Hide All', style: TextStyle(fontSize: 11)),
+                tooltip: 'Hide all communes on the map',
+              ),
+            ],
+            selected: {controller.communeVisibilityMode},
+            onSelectionChanged: (Set<CommuneVisibilityMode> newSelection) {
+              controller.setCommuneVisibilityMode(newSelection.first);
+            },
+          ),
+        ),
+      ],
+    );
+  }
 }

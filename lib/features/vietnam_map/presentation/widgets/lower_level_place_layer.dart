@@ -3,22 +3,27 @@ import 'package:flutter_map/flutter_map.dart';
 
 import '../../../../shared/constants/map_constants.dart';
 import '../../domain/lower_level_place.dart';
+import '../vietnam_map_controller.dart' show CommuneVisibilityMode;
 
 class LowerLevelPlaceLayer extends StatelessWidget {
   const LowerLevelPlaceLayer({
     required this.places,
     required this.zoom,
+    this.visibilityMode = CommuneVisibilityMode.details,
+    this.selectedPlace,
     this.onPlaceSelected,
     super.key,
   });
 
   final List<LowerLevelPlace> places;
   final double zoom;
+  final CommuneVisibilityMode visibilityMode;
+  final LowerLevelPlace? selectedPlace;
   final ValueChanged<LowerLevelPlace>? onPlaceSelected;
 
   @override
   Widget build(BuildContext context) {
-    if (places.isEmpty) {
+    if (places.isEmpty || visibilityMode == CommuneVisibilityMode.hide) {
       return const SizedBox.shrink();
     }
 
@@ -30,7 +35,18 @@ class LowerLevelPlaceLayer extends StatelessWidget {
   }
 
   Marker _markerFor(LowerLevelPlace place) {
-    final showLabel = zoom >= MapConstants.lowerLevelLabelMinZoom;
+    final isChosen = selectedPlace?.code == place.code;
+
+    final bool showLabel;
+    if (visibilityMode == CommuneVisibilityMode.dots) {
+      if (selectedPlace != null) {
+        showLabel = isChosen && (zoom >= MapConstants.lowerLevelLabelMinZoom);
+      } else {
+        showLabel = false;
+      }
+    } else {
+      showLabel = zoom >= MapConstants.lowerLevelLabelMinZoom;
+    }
 
     // Use a larger hit target (24px) for the dots so they are easy to click
     final hitWidth = showLabel

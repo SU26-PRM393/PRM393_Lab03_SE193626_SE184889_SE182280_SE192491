@@ -23,6 +23,12 @@ import '../domain/province_hover_state.dart';
 import '../model/province.dart';
 import '../model/commune.dart';
 
+enum CommuneVisibilityMode {
+  details,
+  dots,
+  hide,
+}
+
 class VietnamMapController extends ChangeNotifier {
   VietnamMapController({
     LocationRepository locationRepository =
@@ -46,6 +52,7 @@ class VietnamMapController extends ChangeNotifier {
   LowerLevelPlace? _selectedLowerLevelPlace;
   Commune? _selectedCommuneDetails;
   bool _isLoadingDetails = false;
+  CommuneVisibilityMode _communeVisibilityMode = CommuneVisibilityMode.details;
   final MapTileSource _tileSource = MapTileSources.defaultBasemap;
   DateTime? _lastTileFailureNoticeAt;
   bool _isLoadingBoundaryData = false;
@@ -66,6 +73,16 @@ class VietnamMapController extends ChangeNotifier {
   LowerLevelPlace? get selectedLowerLevelPlace => _selectedLowerLevelPlace;
   Commune? get selectedCommuneDetails => _selectedCommuneDetails;
   bool get isLoadingDetails => _isLoadingDetails;
+  CommuneVisibilityMode get communeVisibilityMode => _communeVisibilityMode;
+
+  void setCommuneVisibilityMode(CommuneVisibilityMode mode) {
+    if (_communeVisibilityMode != mode) {
+      _communeVisibilityMode = mode;
+      notifyListeners();
+    }
+  }
+
+
   List<LowerLevelPlace> get selectedLowerLevelPlaces {
     final province = _selectedProvince;
     if (province == null) {
@@ -266,6 +283,7 @@ class VietnamMapController extends ChangeNotifier {
     if (isNewProvince || _selectedLowerLevelPlace != null) {
       _selectedLowerLevelPlace = null;
       _selectedCommuneDetails = null;
+      _communeVisibilityMode = CommuneVisibilityMode.details;
       _loadProvinceDetails(boundary.provinceCode);
     }
 
@@ -328,6 +346,7 @@ class VietnamMapController extends ChangeNotifier {
     _selectedProvinceDetails = null;
     _selectedLowerLevelPlace = null;
     _selectedCommuneDetails = null;
+    _communeVisibilityMode = CommuneVisibilityMode.details;
     _isLoadingDetails = false;
     notifyListeners();
   }
@@ -335,6 +354,7 @@ class VietnamMapController extends ChangeNotifier {
   void clearPlaceSelection() {
     _selectedLowerLevelPlace = null;
     _selectedCommuneDetails = null;
+    _communeVisibilityMode = CommuneVisibilityMode.details;
     _isLoadingDetails = false;
     notifyListeners();
   }
