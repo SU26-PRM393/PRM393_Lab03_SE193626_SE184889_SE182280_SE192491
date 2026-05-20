@@ -1,0 +1,22 @@
+[
+  {
+    "id": "hoang-sa",
+    "legacyLabel": "Paracel Islands",
+    "displayLabel": "Quan dao Hoang Sa",
+    "lon": 112.0,
+    "lat": 16.5,
+    "minZoom": 4.0,
+    "maxZoom": 12.0,
+    "coverLegacyLabel": true
+  },
+  {
+    "id": "truong-sa",
+    "legacyLabel": "Spratly Islands",
+    "displayLabel": "Quan \u0111ao Tr\u01b0\u1eddng Sa",
+    "lon": 114.3,
+    "lat": 10.5,
+    "minZoom": 4.0,
+    "maxZoom": 12.0,
+    "coverLegacyLabel": true
+  }
+]

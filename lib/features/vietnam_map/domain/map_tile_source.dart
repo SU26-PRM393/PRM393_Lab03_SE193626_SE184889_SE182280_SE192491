@@ -1,5 +1,6 @@
 enum MapTileSourceType {
   onlineOsm,
+  onlineVector,
   localMbtiles,
   localPmtiles,
   placeholder,
@@ -22,5 +23,8 @@ class MapTileSource {
   final String cachePolicy;
   final bool supportsOffline;
 
-  bool get isOnline => type == MapTileSourceType.onlineOsm;
+  bool get isOnline =>
+      type == MapTileSourceType.onlineOsm ||
+      type == MapTileSourceType.onlineVector;
+  bool get isVector => type == MapTileSourceType.onlineVector;
 }

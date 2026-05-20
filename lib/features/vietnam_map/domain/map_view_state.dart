@@ -1,3 +1,4 @@
+import 'package:flutter_map/flutter_map.dart' show LatLngBounds;
 import 'package:latlong2/latlong.dart';
 
 import '../../../shared/constants/map_constants.dart';
@@ -39,9 +40,18 @@ class MapViewport {
   final DateTime? lastInteractionAt;
   final String? message;
 
+  LatLngBounds get cameraBounds => MapConstants.vietnamCameraBounds;
   bool get isInteracting => status == MapViewportStatus.interacting;
   bool get hasMessage => message != null && message!.isNotEmpty;
   bool get isSourceUnavailable => status == MapViewportStatus.sourceUnavailable;
+
+  LatLng constrainCenter(LatLng coordinate) {
+    final bounds = cameraBounds;
+    return LatLng(
+      coordinate.latitude.clamp(bounds.south, bounds.north).toDouble(),
+      coordinate.longitude.clamp(bounds.west, bounds.east).toDouble(),
+    );
+  }
 
   MapViewport markReady() {
     return copyWith(status: MapViewportStatus.ready, clearMessage: true);

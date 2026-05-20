@@ -22,6 +22,7 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     _controller = VietnamMapController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _controller.loadBoundaryData();
         _controller.requestCurrentLocation();
       }
     });

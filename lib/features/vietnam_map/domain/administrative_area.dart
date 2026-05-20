@@ -43,6 +43,8 @@ class AdministrativeArea {
     required this.name,
     required this.level,
     required this.boundarySource,
+    this.provinceCode,
+    this.boundaryId,
     this.geometryAsset,
   });
 
@@ -50,5 +52,7 @@ class AdministrativeArea {
   final String name;
   final AdministrativeAreaLevel level;
   final BoundarySourceType boundarySource;
+  final String? provinceCode;
+  final String? boundaryId;
   final String? geometryAsset;
 }

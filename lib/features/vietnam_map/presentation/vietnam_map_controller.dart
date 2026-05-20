@@ -1,39 +1,95 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show EdgeInsets;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../shared/constants/map_constants.dart';
+import '../data/admin_boundary_source.dart';
 import '../data/location_repository.dart';
 import '../data/map_tile_source.dart';
 import '../domain/administrative_area.dart';
 import '../domain/current_location_state.dart';
+import '../domain/island_label_override.dart';
+import '../domain/lower_level_place.dart';
+import '../domain/map_boundary.dart';
+import '../domain/map_scope.dart';
 import '../domain/map_tile_source.dart';
 import '../domain/map_view_state.dart';
+import '../domain/province_hover_state.dart';
 
 class VietnamMapController extends ChangeNotifier {
   VietnamMapController({
     LocationRepository locationRepository =
         const GeolocatorLocationRepository(),
-  }) : _locationRepository = locationRepository;
+    AdminBoundarySource adminBoundarySource = const AdminBoundarySource(),
+  })  : _locationRepository = locationRepository,
+        _adminBoundarySource = adminBoundarySource;
 
   final LocationRepository _locationRepository;
+  final AdminBoundarySource _adminBoundarySource;
   final MapController mapController = MapController();
 
   MapViewport _viewport = MapViewport.initial();
   CurrentLocationState _locationState = CurrentLocationState.unknown();
   AdministrativeAreaControlSpace _controlSpace =
       AdministrativeAreaControlSpace.inactive();
-  final MapTileSource _tileSource = MapTileSources.openStreetMap;
+  VietnamBoundaryData _boundaryData = VietnamBoundaryData.initial();
+  ProvinceHoverState _provinceHoverState = ProvinceHoverState.inactive();
+  ProvinceBoundary? _selectedProvince;
+  final MapTileSource _tileSource = MapTileSources.defaultBasemap;
   DateTime? _lastTileFailureNoticeAt;
+  bool _isLoadingBoundaryData = false;
+  Timer? _cameraAnimationTimer;
 
   MapViewport get viewport => _viewport;
   CurrentLocationState get locationState => _locationState;
   AdministrativeAreaControlSpace get controlSpace => _controlSpace;
   MapTileSource get tileSource => _tileSource;
+  VietNamMapScope get mapScope => _boundaryData.scope;
+  List<ProvinceBoundary> get provinceBoundaries =>
+      _boundaryData.provinceBoundaries;
+  List<IslandLabelOverride> get islandLabelOverrides =>
+      _boundaryData.islandLabels;
+  ProvinceHoverState get provinceHoverState => _provinceHoverState;
+  ProvinceBoundary? get selectedProvince => _selectedProvince;
+  List<LowerLevelPlace> get selectedLowerLevelPlaces {
+    final province = _selectedProvince;
+    if (province == null) {
+      return const [];
+    }
+
+    return [
+      for (final place in _boundaryData.lowerLevelPlaces)
+        if (place.parentCode == province.provinceCode) place,
+    ];
+  }
+
+  bool get isBoundaryDataUnavailable => _boundaryData.isUnavailable;
+  String? get boundaryDataMessage => _boundaryData.message;
 
   bool get hasLocationMessage {
     return _locationState.status != CurrentLocationStatus.unknown &&
         _locationState.hasMessage;
+  }
+
+  Future<void> loadBoundaryData() async {
+    if (_isLoadingBoundaryData ||
+        _boundaryData.status == VietnamBoundaryDataStatus.ready) {
+      return;
+    }
+
+    _isLoadingBoundaryData = true;
+    final nextData = await _adminBoundarySource.loadBoundaryData();
+    _isLoadingBoundaryData = false;
+    _boundaryData = nextData;
+
+    if (!nextData.hasProvinceBoundaries && nextData.message != null) {
+      _provinceHoverState = ProvinceHoverState.unavailable(nextData.message!);
+    }
+
+    notifyListeners();
   }
 
   void markMapReady() {
@@ -45,14 +101,33 @@ class VietnamMapController extends ChangeNotifier {
 
   void updateViewport(MapCamera camera, bool hasGesture) {
     final previousStatus = _viewport.status;
+    final previousShowsLowerLevelLabels =
+        _viewport.zoom >= MapConstants.lowerLevelLabelMinZoom;
     _viewport = _viewport.trackInteraction(
       center: camera.center,
       zoom: camera.zoom,
       hasGesture: hasGesture,
       occurredAt: DateTime.now(),
     );
+    final nextShowsLowerLevelLabels =
+        _viewport.zoom >= MapConstants.lowerLevelLabelMinZoom;
+
+    var shouldNotify = false;
+    if (hasGesture && !_provinceHoverState.isInactive) {
+      _provinceHoverState = ProvinceHoverState.inactive();
+      shouldNotify = true;
+    }
+
+    if (_selectedProvince != null &&
+        previousShowsLowerLevelLabels != nextShowsLowerLevelLabels) {
+      shouldNotify = true;
+    }
 
     if (!hasGesture && previousStatus == MapViewportStatus.interacting) {
+      shouldNotify = true;
+    }
+
+    if (shouldNotify) {
       notifyListeners();
     }
   }
@@ -115,18 +190,170 @@ class VietnamMapController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateProvinceHover(LatLng coordinate) {
+    if (_boundaryData.status == VietnamBoundaryDataStatus.initial) {
+      return;
+    }
+
+    if (!_boundaryData.hasProvinceBoundaries) {
+      final message =
+          _boundaryData.message ?? 'Province boundary data is unavailable.';
+      final nextState = ProvinceHoverState.unavailable(message);
+      if (!_provinceHoverState.isSameVisibleState(nextState)) {
+        _provinceHoverState = nextState;
+        notifyListeners();
+      }
+      return;
+    }
+
+    final nextState = ProvinceHoverResolver.resolve(
+      coordinate: coordinate,
+      boundaries: _boundaryData.provinceBoundaries,
+      occurredAt: DateTime.now(),
+    );
+
+    if (_provinceHoverState.isSameVisibleState(nextState)) {
+      return;
+    }
+
+    _provinceHoverState = nextState;
+    notifyListeners();
+  }
+
+  void selectProvinceAt(LatLng coordinate) {
+    if (!_boundaryData.hasProvinceBoundaries) {
+      return;
+    }
+
+    final nextState = ProvinceHoverResolver.resolve(
+      coordinate: coordinate,
+      boundaries: _boundaryData.provinceBoundaries,
+      occurredAt: DateTime.now(),
+    );
+
+    final boundary = nextState.hoveredBoundary;
+    if (boundary == null) {
+      if (_selectedProvince != null) {
+        _selectedProvince = null;
+        notifyListeners();
+      }
+      return;
+    }
+
+    final shouldNotify = _selectedProvince?.id != boundary.id ||
+        !_provinceHoverState.isSameVisibleState(nextState);
+    _selectedProvince = boundary;
+    _provinceHoverState = nextState;
+    _animateViewportToProvince(boundary);
+
+    if (shouldNotify) {
+      notifyListeners();
+    }
+  }
+
+  void clearProvinceHover() {
+    if (_provinceHoverState.isInactive) {
+      return;
+    }
+
+    _provinceHoverState = ProvinceHoverState.inactive();
+    notifyListeners();
+  }
+
   void _moveTo(LatLng center, double zoom) {
+    _cancelCameraAnimation();
     final viewport = _currentViewport();
+    final nextCenter = viewport.constrainCenter(center);
     final nextZoom = zoom.clamp(viewport.minZoom, viewport.maxZoom).toDouble();
-    mapController.move(center, nextZoom);
+    mapController.move(nextCenter, nextZoom);
     _viewport = viewport.copyWith(
-      center: center,
+      center: nextCenter,
       zoom: nextZoom,
       status: MapViewportStatus.ready,
       lastInteractionAt: DateTime.now(),
       clearMessage: true,
     );
     notifyListeners();
+  }
+
+  void _animateViewportToProvince(ProvinceBoundary boundary) {
+    try {
+      final currentCamera = mapController.camera;
+      final targetCamera = CameraFit.bounds(
+        bounds: boundary.bounds,
+        padding: const EdgeInsets.all(MapConstants.provinceFitPadding),
+        maxZoom: MapConstants.provinceFitMaxZoom,
+        minZoom: viewport.minZoom,
+      ).fit(currentCamera);
+
+      _animateCameraTo(
+        center: targetCamera.center,
+        zoom: targetCamera.zoom,
+      );
+    } catch (_) {
+      _moveTo(boundary.labelCoordinate, viewport.zoom);
+    }
+  }
+
+  void _animateCameraTo({
+    required LatLng center,
+    required double zoom,
+  }) {
+    _cancelCameraAnimation();
+
+    final startViewport = _currentViewport();
+    final startCenter = startViewport.center;
+    final startZoom = startViewport.zoom;
+    final startAt = DateTime.now();
+    final duration = MapConstants.provinceFitAnimationDuration;
+
+    _cameraAnimationTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (timer) {
+        final elapsed = DateTime.now().difference(startAt);
+        final linearProgress = elapsed.inMicroseconds / duration.inMicroseconds;
+        final progress = linearProgress.clamp(0, 1).toDouble();
+        final easedProgress = _easeInOutCubic(progress);
+        final nextCenter = LatLng(
+          _lerp(startCenter.latitude, center.latitude, easedProgress),
+          _lerp(startCenter.longitude, center.longitude, easedProgress),
+        );
+        final nextZoom = _lerp(startZoom, zoom, easedProgress);
+
+        mapController.move(nextCenter, nextZoom);
+
+        if (progress >= 1) {
+          timer.cancel();
+          if (identical(_cameraAnimationTimer, timer)) {
+            _cameraAnimationTimer = null;
+          }
+          _viewport = _currentViewport().copyWith(
+            status: MapViewportStatus.ready,
+            lastInteractionAt: DateTime.now(),
+            clearMessage: true,
+          );
+          notifyListeners();
+        }
+      },
+    );
+  }
+
+  void _cancelCameraAnimation() {
+    _cameraAnimationTimer?.cancel();
+    _cameraAnimationTimer = null;
+  }
+
+  double _easeInOutCubic(double value) {
+    if (value < 0.5) {
+      return 4 * value * value * value;
+    }
+
+    final adjusted = -2 * value + 2;
+    return 1 - (adjusted * adjusted * adjusted) / 2;
+  }
+
+  double _lerp(double start, double end, double progress) {
+    return start + (end - start) * progress;
   }
 
   MapViewport _currentViewport() {
@@ -143,6 +370,7 @@ class VietnamMapController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _cancelCameraAnimation();
     mapController.dispose();
     super.dispose();
   }

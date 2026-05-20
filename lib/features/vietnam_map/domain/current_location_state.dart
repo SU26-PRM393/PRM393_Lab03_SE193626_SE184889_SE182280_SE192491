@@ -31,7 +31,8 @@ class CurrentLocationState {
   final String? message;
   final DateTime? lastUpdatedAt;
 
-  bool get isAvailable => status == CurrentLocationStatus.available && coordinate != null;
+  bool get isAvailable =>
+      status == CurrentLocationStatus.available && coordinate != null;
   bool get isRequesting => status == CurrentLocationStatus.requesting;
   bool get hasMessage => message != null && message!.isNotEmpty;
 
