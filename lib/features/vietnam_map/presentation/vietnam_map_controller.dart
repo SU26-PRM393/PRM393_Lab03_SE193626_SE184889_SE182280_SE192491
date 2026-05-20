@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show EdgeInsets;
 import 'package:flutter_map/flutter_map.dart';
+import 'package:isar/isar.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../shared/constants/map_constants.dart';
 import '../data/admin_boundary_source.dart';
 import '../data/location_repository.dart';
 import '../data/map_tile_source.dart';
+import '../database/isar_service.dart';
 import '../domain/administrative_area.dart';
 import '../domain/current_location_state.dart';
 import '../domain/island_label_override.dart';
@@ -18,6 +20,8 @@ import '../domain/map_scope.dart';
 import '../domain/map_tile_source.dart';
 import '../domain/map_view_state.dart';
 import '../domain/province_hover_state.dart';
+import '../model/province.dart';
+import '../model/commune.dart';
 
 class VietnamMapController extends ChangeNotifier {
   VietnamMapController({
@@ -38,6 +42,10 @@ class VietnamMapController extends ChangeNotifier {
   VietnamBoundaryData _boundaryData = VietnamBoundaryData.initial();
   ProvinceHoverState _provinceHoverState = ProvinceHoverState.inactive();
   ProvinceBoundary? _selectedProvince;
+  Province? _selectedProvinceDetails;
+  LowerLevelPlace? _selectedLowerLevelPlace;
+  Commune? _selectedCommuneDetails;
+  bool _isLoadingDetails = false;
   final MapTileSource _tileSource = MapTileSources.defaultBasemap;
   DateTime? _lastTileFailureNoticeAt;
   bool _isLoadingBoundaryData = false;
@@ -54,6 +62,10 @@ class VietnamMapController extends ChangeNotifier {
       _boundaryData.islandLabels;
   ProvinceHoverState get provinceHoverState => _provinceHoverState;
   ProvinceBoundary? get selectedProvince => _selectedProvince;
+  Province? get selectedProvinceDetails => _selectedProvinceDetails;
+  LowerLevelPlace? get selectedLowerLevelPlace => _selectedLowerLevelPlace;
+  Commune? get selectedCommuneDetails => _selectedCommuneDetails;
+  bool get isLoadingDetails => _isLoadingDetails;
   List<LowerLevelPlace> get selectedLowerLevelPlaces {
     final province = _selectedProvince;
     if (province == null) {
@@ -233,22 +245,98 @@ class VietnamMapController extends ChangeNotifier {
 
     final boundary = nextState.hoveredBoundary;
     if (boundary == null) {
-      if (_selectedProvince != null) {
+      if (_selectedProvince != null || _selectedLowerLevelPlace != null) {
         _selectedProvince = null;
+        _selectedProvinceDetails = null;
+        _selectedLowerLevelPlace = null;
+        _selectedCommuneDetails = null;
         notifyListeners();
       }
       return;
     }
 
-    final shouldNotify = _selectedProvince?.id != boundary.id ||
-        !_provinceHoverState.isSameVisibleState(nextState);
+    final isNewProvince = _selectedProvince?.id != boundary.id;
+    final shouldNotify = isNewProvince ||
+        !_provinceHoverState.isSameVisibleState(nextState) ||
+        _selectedLowerLevelPlace != null;
+    
     _selectedProvince = boundary;
     _provinceHoverState = nextState;
+
+    if (isNewProvince || _selectedLowerLevelPlace != null) {
+      _selectedLowerLevelPlace = null;
+      _selectedCommuneDetails = null;
+      _loadProvinceDetails(boundary.provinceCode);
+    }
+
     _animateViewportToProvince(boundary);
 
     if (shouldNotify) {
       notifyListeners();
     }
+  }
+
+  Future<void> _loadProvinceDetails(String provinceCode) async {
+    _isLoadingDetails = true;
+    notifyListeners();
+
+    try {
+      final details = await IsarService.isar.provinces
+          .filter()
+          .maEqualTo(provinceCode)
+          .findFirst();
+      _selectedProvinceDetails = details;
+    } catch (e) {
+      debugPrint('Error loading province details: $e');
+    } finally {
+      _isLoadingDetails = false;
+      notifyListeners();
+    }
+  }
+
+  void selectLowerLevelPlace(LowerLevelPlace place) {
+    _selectedLowerLevelPlace = place;
+    _selectedCommuneDetails = null;
+    _isLoadingDetails = true;
+    notifyListeners();
+
+    _animateCameraTo(
+      center: place.coordinate,
+      zoom: 12.0,
+    );
+
+    _loadCommuneDetails(place.code);
+  }
+
+  Future<void> _loadCommuneDetails(String communeCode) async {
+    try {
+      final details = await IsarService.isar.communes
+          .filter()
+          .maEqualTo(communeCode)
+          .findFirst();
+      _selectedCommuneDetails = details;
+    } catch (e) {
+      debugPrint('Error loading commune details: $e');
+    } finally {
+      _isLoadingDetails = false;
+      notifyListeners();
+    }
+  }
+
+  void clearSelection() {
+    _selectedProvince = null;
+    _selectedProvinceDetails = null;
+    _selectedLowerLevelPlace = null;
+    _selectedCommuneDetails = null;
+    _isLoadingDetails = false;
+    notifyListeners();
+  }
+
+  void clearPlaceSelection() {
+    _selectedLowerLevelPlace = null;
+    _selectedCommuneDetails = null;
+    _isLoadingDetails = false;
+    notifyListeners();
   }
 
   void clearProvinceHover() {

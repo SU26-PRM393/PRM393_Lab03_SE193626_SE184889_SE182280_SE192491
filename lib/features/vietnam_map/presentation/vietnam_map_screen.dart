@@ -37,29 +37,33 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 980;
-          final map = _MapSurface(controller: _controller);
-          final panel = MapControlPanel(
-            controlSpace: _controller.controlSpace,
-            onInactiveInteraction: _controller.acknowledgeInactiveControl,
-          );
+      body: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 980;
+              final map = _MapSurface(controller: _controller);
+              final panel = MapControlPanel(
+                controller: _controller,
+              );
 
-          if (compact) {
-            return Column(
-              children: [
-                SizedBox(height: 238, child: panel),
-                Expanded(child: map),
-              ],
-            );
-          }
+              if (compact) {
+                return Column(
+                  children: [
+                    SizedBox(height: 250, child: panel),
+                    Expanded(child: map),
+                  ],
+                );
+              }
 
-          return Row(
-            children: [
-              SizedBox(width: 360, child: panel),
-              Expanded(child: map),
-            ],
+              return Row(
+                children: [
+                  SizedBox(width: 360, child: panel),
+                  Expanded(child: map),
+                ],
+              );
+            },
           );
         },
       ),

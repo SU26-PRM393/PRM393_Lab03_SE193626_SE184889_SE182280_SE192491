@@ -14,12 +14,24 @@ class ImportService {
     final prefs = await SharedPreferences.getInstance();
 
     final imported = prefs.getBool('imported') ?? false;
+    
+    final provincesCount = await IsarService.isar.provinces.count();
+    final communesCount = await IsarService.isar.communes.count();
+    final committeesCount = await IsarService.isar.committees.count();
 
-    if (imported) return;
+    if (imported && provincesCount > 0 && communesCount > 0 && committeesCount > 0) {
+      return;
+    }
 
-    await importProvinces();
-    await importCommunes();
-    await importCommittees();
+    if (provincesCount == 0) {
+      await importProvinces();
+    }
+    if (communesCount == 0) {
+      await importCommunes();
+    }
+    if (committeesCount == 0) {
+      await importCommittees();
+    }
 
     await prefs.setBool('imported', true);
   }
@@ -102,9 +114,12 @@ class ImportService {
         ..population = e['population']
         ..density = (e['density'] as num?)?.toDouble()
         ..capital = e['capital']
+        ..address = e['address']
+        ..phone = e['phone']
         ..decree = e['decree']
         ..decreeUrl = e['decree_url']
         ..predecessors = e['predecessors']
+        ..nPredecessors = e['n_predecessors']
         ..parentMa = e['parent_ma']
         ..parentTen = e['parent_ten']
         ..centroidLon = (e['centroid_lon'] as num?)?.toDouble()
@@ -147,19 +162,38 @@ class ImportService {
     final items = data.map((e) {
       return Committee()
         ..dataId = e['id']
+        ..ma = e['ma'] ?? ''
         ..ten = e['ten'] ?? ''
         ..type = e['type']
         ..tenShort = e['ten_short']
+        ..areaKm2 = (e['area_km2'] as num?)?.toDouble()
+        ..population = e['population']
+        ..density = (e['density'] as num?)?.toDouble()
+        ..capital = e['capital']
+        ..address = e['address']
+        ..phone = e['phone']
+        ..decree = e['decree']
+        ..decreeUrl = e['decree_url']
+        ..predecessors = e['predecessors']
+        ..nPredecessors = e['n_predecessors']
         ..parentMa = e['parent_ma']
         ..parentTen = e['parent_ten']
         ..centroidLon = (e['centroid_lon'] as num?)?.toDouble()
         ..centroidLat = (e['centroid_lat'] as num?)?.toDouble()
         ..geomType = e['geom_type']
+        ..nVertices = e['n_vertices']
         ..macroRegion = e['macro_region']
-        ..embedText = e['embed_text']
+        ..predecessorsList = (e['predecessors_list'] as List<dynamic>?)
+            ?.map((x) => x.toString())
+            .toList()
+        ..bbox = (e['bbox'] as List<dynamic>?)
+            ?.map((x) => (x as num).toDouble())
+            .toList()
         ..keywords = (e['keywords'] as List<dynamic>?)
             ?.map((x) => x.toString())
-            .toList();
+            .toList()
+        ..embedText = e['embed_text']
+        ..parentTenXa = e['parent_ten_xa'];
     }).toList();
 
     await IsarService.isar.writeTxn(() async {

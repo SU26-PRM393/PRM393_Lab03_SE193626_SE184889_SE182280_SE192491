@@ -9,11 +9,28 @@ class Committee {
   @Index(unique: true)
   late String dataId;
 
+  @Index()
+  String? ma;
+
   @Index(caseSensitive: false)
   late String ten;
 
   String? type;
   String? tenShort;
+
+  double? areaKm2;
+  int? population;
+  double? density;
+
+  String? capital;
+  String? address;
+  String? phone;
+
+  String? decree;
+  String? decreeUrl;
+
+  String? predecessors;
+  int? nPredecessors;
 
   @Index()
   String? parentMa;
@@ -25,10 +42,18 @@ class Committee {
 
   String? geomType;
 
+  int? nVertices;
+
   @Index()
   String? macroRegion;
+
+  List<String>? predecessorsList;
+
+  List<double>? bbox;
 
   List<String>? keywords;
 
   String? embedText;
+
+  String? parentTenXa;
 }

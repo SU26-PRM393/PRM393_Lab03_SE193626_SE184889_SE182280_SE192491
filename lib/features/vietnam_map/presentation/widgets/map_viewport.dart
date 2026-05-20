@@ -106,6 +106,7 @@ class _MapViewportState extends State<MapViewport> {
                   LowerLevelPlaceLayer(
                     places: controller.selectedLowerLevelPlaces,
                     zoom: controller.viewport.zoom,
+                    onPlaceSelected: controller.selectLowerLevelPlace,
                   ),
                   ProvinceHoverOutline(state: controller.provinceHoverState),
                   if (controller.locationState.isAvailable)

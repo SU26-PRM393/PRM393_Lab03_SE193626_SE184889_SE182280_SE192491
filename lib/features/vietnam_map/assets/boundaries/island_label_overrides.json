@@ -2,21 +2,21 @@
   {
     "id": "hoang-sa",
     "legacyLabel": "Paracel Islands",
-    "displayLabel": "Quan dao Hoang Sa",
-    "lon": 112.0,
-    "lat": 16.5,
+    "displayLabel": "Quần đảo Hoàng Sa",
+    "lon": 112.07857797346432,
+    "lat": 16.371347929067802,
     "minZoom": 4.0,
-    "maxZoom": 12.0,
+    "maxZoom": 10.25,
     "coverLegacyLabel": true
   },
   {
     "id": "truong-sa",
     "legacyLabel": "Spratly Islands",
-    "displayLabel": "Quan \u0111ao Tr\u01b0\u1eddng Sa",
-    "lon": 114.3,
-    "lat": 10.5,
+    "displayLabel": "Quần đảo Trường Sa",
+    "lon": 113.97556476731718,
+    "lat": 9.288659257720576,
     "minZoom": 4.0,
-    "maxZoom": 12.0,
+    "maxZoom": 10.25,
     "coverLegacyLabel": true
   }
 ]

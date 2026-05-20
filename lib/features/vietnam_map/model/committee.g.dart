@@ -17,63 +17,138 @@ const CommitteeSchema = CollectionSchema(
   name: r'Committee',
   id: 6543261920673967059,
   properties: {
-    r'centroidLat': PropertySchema(
+    r'address': PropertySchema(
       id: 0,
+      name: r'address',
+      type: IsarType.string,
+    ),
+    r'areaKm2': PropertySchema(
+      id: 1,
+      name: r'areaKm2',
+      type: IsarType.double,
+    ),
+    r'bbox': PropertySchema(
+      id: 2,
+      name: r'bbox',
+      type: IsarType.doubleList,
+    ),
+    r'capital': PropertySchema(
+      id: 3,
+      name: r'capital',
+      type: IsarType.string,
+    ),
+    r'centroidLat': PropertySchema(
+      id: 4,
       name: r'centroidLat',
       type: IsarType.double,
     ),
     r'centroidLon': PropertySchema(
-      id: 1,
+      id: 5,
       name: r'centroidLon',
       type: IsarType.double,
     ),
     r'dataId': PropertySchema(
-      id: 2,
+      id: 6,
       name: r'dataId',
       type: IsarType.string,
     ),
+    r'decree': PropertySchema(
+      id: 7,
+      name: r'decree',
+      type: IsarType.string,
+    ),
+    r'decreeUrl': PropertySchema(
+      id: 8,
+      name: r'decreeUrl',
+      type: IsarType.string,
+    ),
+    r'density': PropertySchema(
+      id: 9,
+      name: r'density',
+      type: IsarType.double,
+    ),
     r'embedText': PropertySchema(
-      id: 3,
+      id: 10,
       name: r'embedText',
       type: IsarType.string,
     ),
     r'geomType': PropertySchema(
-      id: 4,
+      id: 11,
       name: r'geomType',
       type: IsarType.string,
     ),
     r'keywords': PropertySchema(
-      id: 5,
+      id: 12,
       name: r'keywords',
       type: IsarType.stringList,
     ),
+    r'ma': PropertySchema(
+      id: 13,
+      name: r'ma',
+      type: IsarType.string,
+    ),
     r'macroRegion': PropertySchema(
-      id: 6,
+      id: 14,
       name: r'macroRegion',
       type: IsarType.string,
     ),
+    r'nPredecessors': PropertySchema(
+      id: 15,
+      name: r'nPredecessors',
+      type: IsarType.long,
+    ),
+    r'nVertices': PropertySchema(
+      id: 16,
+      name: r'nVertices',
+      type: IsarType.long,
+    ),
     r'parentMa': PropertySchema(
-      id: 7,
+      id: 17,
       name: r'parentMa',
       type: IsarType.string,
     ),
     r'parentTen': PropertySchema(
-      id: 8,
+      id: 18,
       name: r'parentTen',
       type: IsarType.string,
     ),
+    r'parentTenXa': PropertySchema(
+      id: 19,
+      name: r'parentTenXa',
+      type: IsarType.string,
+    ),
+    r'phone': PropertySchema(
+      id: 20,
+      name: r'phone',
+      type: IsarType.string,
+    ),
+    r'population': PropertySchema(
+      id: 21,
+      name: r'population',
+      type: IsarType.long,
+    ),
+    r'predecessors': PropertySchema(
+      id: 22,
+      name: r'predecessors',
+      type: IsarType.string,
+    ),
+    r'predecessorsList': PropertySchema(
+      id: 23,
+      name: r'predecessorsList',
+      type: IsarType.stringList,
+    ),
     r'ten': PropertySchema(
-      id: 9,
+      id: 24,
       name: r'ten',
       type: IsarType.string,
     ),
     r'tenShort': PropertySchema(
-      id: 10,
+      id: 25,
       name: r'tenShort',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 11,
+      id: 26,
       name: r'type',
       type: IsarType.string,
     )
@@ -92,6 +167,19 @@ const CommitteeSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'dataId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
+    r'ma': IndexSchema(
+      id: -4596340741078201700,
+      name: r'ma',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'ma',
           type: IndexType.hash,
           caseSensitive: true,
         )
@@ -151,7 +239,37 @@ int _committeeEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.address;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.bbox;
+    if (value != null) {
+      bytesCount += 3 + value.length * 8;
+    }
+  }
+  {
+    final value = object.capital;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.dataId.length * 3;
+  {
+    final value = object.decree;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.decreeUrl;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.embedText;
     if (value != null) {
@@ -177,6 +295,12 @@ int _committeeEstimateSize(
     }
   }
   {
+    final value = object.ma;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.macroRegion;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -192,6 +316,36 @@ int _committeeEstimateSize(
     final value = object.parentTen;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.parentTenXa;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.phone;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.predecessors;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final list = object.predecessorsList;
+    if (list != null) {
+      bytesCount += 3 + list.length * 3;
+      {
+        for (var i = 0; i < list.length; i++) {
+          final value = list[i];
+          bytesCount += value.length * 3;
+        }
+      }
     }
   }
   bytesCount += 3 + object.ten.length * 3;
@@ -216,18 +370,33 @@ void _committeeSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDouble(offsets[0], object.centroidLat);
-  writer.writeDouble(offsets[1], object.centroidLon);
-  writer.writeString(offsets[2], object.dataId);
-  writer.writeString(offsets[3], object.embedText);
-  writer.writeString(offsets[4], object.geomType);
-  writer.writeStringList(offsets[5], object.keywords);
-  writer.writeString(offsets[6], object.macroRegion);
-  writer.writeString(offsets[7], object.parentMa);
-  writer.writeString(offsets[8], object.parentTen);
-  writer.writeString(offsets[9], object.ten);
-  writer.writeString(offsets[10], object.tenShort);
-  writer.writeString(offsets[11], object.type);
+  writer.writeString(offsets[0], object.address);
+  writer.writeDouble(offsets[1], object.areaKm2);
+  writer.writeDoubleList(offsets[2], object.bbox);
+  writer.writeString(offsets[3], object.capital);
+  writer.writeDouble(offsets[4], object.centroidLat);
+  writer.writeDouble(offsets[5], object.centroidLon);
+  writer.writeString(offsets[6], object.dataId);
+  writer.writeString(offsets[7], object.decree);
+  writer.writeString(offsets[8], object.decreeUrl);
+  writer.writeDouble(offsets[9], object.density);
+  writer.writeString(offsets[10], object.embedText);
+  writer.writeString(offsets[11], object.geomType);
+  writer.writeStringList(offsets[12], object.keywords);
+  writer.writeString(offsets[13], object.ma);
+  writer.writeString(offsets[14], object.macroRegion);
+  writer.writeLong(offsets[15], object.nPredecessors);
+  writer.writeLong(offsets[16], object.nVertices);
+  writer.writeString(offsets[17], object.parentMa);
+  writer.writeString(offsets[18], object.parentTen);
+  writer.writeString(offsets[19], object.parentTenXa);
+  writer.writeString(offsets[20], object.phone);
+  writer.writeLong(offsets[21], object.population);
+  writer.writeString(offsets[22], object.predecessors);
+  writer.writeStringList(offsets[23], object.predecessorsList);
+  writer.writeString(offsets[24], object.ten);
+  writer.writeString(offsets[25], object.tenShort);
+  writer.writeString(offsets[26], object.type);
 }
 
 Committee _committeeDeserialize(
@@ -237,19 +406,34 @@ Committee _committeeDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Committee();
-  object.centroidLat = reader.readDoubleOrNull(offsets[0]);
-  object.centroidLon = reader.readDoubleOrNull(offsets[1]);
-  object.dataId = reader.readString(offsets[2]);
-  object.embedText = reader.readStringOrNull(offsets[3]);
-  object.geomType = reader.readStringOrNull(offsets[4]);
+  object.address = reader.readStringOrNull(offsets[0]);
+  object.areaKm2 = reader.readDoubleOrNull(offsets[1]);
+  object.bbox = reader.readDoubleList(offsets[2]);
+  object.capital = reader.readStringOrNull(offsets[3]);
+  object.centroidLat = reader.readDoubleOrNull(offsets[4]);
+  object.centroidLon = reader.readDoubleOrNull(offsets[5]);
+  object.dataId = reader.readString(offsets[6]);
+  object.decree = reader.readStringOrNull(offsets[7]);
+  object.decreeUrl = reader.readStringOrNull(offsets[8]);
+  object.density = reader.readDoubleOrNull(offsets[9]);
+  object.embedText = reader.readStringOrNull(offsets[10]);
+  object.geomType = reader.readStringOrNull(offsets[11]);
   object.id = id;
-  object.keywords = reader.readStringList(offsets[5]);
-  object.macroRegion = reader.readStringOrNull(offsets[6]);
-  object.parentMa = reader.readStringOrNull(offsets[7]);
-  object.parentTen = reader.readStringOrNull(offsets[8]);
-  object.ten = reader.readString(offsets[9]);
-  object.tenShort = reader.readStringOrNull(offsets[10]);
-  object.type = reader.readStringOrNull(offsets[11]);
+  object.keywords = reader.readStringList(offsets[12]);
+  object.ma = reader.readStringOrNull(offsets[13]);
+  object.macroRegion = reader.readStringOrNull(offsets[14]);
+  object.nPredecessors = reader.readLongOrNull(offsets[15]);
+  object.nVertices = reader.readLongOrNull(offsets[16]);
+  object.parentMa = reader.readStringOrNull(offsets[17]);
+  object.parentTen = reader.readStringOrNull(offsets[18]);
+  object.parentTenXa = reader.readStringOrNull(offsets[19]);
+  object.phone = reader.readStringOrNull(offsets[20]);
+  object.population = reader.readLongOrNull(offsets[21]);
+  object.predecessors = reader.readStringOrNull(offsets[22]);
+  object.predecessorsList = reader.readStringList(offsets[23]);
+  object.ten = reader.readString(offsets[24]);
+  object.tenShort = reader.readStringOrNull(offsets[25]);
+  object.type = reader.readStringOrNull(offsets[26]);
   return object;
 }
 
@@ -261,28 +445,58 @@ P _committeeDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
       return (reader.readDoubleOrNull(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleList(offset)) as P;
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 5:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
+      return (reader.readStringOrNull(offset)) as P;
+    case 12:
+      return (reader.readStringList(offset)) as P;
+    case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
+      return (reader.readStringOrNull(offset)) as P;
+    case 15:
+      return (reader.readLongOrNull(offset)) as P;
+    case 16:
+      return (reader.readLongOrNull(offset)) as P;
+    case 17:
+      return (reader.readStringOrNull(offset)) as P;
+    case 18:
+      return (reader.readStringOrNull(offset)) as P;
+    case 19:
+      return (reader.readStringOrNull(offset)) as P;
+    case 20:
+      return (reader.readStringOrNull(offset)) as P;
+    case 21:
+      return (reader.readLongOrNull(offset)) as P;
+    case 22:
+      return (reader.readStringOrNull(offset)) as P;
+    case 23:
+      return (reader.readStringList(offset)) as P;
+    case 24:
+      return (reader.readString(offset)) as P;
+    case 25:
+      return (reader.readStringOrNull(offset)) as P;
+    case 26:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -477,6 +691,70 @@ extension CommitteeQueryWhere
     });
   }
 
+  QueryBuilder<Committee, Committee, QAfterWhereClause> maIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'ma',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterWhereClause> maIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'ma',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterWhereClause> maEqualTo(String? ma) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'ma',
+        value: [ma],
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterWhereClause> maNotEqualTo(
+      String? ma) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'ma',
+              lower: [],
+              upper: [ma],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'ma',
+              lower: [ma],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'ma',
+              lower: [ma],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'ma',
+              lower: [],
+              upper: [ma],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterWhereClause> tenEqualTo(String ten) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
@@ -654,6 +932,542 @@ extension CommitteeQueryWhere
 
 extension CommitteeQueryFilter
     on QueryBuilder<Committee, Committee, QFilterCondition> {
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'address',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'address',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> addressIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      addressIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> areaKm2IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'areaKm2',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> areaKm2IsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'areaKm2',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> areaKm2EqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'areaKm2',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> areaKm2GreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'areaKm2',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> areaKm2LessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'areaKm2',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> areaKm2Between(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'areaKm2',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'bbox',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'bbox',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxElementEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bbox',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      bboxElementGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'bbox',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxElementLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'bbox',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxElementBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'bbox',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'bbox',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'bbox',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'bbox',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'bbox',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      bboxLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'bbox',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> bboxLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'bbox',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'capital',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'capital',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'capital',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'capital',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'capital',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'capital',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'capital',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'capital',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'capital',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'capital',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> capitalIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'capital',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      capitalIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'capital',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterFilterCondition>
       centroidLatIsNull() {
     return QueryBuilder.apply(this, (query) {
@@ -942,6 +1756,379 @@ extension CommitteeQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'dataId',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'decree',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'decree',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'decree',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'decree',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'decree',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'decree',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'decree',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'decree',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'decree',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'decree',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'decree',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'decree',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'decreeUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      decreeUrlIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'decreeUrl',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'decreeUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      decreeUrlGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'decreeUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'decreeUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'decreeUrl',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'decreeUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'decreeUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'decreeUrl',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'decreeUrl',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> decreeUrlIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'decreeUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      decreeUrlIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'decreeUrl',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> densityIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'density',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> densityIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'density',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> densityEqualTo(
+    double? value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'density',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> densityGreaterThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'density',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> densityLessThan(
+    double? value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'density',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> densityBetween(
+    double? lower,
+    double? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'density',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
       ));
     });
   }
@@ -1537,6 +2724,152 @@ extension CommitteeQueryFilter
     });
   }
 
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'ma',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'ma',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ma',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'ma',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'ma',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'ma',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'ma',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'ma',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'ma',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'ma',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'ma',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> maIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'ma',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterFilterCondition>
       macroRegionIsNull() {
     return QueryBuilder.apply(this, (query) {
@@ -1685,6 +3018,151 @@ extension CommitteeQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'macroRegion',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nPredecessorsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'nPredecessors',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nPredecessorsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'nPredecessors',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nPredecessorsEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nPredecessors',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nPredecessorsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'nPredecessors',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nPredecessorsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'nPredecessors',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nPredecessorsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'nPredecessors',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> nVerticesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'nVertices',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nVerticesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'nVertices',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> nVerticesEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nVertices',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      nVerticesGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'nVertices',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> nVerticesLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'nVertices',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> nVerticesBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'nVertices',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1983,6 +3461,773 @@ extension CommitteeQueryFilter
         property: r'parentTen',
         value: '',
       ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      parentTenXaIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'parentTenXa',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      parentTenXaIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'parentTenXa',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> parentTenXaEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'parentTenXa',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      parentTenXaGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'parentTenXa',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> parentTenXaLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'parentTenXa',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> parentTenXaBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'parentTenXa',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      parentTenXaStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'parentTenXa',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> parentTenXaEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'parentTenXa',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> parentTenXaContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'parentTenXa',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> parentTenXaMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'parentTenXa',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      parentTenXaIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'parentTenXa',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      parentTenXaIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'parentTenXa',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'phone',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'phone',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'phone',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'phone',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'phone',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> phoneIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'phone',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> populationIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'population',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      populationIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'population',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> populationEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'population',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      populationGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'population',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> populationLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'population',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> populationBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'population',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'predecessors',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'predecessors',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> predecessorsEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'predecessors',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'predecessors',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'predecessors',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> predecessorsBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'predecessors',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'predecessors',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'predecessors',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'predecessors',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition> predecessorsMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'predecessors',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'predecessors',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'predecessors',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'predecessorsList',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'predecessorsList',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'predecessorsList',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'predecessorsList',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'predecessorsList',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'predecessorsList',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'predecessorsList',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'predecessorsList',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'predecessorsList',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'predecessorsList',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'predecessorsList',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'predecessorsList',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'predecessorsList',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'predecessorsList',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'predecessorsList',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'predecessorsList',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'predecessorsList',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterFilterCondition>
+      predecessorsListLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'predecessorsList',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -2418,6 +4663,42 @@ extension CommitteeQueryLinks
     on QueryBuilder<Committee, Committee, QFilterCondition> {}
 
 extension CommitteeQuerySortBy on QueryBuilder<Committee, Committee, QSortBy> {
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByAreaKm2() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'areaKm2', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByAreaKm2Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'areaKm2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByCapital() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'capital', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByCapitalDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'capital', Sort.desc);
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterSortBy> sortByCentroidLat() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'centroidLat', Sort.asc);
@@ -2454,6 +4735,42 @@ extension CommitteeQuerySortBy on QueryBuilder<Committee, Committee, QSortBy> {
     });
   }
 
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByDecree() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decree', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByDecreeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decree', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByDecreeUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decreeUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByDecreeUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decreeUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByDensity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'density', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByDensityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'density', Sort.desc);
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterSortBy> sortByEmbedText() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'embedText', Sort.asc);
@@ -2478,6 +4795,18 @@ extension CommitteeQuerySortBy on QueryBuilder<Committee, Committee, QSortBy> {
     });
   }
 
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByMa() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ma', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByMaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ma', Sort.desc);
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterSortBy> sortByMacroRegion() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'macroRegion', Sort.asc);
@@ -2487,6 +4816,30 @@ extension CommitteeQuerySortBy on QueryBuilder<Committee, Committee, QSortBy> {
   QueryBuilder<Committee, Committee, QAfterSortBy> sortByMacroRegionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'macroRegion', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByNPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByNPredecessorsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByNVertices() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nVertices', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByNVerticesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nVertices', Sort.desc);
     });
   }
 
@@ -2511,6 +4864,54 @@ extension CommitteeQuerySortBy on QueryBuilder<Committee, Committee, QSortBy> {
   QueryBuilder<Committee, Committee, QAfterSortBy> sortByParentTenDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parentTen', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByParentTenXa() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTenXa', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByParentTenXaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTenXa', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByPhone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByPhoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByPopulation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'population', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByPopulationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'population', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'predecessors', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> sortByPredecessorsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'predecessors', Sort.desc);
     });
   }
 
@@ -2553,6 +4954,42 @@ extension CommitteeQuerySortBy on QueryBuilder<Committee, Committee, QSortBy> {
 
 extension CommitteeQuerySortThenBy
     on QueryBuilder<Committee, Committee, QSortThenBy> {
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByAreaKm2() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'areaKm2', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByAreaKm2Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'areaKm2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByCapital() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'capital', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByCapitalDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'capital', Sort.desc);
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterSortBy> thenByCentroidLat() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'centroidLat', Sort.asc);
@@ -2586,6 +5023,42 @@ extension CommitteeQuerySortThenBy
   QueryBuilder<Committee, Committee, QAfterSortBy> thenByDataIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'dataId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByDecree() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decree', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByDecreeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decree', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByDecreeUrl() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decreeUrl', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByDecreeUrlDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'decreeUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByDensity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'density', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByDensityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'density', Sort.desc);
     });
   }
 
@@ -2625,6 +5098,18 @@ extension CommitteeQuerySortThenBy
     });
   }
 
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByMa() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ma', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByMaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'ma', Sort.desc);
+    });
+  }
+
   QueryBuilder<Committee, Committee, QAfterSortBy> thenByMacroRegion() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'macroRegion', Sort.asc);
@@ -2634,6 +5119,30 @@ extension CommitteeQuerySortThenBy
   QueryBuilder<Committee, Committee, QAfterSortBy> thenByMacroRegionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'macroRegion', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByNPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByNPredecessorsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByNVertices() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nVertices', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByNVerticesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nVertices', Sort.desc);
     });
   }
 
@@ -2658,6 +5167,54 @@ extension CommitteeQuerySortThenBy
   QueryBuilder<Committee, Committee, QAfterSortBy> thenByParentTenDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parentTen', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByParentTenXa() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTenXa', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByParentTenXaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'parentTenXa', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByPhone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByPhoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByPopulation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'population', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByPopulationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'population', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'predecessors', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QAfterSortBy> thenByPredecessorsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'predecessors', Sort.desc);
     });
   }
 
@@ -2700,6 +5257,32 @@ extension CommitteeQuerySortThenBy
 
 extension CommitteeQueryWhereDistinct
     on QueryBuilder<Committee, Committee, QDistinct> {
+  QueryBuilder<Committee, Committee, QDistinct> distinctByAddress(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'address', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByAreaKm2() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'areaKm2');
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByBbox() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'bbox');
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByCapital(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'capital', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Committee, Committee, QDistinct> distinctByCentroidLat() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'centroidLat');
@@ -2716,6 +5299,26 @@ extension CommitteeQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'dataId', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByDecree(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'decree', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByDecreeUrl(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'decreeUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByDensity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'density');
     });
   }
 
@@ -2739,10 +5342,29 @@ extension CommitteeQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Committee, Committee, QDistinct> distinctByMa(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'ma', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Committee, Committee, QDistinct> distinctByMacroRegion(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'macroRegion', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByNPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'nPredecessors');
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByNVertices() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'nVertices');
     });
   }
 
@@ -2757,6 +5379,39 @@ extension CommitteeQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'parentTen', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByParentTenXa(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'parentTenXa', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByPhone(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'phone', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByPopulation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'population');
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByPredecessors(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'predecessors', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Committee, Committee, QDistinct> distinctByPredecessorsList() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'predecessorsList');
     });
   }
 
@@ -2790,6 +5445,30 @@ extension CommitteeQueryProperty
     });
   }
 
+  QueryBuilder<Committee, String?, QQueryOperations> addressProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'address');
+    });
+  }
+
+  QueryBuilder<Committee, double?, QQueryOperations> areaKm2Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'areaKm2');
+    });
+  }
+
+  QueryBuilder<Committee, List<double>?, QQueryOperations> bboxProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'bbox');
+    });
+  }
+
+  QueryBuilder<Committee, String?, QQueryOperations> capitalProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'capital');
+    });
+  }
+
   QueryBuilder<Committee, double?, QQueryOperations> centroidLatProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'centroidLat');
@@ -2805,6 +5484,24 @@ extension CommitteeQueryProperty
   QueryBuilder<Committee, String, QQueryOperations> dataIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'dataId');
+    });
+  }
+
+  QueryBuilder<Committee, String?, QQueryOperations> decreeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'decree');
+    });
+  }
+
+  QueryBuilder<Committee, String?, QQueryOperations> decreeUrlProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'decreeUrl');
+    });
+  }
+
+  QueryBuilder<Committee, double?, QQueryOperations> densityProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'density');
     });
   }
 
@@ -2826,9 +5523,27 @@ extension CommitteeQueryProperty
     });
   }
 
+  QueryBuilder<Committee, String?, QQueryOperations> maProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'ma');
+    });
+  }
+
   QueryBuilder<Committee, String?, QQueryOperations> macroRegionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'macroRegion');
+    });
+  }
+
+  QueryBuilder<Committee, int?, QQueryOperations> nPredecessorsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'nPredecessors');
+    });
+  }
+
+  QueryBuilder<Committee, int?, QQueryOperations> nVerticesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'nVertices');
     });
   }
 
@@ -2841,6 +5556,37 @@ extension CommitteeQueryProperty
   QueryBuilder<Committee, String?, QQueryOperations> parentTenProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'parentTen');
+    });
+  }
+
+  QueryBuilder<Committee, String?, QQueryOperations> parentTenXaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'parentTenXa');
+    });
+  }
+
+  QueryBuilder<Committee, String?, QQueryOperations> phoneProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'phone');
+    });
+  }
+
+  QueryBuilder<Committee, int?, QQueryOperations> populationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'population');
+    });
+  }
+
+  QueryBuilder<Committee, String?, QQueryOperations> predecessorsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'predecessors');
+    });
+  }
+
+  QueryBuilder<Committee, List<String>?, QQueryOperations>
+      predecessorsListProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'predecessorsList');
     });
   }
 

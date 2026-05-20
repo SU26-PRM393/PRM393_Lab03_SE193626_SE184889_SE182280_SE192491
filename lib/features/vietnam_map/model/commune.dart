@@ -23,11 +23,14 @@ class Commune {
   double? density;
 
   String? capital;
+  String? address;
+  String? phone;
 
   String? decree;
   String? decreeUrl;
 
   String? predecessors;
+  int? nPredecessors;
 
   @Index()
   String? parentMa;

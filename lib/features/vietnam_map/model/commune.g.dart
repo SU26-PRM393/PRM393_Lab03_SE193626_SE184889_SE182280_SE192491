@@ -17,123 +17,138 @@ const CommuneSchema = CollectionSchema(
   name: r'Commune',
   id: 8257384470769380832,
   properties: {
-    r'areaKm2': PropertySchema(
+    r'address': PropertySchema(
       id: 0,
+      name: r'address',
+      type: IsarType.string,
+    ),
+    r'areaKm2': PropertySchema(
+      id: 1,
       name: r'areaKm2',
       type: IsarType.double,
     ),
     r'bbox': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'bbox',
       type: IsarType.doubleList,
     ),
     r'capital': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'capital',
       type: IsarType.string,
     ),
     r'centroidLat': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'centroidLat',
       type: IsarType.double,
     ),
     r'centroidLon': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'centroidLon',
       type: IsarType.double,
     ),
     r'dataId': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'dataId',
       type: IsarType.string,
     ),
     r'decree': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'decree',
       type: IsarType.string,
     ),
     r'decreeUrl': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'decreeUrl',
       type: IsarType.string,
     ),
     r'density': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'density',
       type: IsarType.double,
     ),
     r'embedText': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'embedText',
       type: IsarType.string,
     ),
     r'geomType': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'geomType',
       type: IsarType.string,
     ),
     r'keywords': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'keywords',
       type: IsarType.stringList,
     ),
     r'ma': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'ma',
       type: IsarType.string,
     ),
     r'macroRegion': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'macroRegion',
       type: IsarType.string,
     ),
+    r'nPredecessors': PropertySchema(
+      id: 15,
+      name: r'nPredecessors',
+      type: IsarType.long,
+    ),
     r'nVertices': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'nVertices',
       type: IsarType.long,
     ),
     r'parentMa': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'parentMa',
       type: IsarType.string,
     ),
     r'parentTen': PropertySchema(
-      id: 16,
+      id: 18,
       name: r'parentTen',
       type: IsarType.string,
     ),
     r'parentTenXa': PropertySchema(
-      id: 17,
+      id: 19,
       name: r'parentTenXa',
       type: IsarType.string,
     ),
+    r'phone': PropertySchema(
+      id: 20,
+      name: r'phone',
+      type: IsarType.string,
+    ),
     r'population': PropertySchema(
-      id: 18,
+      id: 21,
       name: r'population',
       type: IsarType.long,
     ),
     r'predecessors': PropertySchema(
-      id: 19,
+      id: 22,
       name: r'predecessors',
       type: IsarType.string,
     ),
     r'predecessorsList': PropertySchema(
-      id: 20,
+      id: 23,
       name: r'predecessorsList',
       type: IsarType.stringList,
     ),
     r'ten': PropertySchema(
-      id: 21,
+      id: 24,
       name: r'ten',
       type: IsarType.string,
     ),
     r'tenShort': PropertySchema(
-      id: 22,
+      id: 25,
       name: r'tenShort',
       type: IsarType.string,
     ),
     r'type': PropertySchema(
-      id: 23,
+      id: 26,
       name: r'type',
       type: IsarType.string,
     )
@@ -225,6 +240,12 @@ int _communeEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
+    final value = object.address;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.bbox;
     if (value != null) {
       bytesCount += 3 + value.length * 8;
@@ -299,6 +320,12 @@ int _communeEstimateSize(
     }
   }
   {
+    final value = object.phone;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.predecessors;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -338,30 +365,33 @@ void _communeSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDouble(offsets[0], object.areaKm2);
-  writer.writeDoubleList(offsets[1], object.bbox);
-  writer.writeString(offsets[2], object.capital);
-  writer.writeDouble(offsets[3], object.centroidLat);
-  writer.writeDouble(offsets[4], object.centroidLon);
-  writer.writeString(offsets[5], object.dataId);
-  writer.writeString(offsets[6], object.decree);
-  writer.writeString(offsets[7], object.decreeUrl);
-  writer.writeDouble(offsets[8], object.density);
-  writer.writeString(offsets[9], object.embedText);
-  writer.writeString(offsets[10], object.geomType);
-  writer.writeStringList(offsets[11], object.keywords);
-  writer.writeString(offsets[12], object.ma);
-  writer.writeString(offsets[13], object.macroRegion);
-  writer.writeLong(offsets[14], object.nVertices);
-  writer.writeString(offsets[15], object.parentMa);
-  writer.writeString(offsets[16], object.parentTen);
-  writer.writeString(offsets[17], object.parentTenXa);
-  writer.writeLong(offsets[18], object.population);
-  writer.writeString(offsets[19], object.predecessors);
-  writer.writeStringList(offsets[20], object.predecessorsList);
-  writer.writeString(offsets[21], object.ten);
-  writer.writeString(offsets[22], object.tenShort);
-  writer.writeString(offsets[23], object.type);
+  writer.writeString(offsets[0], object.address);
+  writer.writeDouble(offsets[1], object.areaKm2);
+  writer.writeDoubleList(offsets[2], object.bbox);
+  writer.writeString(offsets[3], object.capital);
+  writer.writeDouble(offsets[4], object.centroidLat);
+  writer.writeDouble(offsets[5], object.centroidLon);
+  writer.writeString(offsets[6], object.dataId);
+  writer.writeString(offsets[7], object.decree);
+  writer.writeString(offsets[8], object.decreeUrl);
+  writer.writeDouble(offsets[9], object.density);
+  writer.writeString(offsets[10], object.embedText);
+  writer.writeString(offsets[11], object.geomType);
+  writer.writeStringList(offsets[12], object.keywords);
+  writer.writeString(offsets[13], object.ma);
+  writer.writeString(offsets[14], object.macroRegion);
+  writer.writeLong(offsets[15], object.nPredecessors);
+  writer.writeLong(offsets[16], object.nVertices);
+  writer.writeString(offsets[17], object.parentMa);
+  writer.writeString(offsets[18], object.parentTen);
+  writer.writeString(offsets[19], object.parentTenXa);
+  writer.writeString(offsets[20], object.phone);
+  writer.writeLong(offsets[21], object.population);
+  writer.writeString(offsets[22], object.predecessors);
+  writer.writeStringList(offsets[23], object.predecessorsList);
+  writer.writeString(offsets[24], object.ten);
+  writer.writeString(offsets[25], object.tenShort);
+  writer.writeString(offsets[26], object.type);
 }
 
 Commune _communeDeserialize(
@@ -371,31 +401,34 @@ Commune _communeDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Commune();
-  object.areaKm2 = reader.readDoubleOrNull(offsets[0]);
-  object.bbox = reader.readDoubleList(offsets[1]);
-  object.capital = reader.readStringOrNull(offsets[2]);
-  object.centroidLat = reader.readDoubleOrNull(offsets[3]);
-  object.centroidLon = reader.readDoubleOrNull(offsets[4]);
-  object.dataId = reader.readString(offsets[5]);
-  object.decree = reader.readStringOrNull(offsets[6]);
-  object.decreeUrl = reader.readStringOrNull(offsets[7]);
-  object.density = reader.readDoubleOrNull(offsets[8]);
-  object.embedText = reader.readStringOrNull(offsets[9]);
-  object.geomType = reader.readStringOrNull(offsets[10]);
+  object.address = reader.readStringOrNull(offsets[0]);
+  object.areaKm2 = reader.readDoubleOrNull(offsets[1]);
+  object.bbox = reader.readDoubleList(offsets[2]);
+  object.capital = reader.readStringOrNull(offsets[3]);
+  object.centroidLat = reader.readDoubleOrNull(offsets[4]);
+  object.centroidLon = reader.readDoubleOrNull(offsets[5]);
+  object.dataId = reader.readString(offsets[6]);
+  object.decree = reader.readStringOrNull(offsets[7]);
+  object.decreeUrl = reader.readStringOrNull(offsets[8]);
+  object.density = reader.readDoubleOrNull(offsets[9]);
+  object.embedText = reader.readStringOrNull(offsets[10]);
+  object.geomType = reader.readStringOrNull(offsets[11]);
   object.id = id;
-  object.keywords = reader.readStringList(offsets[11]);
-  object.ma = reader.readString(offsets[12]);
-  object.macroRegion = reader.readStringOrNull(offsets[13]);
-  object.nVertices = reader.readLongOrNull(offsets[14]);
-  object.parentMa = reader.readStringOrNull(offsets[15]);
-  object.parentTen = reader.readStringOrNull(offsets[16]);
-  object.parentTenXa = reader.readStringOrNull(offsets[17]);
-  object.population = reader.readLongOrNull(offsets[18]);
-  object.predecessors = reader.readStringOrNull(offsets[19]);
-  object.predecessorsList = reader.readStringList(offsets[20]);
-  object.ten = reader.readString(offsets[21]);
-  object.tenShort = reader.readStringOrNull(offsets[22]);
-  object.type = reader.readStringOrNull(offsets[23]);
+  object.keywords = reader.readStringList(offsets[12]);
+  object.ma = reader.readString(offsets[13]);
+  object.macroRegion = reader.readStringOrNull(offsets[14]);
+  object.nPredecessors = reader.readLongOrNull(offsets[15]);
+  object.nVertices = reader.readLongOrNull(offsets[16]);
+  object.parentMa = reader.readStringOrNull(offsets[17]);
+  object.parentTen = reader.readStringOrNull(offsets[18]);
+  object.parentTenXa = reader.readStringOrNull(offsets[19]);
+  object.phone = reader.readStringOrNull(offsets[20]);
+  object.population = reader.readLongOrNull(offsets[21]);
+  object.predecessors = reader.readStringOrNull(offsets[22]);
+  object.predecessorsList = reader.readStringList(offsets[23]);
+  object.ten = reader.readString(offsets[24]);
+  object.tenShort = reader.readStringOrNull(offsets[25]);
+  object.type = reader.readStringOrNull(offsets[26]);
   return object;
 }
 
@@ -407,52 +440,58 @@ P _communeDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDoubleOrNull(offset)) as P;
-    case 1:
-      return (reader.readDoubleList(offset)) as P;
-    case 2:
       return (reader.readStringOrNull(offset)) as P;
-    case 3:
+    case 1:
       return (reader.readDoubleOrNull(offset)) as P;
+    case 2:
+      return (reader.readDoubleList(offset)) as P;
+    case 3:
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
       return (reader.readDoubleOrNull(offset)) as P;
     case 5:
-      return (reader.readString(offset)) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readDoubleOrNull(offset)) as P;
-    case 9:
       return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readDoubleOrNull(offset)) as P;
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringList(offset)) as P;
     case 13:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 14:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 15:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 16:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 17:
       return (reader.readStringOrNull(offset)) as P;
     case 18:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 19:
       return (reader.readStringOrNull(offset)) as P;
     case 20:
-      return (reader.readStringList(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 21:
-      return (reader.readString(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 22:
       return (reader.readStringOrNull(offset)) as P;
     case 23:
+      return (reader.readStringList(offset)) as P;
+    case 24:
+      return (reader.readString(offset)) as P;
+    case 25:
+      return (reader.readStringOrNull(offset)) as P;
+    case 26:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -863,6 +902,152 @@ extension CommuneQueryWhere on QueryBuilder<Commune, Commune, QWhereClause> {
 
 extension CommuneQueryFilter
     on QueryBuilder<Commune, Commune, QFilterCondition> {
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'address',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'address',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> addressIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Commune, Commune, QAfterFilterCondition> areaKm2IsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2760,6 +2945,77 @@ extension CommuneQueryFilter
     });
   }
 
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> nPredecessorsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'nPredecessors',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition>
+      nPredecessorsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'nPredecessors',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> nPredecessorsEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nPredecessors',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition>
+      nPredecessorsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'nPredecessors',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> nPredecessorsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'nPredecessors',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> nPredecessorsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'nPredecessors',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Commune, Commune, QAfterFilterCondition> nVerticesIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -3263,6 +3519,152 @@ extension CommuneQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'parentTenXa',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'phone',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'phone',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'phone',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'phone',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'phone',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'phone',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterFilterCondition> phoneIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'phone',
         value: '',
       ));
     });
@@ -4160,6 +4562,18 @@ extension CommuneQueryLinks
     on QueryBuilder<Commune, Commune, QFilterCondition> {}
 
 extension CommuneQuerySortBy on QueryBuilder<Commune, Commune, QSortBy> {
+  QueryBuilder<Commune, Commune, QAfterSortBy> sortByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> sortByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
   QueryBuilder<Commune, Commune, QAfterSortBy> sortByAreaKm2() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'areaKm2', Sort.asc);
@@ -4304,6 +4718,18 @@ extension CommuneQuerySortBy on QueryBuilder<Commune, Commune, QSortBy> {
     });
   }
 
+  QueryBuilder<Commune, Commune, QAfterSortBy> sortByNPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> sortByNPredecessorsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.desc);
+    });
+  }
+
   QueryBuilder<Commune, Commune, QAfterSortBy> sortByNVertices() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nVertices', Sort.asc);
@@ -4349,6 +4775,18 @@ extension CommuneQuerySortBy on QueryBuilder<Commune, Commune, QSortBy> {
   QueryBuilder<Commune, Commune, QAfterSortBy> sortByParentTenXaDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parentTenXa', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> sortByPhone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> sortByPhoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.desc);
     });
   }
 
@@ -4415,6 +4853,18 @@ extension CommuneQuerySortBy on QueryBuilder<Commune, Commune, QSortBy> {
 
 extension CommuneQuerySortThenBy
     on QueryBuilder<Commune, Commune, QSortThenBy> {
+  QueryBuilder<Commune, Commune, QAfterSortBy> thenByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> thenByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
   QueryBuilder<Commune, Commune, QAfterSortBy> thenByAreaKm2() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'areaKm2', Sort.asc);
@@ -4571,6 +5021,18 @@ extension CommuneQuerySortThenBy
     });
   }
 
+  QueryBuilder<Commune, Commune, QAfterSortBy> thenByNPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> thenByNPredecessorsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nPredecessors', Sort.desc);
+    });
+  }
+
   QueryBuilder<Commune, Commune, QAfterSortBy> thenByNVertices() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nVertices', Sort.asc);
@@ -4616,6 +5078,18 @@ extension CommuneQuerySortThenBy
   QueryBuilder<Commune, Commune, QAfterSortBy> thenByParentTenXaDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'parentTenXa', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> thenByPhone() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QAfterSortBy> thenByPhoneDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'phone', Sort.desc);
     });
   }
 
@@ -4682,6 +5156,13 @@ extension CommuneQuerySortThenBy
 
 extension CommuneQueryWhereDistinct
     on QueryBuilder<Commune, Commune, QDistinct> {
+  QueryBuilder<Commune, Commune, QDistinct> distinctByAddress(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'address', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Commune, Commune, QDistinct> distinctByAreaKm2() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'areaKm2');
@@ -4774,6 +5255,12 @@ extension CommuneQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Commune, Commune, QDistinct> distinctByNPredecessors() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'nPredecessors');
+    });
+  }
+
   QueryBuilder<Commune, Commune, QDistinct> distinctByNVertices() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'nVertices');
@@ -4798,6 +5285,13 @@ extension CommuneQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'parentTenXa', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Commune, Commune, QDistinct> distinctByPhone(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'phone', caseSensitive: caseSensitive);
     });
   }
 
@@ -4847,6 +5341,12 @@ extension CommuneQueryProperty
   QueryBuilder<Commune, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Commune, String?, QQueryOperations> addressProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'address');
     });
   }
 
@@ -4934,6 +5434,12 @@ extension CommuneQueryProperty
     });
   }
 
+  QueryBuilder<Commune, int?, QQueryOperations> nPredecessorsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'nPredecessors');
+    });
+  }
+
   QueryBuilder<Commune, int?, QQueryOperations> nVerticesProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'nVertices');
@@ -4955,6 +5461,12 @@ extension CommuneQueryProperty
   QueryBuilder<Commune, String?, QQueryOperations> parentTenXaProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'parentTenXa');
+    });
+  }
+
+  QueryBuilder<Commune, String?, QQueryOperations> phoneProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'phone');
     });
   }
 

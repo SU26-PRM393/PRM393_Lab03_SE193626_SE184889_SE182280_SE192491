@@ -75,7 +75,10 @@ void main() {
         ..dataId = 'commune_1'
         ..ma = '00001'
         ..ten = 'Tràng Tiền'
-        ..parentMa = '001';
+        ..parentMa = '001'
+        ..address = '123 Test St'
+        ..phone = '0987654321'
+        ..nPredecessors = 5;
 
       await IsarService.isar.writeTxn(() async {
         await IsarService.isar.communes.put(commune);
@@ -88,12 +91,22 @@ void main() {
 
       expect(savedCommune, isNotNull);
       expect(savedCommune!.ten, equals('Tràng Tiền'));
+      expect(savedCommune.address, equals('123 Test St'));
+      expect(savedCommune.phone, equals('0987654321'));
+      expect(savedCommune.nPredecessors, equals(5));
     });
 
     test('Can write and read a Committee', () async {
       final committee = Committee()
         ..dataId = 'committee_1'
-        ..ten = 'Ủy ban nhân dân';
+        ..ma = 'comm_ma_1'
+        ..ten = 'Ủy ban nhân dân'
+        ..address = '456 Committee Rd'
+        ..phone = '0123456789'
+        ..areaKm2 = 12.34
+        ..population = 5678
+        ..density = 459.9
+        ..nPredecessors = 2;
 
       await IsarService.isar.writeTxn(() async {
         await IsarService.isar.committees.put(committee);
@@ -106,6 +119,13 @@ void main() {
 
       expect(savedCommittee, isNotNull);
       expect(savedCommittee!.ten, equals('Ủy ban nhân dân'));
+      expect(savedCommittee.ma, equals('comm_ma_1'));
+      expect(savedCommittee.address, equals('456 Committee Rd'));
+      expect(savedCommittee.phone, equals('0123456789'));
+      expect(savedCommittee.areaKm2, equals(12.34));
+      expect(savedCommittee.population, equals(5678));
+      expect(savedCommittee.density, equals(459.9));
+      expect(savedCommittee.nPredecessors, equals(2));
     });
 
     test('Can fetch all provinces', () async {
@@ -133,9 +153,28 @@ void main() {
           .tenEqualTo('Phường Ba Đình')
           .findFirst();
 
-      if (baDinh != null) {
-        print('Verified commune: ${baDinh.ten}');
-      }
+      expect(baDinh, isNotNull);
+      print('Verified commune: ${baDinh!.ten}');
+      expect(baDinh.decree, equals('Nghị quyết số 1656/NQ-UBTVQH15'));
+      expect(baDinh.nPredecessors, equals(11));
+
+      final hoangSa = await IsarService.isar.communes
+          .filter()
+          .maEqualTo('20333')
+          .findFirst();
+      expect(hoangSa, isNotNull);
+      expect(hoangSa!.ten, equals('Đặc khu Hoàng Sa'));
+      expect(hoangSa.parentMa, equals('48'));
+      print('Verified commune: ${hoangSa.ten} (${hoangSa.ma})');
+
+      final truongSa = await IsarService.isar.communes
+          .filter()
+          .maEqualTo('22736')
+          .findFirst();
+      expect(truongSa, isNotNull);
+      expect(truongSa!.ten, equals('Đặc khu Trường Sa'));
+      expect(truongSa.parentMa, equals('56'));
+      print('Verified commune: ${truongSa.ten} (${truongSa.ma})');
     });
     test('Can import and verify all real Committees', () async {
       final jsonPath = 'lib/features/vietnam_map/assets/data/committees.json';
@@ -153,9 +192,11 @@ void main() {
           .tenEqualTo('Đặc khu Phú Quốc')
           .findFirst();
 
-      if (phuQuoc != null) {
-        print('Verified committee: ${phuQuoc.ten}');
-      }
+      expect(phuQuoc, isNotNull);
+      print('Verified committee: ${phuQuoc!.ten}');
+      expect(phuQuoc.ma, equals(''));
+      expect(phuQuoc.population, equals(157629));
+      expect(phuQuoc.nPredecessors, equals(1));
     });
   });
 }

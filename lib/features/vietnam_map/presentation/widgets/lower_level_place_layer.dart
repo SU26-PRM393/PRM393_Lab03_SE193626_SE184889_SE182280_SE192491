@@ -8,11 +8,13 @@ class LowerLevelPlaceLayer extends StatelessWidget {
   const LowerLevelPlaceLayer({
     required this.places,
     required this.zoom,
+    this.onPlaceSelected,
     super.key,
   });
 
   final List<LowerLevelPlace> places;
   final double zoom;
+  final ValueChanged<LowerLevelPlace>? onPlaceSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -20,31 +22,41 @@ class LowerLevelPlaceLayer extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return IgnorePointer(
-      child: MarkerLayer(
-        markers: [
-          for (final place in places) _markerFor(place),
-        ],
-      ),
+    return MarkerLayer(
+      markers: [
+        for (final place in places) _markerFor(place),
+      ],
     );
   }
 
   Marker _markerFor(LowerLevelPlace place) {
     final showLabel = zoom >= MapConstants.lowerLevelLabelMinZoom;
 
+    // Use a larger hit target (24px) for the dots so they are easy to click
+    final hitWidth = showLabel
+        ? MapConstants.lowerLevelLabelWidth
+        : 24.0;
+    final hitHeight = showLabel
+        ? MapConstants.lowerLevelLabelHeight
+        : 24.0;
+
     return Marker(
       point: place.coordinate,
-      width: showLabel
-          ? MapConstants.lowerLevelLabelWidth
-          : MapConstants.lowerLevelDotSize,
-      height: showLabel
-          ? MapConstants.lowerLevelLabelHeight
-          : MapConstants.lowerLevelDotSize,
+      width: hitWidth,
+      height: hitHeight,
       alignment: Alignment.center,
-      child: Semantics(
-        label: place.name,
-        child:
-            showLabel ? _LowerLevelLabel(place: place) : const _LowerLevelDot(),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => onPlaceSelected?.call(place),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Semantics(
+            label: place.name,
+            child: showLabel
+                ? _LowerLevelLabel(place: place)
+                : const Center(child: _LowerLevelDot()),
+          ),
+        ),
       ),
     );
   }
@@ -55,18 +67,22 @@ class _LowerLevelDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: MapConstants.lowerLevelMarkerColor,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
+    return SizedBox(
+      width: MapConstants.lowerLevelDotSize,
+      height: MapConstants.lowerLevelDotSize,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: MapConstants.lowerLevelMarkerColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 1.2),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 2,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
       ),
     );
   }

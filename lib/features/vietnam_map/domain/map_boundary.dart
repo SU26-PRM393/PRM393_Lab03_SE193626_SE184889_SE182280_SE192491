@@ -49,7 +49,7 @@ class ProvinceBoundary {
     required this.level,
     required List<BoundaryPolygon> polygons,
   })  : polygons = List.unmodifiable(polygons),
-        bounds = _boundsFromPolygons(polygons),
+        bounds = _extendedBoundsFor(provinceCode, _boundsFromPolygons(polygons)),
         labelCoordinate = _labelCoordinateFor(polygons);
 
   final String id;
@@ -72,6 +72,27 @@ class ProvinceBoundary {
     }
 
     return false;
+  }
+
+  static LatLngBounds _extendedBoundsFor(String provinceCode, LatLngBounds originalBounds) {
+    if (provinceCode == '48') {
+      // Da Nang: include Hoang Sa commune coordinate
+      final points = [
+        originalBounds.northWest,
+        originalBounds.southEast,
+        const LatLng(16.371347929067802, 112.07857797346432),
+      ];
+      return LatLngBounds.fromPoints(points);
+    } else if (provinceCode == '56') {
+      // Khanh Hoa: include Truong Sa commune coordinate
+      final points = [
+        originalBounds.northWest,
+        originalBounds.southEast,
+        const LatLng(9.288659257720576, 113.97556476731718),
+      ];
+      return LatLngBounds.fromPoints(points);
+    }
+    return originalBounds;
   }
 }
 

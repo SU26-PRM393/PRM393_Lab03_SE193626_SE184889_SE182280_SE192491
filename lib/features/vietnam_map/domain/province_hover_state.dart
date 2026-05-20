@@ -77,6 +77,38 @@ class ProvinceHoverResolver {
       );
     }
 
+    // Check if the coordinate is near Hoàng Sa
+    // Hoàng Sa bounds: lat [15.5, 17.5], lon [110.5, 113.5]
+    if (coordinate.latitude >= 15.5 &&
+        coordinate.latitude <= 17.5 &&
+        coordinate.longitude >= 110.5 &&
+        coordinate.longitude <= 113.5) {
+      final boundary = _findBoundaryByCode(boundaries, '48');
+      if (boundary != null) {
+        return ProvinceHoverState.active(
+          pointerCoordinate: coordinate,
+          boundary: boundary,
+          occurredAt: occurredAt,
+        );
+      }
+    }
+
+    // Check if the coordinate is near Trường Sa
+    // Trường Sa bounds: lat [7.0, 12.0], lon [111.0, 117.5]
+    if (coordinate.latitude >= 7.0 &&
+        coordinate.latitude <= 12.0 &&
+        coordinate.longitude >= 111.0 &&
+        coordinate.longitude <= 117.5) {
+      final boundary = _findBoundaryByCode(boundaries, '56');
+      if (boundary != null) {
+        return ProvinceHoverState.active(
+          pointerCoordinate: coordinate,
+          boundary: boundary,
+          occurredAt: occurredAt,
+        );
+      }
+    }
+
     for (final boundary in boundaries) {
       if (!isCoordinateInBounds(boundary.bounds, coordinate)) {
         continue;
@@ -92,5 +124,17 @@ class ProvinceHoverResolver {
     }
 
     return ProvinceHoverState.inactive();
+  }
+
+  static ProvinceBoundary? _findBoundaryByCode(
+    List<ProvinceBoundary> boundaries,
+    String code,
+  ) {
+    for (final boundary in boundaries) {
+      if (boundary.provinceCode == code) {
+        return boundary;
+      }
+    }
+    return null;
   }
 }
