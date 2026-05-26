@@ -52,12 +52,20 @@ class MapControlPanel extends StatelessWidget {
               const _SectionLabel(label: 'Search'),
               const SizedBox(height: 8),
               TextField(
-                enabled: false,
-                onTap: controller.acknowledgeInactiveControl,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
+                enabled: true,
+                textInputAction: TextInputAction.search,
+                onChanged: controller.updateSearchText,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
                   labelText: 'Search provinces, cities, districts',
-                  helperText: 'Reserved for a later feature',
+                  helperText: 'Type a name to filter the results.',
+                  suffixIcon: controller.controlSpace.searchText.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.clear),
+                          tooltip: 'Clear search',
+                          onPressed: () => controller.updateSearchText(''),
+                        ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -82,7 +90,9 @@ class MapControlPanel extends StatelessWidget {
                   ),
                 ],
                 selected: {controller.controlSpace.selectedLevel},
-                onSelectionChanged: null,
+                onSelectionChanged: (selection) {
+                  controller.updateSelectedLevel(selection.first);
+                },
               ),
               const SizedBox(height: 20),
               const _SectionLabel(label: 'Filters'),
@@ -94,25 +104,137 @@ class MapControlPanel extends StatelessWidget {
                   for (final chip in controller.controlSpace.filterChips)
                     FilterChip(
                       label: Text(chip),
-                      selected: false,
-                      onSelected: null,
+                      selected: controller.isFilterChipSelected(chip),
+                      onSelected: (_) => controller.toggleFilterChip(chip),
                     ),
                 ],
               ),
               const SizedBox(height: 20),
               const _SectionLabel(label: 'Sort'),
               const SizedBox(height: 8),
-              DropdownMenu<String>(
-                enabled: false,
-                initialSelection: controller.controlSpace.sortOption,
-                leadingIcon: const Icon(Icons.sort),
-                label: const Text('Sort by'),
-                dropdownMenuEntries: const [
-                  DropdownMenuEntry(value: 'Name', label: 'Name'),
-                  DropdownMenuEntry(value: 'Area', label: 'Area'),
-                  DropdownMenuEntry(value: 'Population', label: 'Population'),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: DropdownMenu<String>(
+                      enabled: true,
+                      initialSelection: controller.controlSpace.sortOption,
+                      leadingIcon: const Icon(Icons.sort),
+                      label: const Text('Sort by'),
+                      onSelected: (value) {
+                        controller.updateSortOption(value ?? 'Name');
+                      },
+                      dropdownMenuEntries: const [
+                        DropdownMenuEntry(value: 'Name', label: 'Name'),
+                        DropdownMenuEntry(value: 'Area', label: 'Area'),
+                        DropdownMenuEntry(
+                          value: 'Population',
+                          label: 'Population',
+                        ),
+                        DropdownMenuEntry(value: 'Density', label: 'Density'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: DropdownMenu<AdministrativeAreaSortDirection>(
+                      enabled: true,
+                      initialSelection: controller.controlSpace.sortDirection,
+                      leadingIcon: const Icon(Icons.swap_vert),
+                      label: const Text('Order'),
+                      onSelected: (value) {
+                        controller.updateSortDirection(
+                          value ?? AdministrativeAreaSortDirection.ascending,
+                        );
+                      },
+                      dropdownMenuEntries: const [
+                        DropdownMenuEntry(
+                          value: AdministrativeAreaSortDirection.ascending,
+                          label: 'Lower to higher',
+                        ),
+                        DropdownMenuEntry(
+                          value: AdministrativeAreaSortDirection.descending,
+                          label: 'Higher to lower',
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
+              const SizedBox(height: 20),
+              const _SectionLabel(label: 'Results'),
+              const SizedBox(height: 8),
+              Card(
+                margin: EdgeInsets.zero,
+                color: colorScheme.primaryContainer.withOpacity(0.35),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.sort, color: colorScheme.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Sorting: ${controller.controlSpace.sortOption} • ${controller.controlSpace.sortDirection.label}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (!controller.isBoundaryDataReady)
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(
+                      'Loading administrative data…',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                )
+              else if (controller.filteredAdministrativeEntries.isEmpty)
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(
+                      'No locations match the current search, level, or filters.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                )
+              else
+                SizedBox(
+                  height: 240,
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount:
+                          controller.filteredAdministrativeEntries.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final result =
+                            controller.filteredAdministrativeEntries[index];
+                        return ListTile(
+                          dense: true,
+                          title: Text(result.name),
+                          subtitle:
+                              Text('${result.levelLabel} • ${result.subtitle}'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () =>
+                              controller.selectAdministrativeEntry(result),
+                        );
+                      },
+                    ),
+                  ),
+                ),
               const SizedBox(height: 24),
               Card(
                 margin: EdgeInsets.zero,
@@ -125,7 +247,7 @@ class MapControlPanel extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Search, filter, and sort controls are visual placeholders in this UI slice.',
+                          'Search, level, filter, and sort are active. Tap a result to center it on the map.',
                           style: theme.textTheme.bodySmall,
                         ),
                       ),
@@ -169,16 +291,17 @@ class _LocationDetailsView extends StatelessWidget {
 
     final selectedProvince = controller.selectedProvince;
     final selectedPlace = controller.selectedLowerLevelPlace;
-    
+
     final String title;
     final String typeLabel;
     final String locationContext;
     final String? macroRegion;
-    
+
     if (selectedPlace != null) {
       title = selectedPlace.name;
       typeLabel = selectedPlace.level == 'ward' ? 'Phường' : 'Xã/Thị trấn';
-      locationContext = '${selectedPlace.parentName}, ${selectedProvince?.name ?? ''}';
+      locationContext =
+          '${selectedPlace.parentName}, ${selectedProvince?.name ?? ''}';
       macroRegion = null;
     } else if (selectedProvince != null) {
       title = selectedProvince.name;
@@ -263,7 +386,8 @@ class _LocationDetailsView extends StatelessWidget {
                     runSpacing: 4,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(4),
@@ -279,7 +403,8 @@ class _LocationDetailsView extends StatelessWidget {
                       ),
                       if (macroRegion != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: colorScheme.secondaryContainer,
                             borderRadius: BorderRadius.circular(4),
@@ -319,7 +444,6 @@ class _LocationDetailsView extends StatelessWidget {
           ),
           const SizedBox(height: 16),
         ],
-
         if (controller.isLoadingDetails)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -350,7 +474,8 @@ class _LocationDetailsView extends StatelessWidget {
                   child: _StatCard(
                     icon: Icons.people_outline,
                     label: 'Population',
-                    value: population != null ? _formatNumber(population) : 'N/A',
+                    value:
+                        population != null ? _formatNumber(population) : 'N/A',
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -358,35 +483,33 @@ class _LocationDetailsView extends StatelessWidget {
                   child: _StatCard(
                     icon: Icons.density_medium_outlined,
                     label: 'Density',
-                    value: density != null ? '${_formatDouble(density)}/km²' : 'N/A',
+                    value: density != null
+                        ? '${_formatDouble(density)}/km²'
+                        : 'N/A',
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-
           if (capital != null && capital.isNotEmpty)
             _InfoRow(
               icon: Icons.location_city_outlined,
               label: selectedPlace != null ? 'Headquarters' : 'Capital',
               value: capital,
             ),
-
           if (address != null && address.isNotEmpty)
             _InfoRow(
               icon: Icons.home_outlined,
               label: 'Address',
               value: address,
             ),
-
           if (phone != null && phone.isNotEmpty)
             _InfoRow(
               icon: Icons.phone_outlined,
               label: 'Phone',
               value: phone,
             ),
-
           if (decree != null && decree.isNotEmpty) ...[
             const SizedBox(height: 12),
             _InfoSection(
@@ -419,7 +542,6 @@ class _LocationDetailsView extends StatelessWidget {
               ),
             ),
           ],
-
           if (predecessors != null && predecessors.isNotEmpty) ...[
             const SizedBox(height: 12),
             _InfoSection(
@@ -433,13 +555,12 @@ class _LocationDetailsView extends StatelessWidget {
               ),
             ),
           ],
-          
-          if (selectedPlace == null && controller.selectedLowerLevelPlaces.isNotEmpty)
+          if (selectedPlace == null &&
+              controller.selectedLowerLevelPlaces.isNotEmpty)
             _CommuneListSection(
               places: controller.selectedLowerLevelPlaces,
               onPlaceSelected: controller.selectLowerLevelPlace,
             ),
-
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
@@ -648,7 +769,7 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     final filteredPlaces = widget.places.where((place) {
       if (_searchQuery.isEmpty) return true;
       final nameLower = place.name.toLowerCase();
@@ -679,7 +800,8 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search, size: 18),
             hintText: 'Search communes/wards...',
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -705,7 +827,8 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
         Container(
           height: 200,
           decoration: BoxDecoration(
-            border: Border.all(color: colorScheme.outlineVariant.withAlpha(128)),
+            border:
+                Border.all(color: colorScheme.outlineVariant.withAlpha(128)),
             borderRadius: BorderRadius.circular(8),
             color: colorScheme.surfaceContainerHighest.withAlpha(64),
           ),
@@ -718,7 +841,8 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
                   itemExtent: 44,
                   itemBuilder: (context, index) {
                     final place = filteredPlaces[index];
-                    final levelName = place.level == 'ward' ? 'Phường' : 'Xã/Thị trấn';
+                    final levelName =
+                        place.level == 'ward' ? 'Phường' : 'Xã/Thị trấn';
                     return ListTile(
                       dense: true,
                       title: Text(
@@ -728,7 +852,8 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
                         ),
                       ),
                       trailing: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: colorScheme.secondaryContainer.withAlpha(128),
                           borderRadius: BorderRadius.circular(4),
@@ -803,12 +928,15 @@ class _CommuneVisibilityToggle extends StatelessWidget {
                 value: CommuneVisibilityMode.details,
                 icon: Icon(Icons.grid_view_outlined, size: 16),
                 label: Text('Show Details', style: TextStyle(fontSize: 11)),
-                tooltip: 'Show all communes on the map with labels (at appropriate zoom)',
+                tooltip:
+                    'Show all communes on the map with labels (at appropriate zoom)',
               ),
               ButtonSegment<CommuneVisibilityMode>(
                 value: CommuneVisibilityMode.dots,
                 icon: Icon(
-                  hasChosenCommune ? Icons.gps_fixed_outlined : Icons.blur_on_outlined,
+                  hasChosenCommune
+                      ? Icons.gps_fixed_outlined
+                      : Icons.blur_on_outlined,
                   size: 16,
                 ),
                 label: const Text('Show Dots', style: TextStyle(fontSize: 11)),

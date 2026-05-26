@@ -44,8 +44,15 @@ class VietnamMapController extends ChangeNotifier {
   MapViewport _viewport = MapViewport.initial();
   CurrentLocationState _locationState = CurrentLocationState.unknown();
   AdministrativeAreaControlSpace _controlSpace =
-      AdministrativeAreaControlSpace.inactive();
+      AdministrativeAreaControlSpace.active();
+  Set<String> _activeFilterChips = {
+    'Province',
+    'City',
+    'District',
+  };
   VietnamBoundaryData _boundaryData = VietnamBoundaryData.initial();
+  Map<String, AdministrativeAreaMetric> _provinceMetricsByCode = {};
+  Map<String, AdministrativeAreaMetric> _lowerLevelMetricsByCode = {};
   ProvinceHoverState _provinceHoverState = ProvinceHoverState.inactive();
   ProvinceBoundary? _selectedProvince;
   Province? _selectedProvinceDetails;
@@ -75,13 +82,57 @@ class VietnamMapController extends ChangeNotifier {
   bool get isLoadingDetails => _isLoadingDetails;
   CommuneVisibilityMode get communeVisibilityMode => _communeVisibilityMode;
 
+  bool get isBoundaryDataReady =>
+      _boundaryData.status == VietnamBoundaryDataStatus.ready;
+
+  List<AdministrativeAreaSearchResult> get filteredAdministrativeEntries {
+    if (!isBoundaryDataReady) {
+      return const [];
+    }
+
+    return AdministrativeAreaSearchEngine.filterAndSort(
+      provinces: _boundaryData.provinceBoundaries,
+      lowerLevelPlaces: _boundaryData.lowerLevelPlaces,
+      searchText: _controlSpace.searchText,
+      selectedLevel: _controlSpace.selectedLevel,
+      selectedFilters: _selectedFilters,
+      sortOption: _controlSpace.sortOption,
+      sortDirection: _controlSpace.sortDirection,
+      provinceMetricsByCode: _provinceMetricsByCode,
+      lowerLevelMetricsByCode: _lowerLevelMetricsByCode,
+    );
+  }
+
+  bool isFilterChipSelected(String chip) {
+    return _activeFilterChips.contains(chip);
+  }
+
+  Set<AdministrativeAreaFilter> get _selectedFilters {
+    final filters = <AdministrativeAreaFilter>{};
+
+    for (final chip in _activeFilterChips) {
+      switch (chip) {
+        case 'Province':
+          filters.add(AdministrativeAreaFilter.province);
+          break;
+        case 'City':
+          filters.add(AdministrativeAreaFilter.city);
+          break;
+        case 'District':
+          filters.add(AdministrativeAreaFilter.district);
+          break;
+      }
+    }
+
+    return filters;
+  }
+
   void setCommuneVisibilityMode(CommuneVisibilityMode mode) {
     if (_communeVisibilityMode != mode) {
       _communeVisibilityMode = mode;
       notifyListeners();
     }
   }
-
 
   List<LowerLevelPlace> get selectedLowerLevelPlaces {
     final province = _selectedProvince;
@@ -118,7 +169,36 @@ class VietnamMapController extends ChangeNotifier {
       _provinceHoverState = ProvinceHoverState.unavailable(nextData.message!);
     }
 
+    if (nextData.status == VietnamBoundaryDataStatus.ready) {
+      await _loadAdministrativeMetrics();
+    }
+
     notifyListeners();
+  }
+
+  Future<void> _loadAdministrativeMetrics() async {
+    final provinceRows = await IsarService.isar.provinces.where().findAll();
+    final communeRows = await IsarService.isar.communes.where().findAll();
+
+    _provinceMetricsByCode = {
+      for (final province in provinceRows)
+        if (province.ma.isNotEmpty)
+          province.ma: AdministrativeAreaMetric(
+            areaKm2: province.areaKm2,
+            population: province.population,
+            density: province.density,
+          ),
+    };
+
+    _lowerLevelMetricsByCode = {
+      for (final commune in communeRows)
+        if (commune.ma.isNotEmpty)
+          commune.ma: AdministrativeAreaMetric(
+            areaKm2: commune.areaKm2,
+            population: commune.population,
+            density: commune.density,
+          ),
+    };
   }
 
   void markMapReady() {
@@ -214,9 +294,60 @@ class VietnamMapController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void acknowledgeInactiveControl() {
-    _controlSpace = AdministrativeAreaControlSpace.inactive();
+  void updateSearchText(String searchText) {
+    _controlSpace = _controlSpace.copyWith(
+      searchText: searchText,
+      isFunctional: true,
+    );
     notifyListeners();
+  }
+
+  void updateSelectedLevel(AdministrativeAreaLevel level) {
+    _controlSpace = _controlSpace.copyWith(
+      selectedLevel: level,
+      isFunctional: true,
+    );
+    notifyListeners();
+  }
+
+  void updateSortOption(String sortOption) {
+    _controlSpace = _controlSpace.copyWith(
+      sortOption: sortOption,
+      sortDirection: sortOption == 'Name'
+          ? AdministrativeAreaSortDirection.ascending
+          : AdministrativeAreaSortDirection.descending,
+      isFunctional: true,
+    );
+    notifyListeners();
+  }
+
+  void updateSortDirection(AdministrativeAreaSortDirection sortDirection) {
+    _controlSpace = _controlSpace.copyWith(
+      sortDirection: sortDirection,
+      isFunctional: true,
+    );
+    notifyListeners();
+  }
+
+  void toggleFilterChip(String chip) {
+    if (_activeFilterChips.contains(chip)) {
+      _activeFilterChips.remove(chip);
+    } else {
+      _activeFilterChips.add(chip);
+    }
+    notifyListeners();
+  }
+
+  void selectAdministrativeEntry(AdministrativeAreaSearchResult result) {
+    if (result.provinceBoundary != null) {
+      selectProvinceAt(result.coordinate);
+      return;
+    }
+
+    final place = result.lowerLevelPlace;
+    if (place != null) {
+      selectLowerLevelPlace(place);
+    }
   }
 
   void updateProvinceHover(LatLng coordinate) {
@@ -276,7 +407,7 @@ class VietnamMapController extends ChangeNotifier {
     final shouldNotify = isNewProvince ||
         !_provinceHoverState.isSameVisibleState(nextState) ||
         _selectedLowerLevelPlace != null;
-    
+
     _selectedProvince = boundary;
     _provinceHoverState = nextState;
 
