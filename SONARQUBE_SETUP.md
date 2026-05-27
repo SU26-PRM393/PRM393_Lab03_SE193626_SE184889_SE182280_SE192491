@@ -12,17 +12,38 @@ This guide explains how to use SonarQube Community Edition to analyze your Vietn
 
 ### 2. Install SonarScanner
 
-Download SonarScanner from: https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner/
+#### Option A: Direct Download (Recommended)
 
-**Windows Installation:**
+1. Download from GitHub Releases:
+   **https://github.com/SonarSource/sonar-scanner-msbuild/releases**
+   
+   Look for the latest release and download `sonar-scanner-x.x.x-windows.zip`
 
-1. Download `sonar-scanner-x.x.x-windows.zip`
 2. Extract to a folder (e.g., `C:\sonar-scanner`)
-3. Add `C:\sonar-scanner\bin` to your Windows PATH environment variable
+
+3. Add `C:\sonar-scanner\bin` to your Windows PATH:
+   - Right-click "This PC" → Properties
+   - Advanced system settings → Environment Variables
+   - New (User variable):
+     - Variable name: `PATH`
+     - Variable value: `C:\sonar-scanner\bin`
+
 4. Verify installation:
    ```powershell
    sonar-scanner -h
    ```
+
+#### Option B: Using Chocolatey
+
+```powershell
+choco install sonarscanner
+```
+
+#### Option C: Using npm
+
+```powershell
+npm install -g sonar-scanner
+```
 
 ### 3. Start SonarQube
 

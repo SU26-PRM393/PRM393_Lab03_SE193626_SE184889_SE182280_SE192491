@@ -1,0 +1,58 @@
+{
+    "issues":  [
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The private field _activeFilterChips could be \u0027final\u0027.",
+                                               "filePath":  "lib\\features\\vietnam_map\\presentation\\vietnam_map_controller.dart",
+                                               "textRange":  {
+                                                                 "startLine":  49,
+                                                                 "endLine":  49
+                                                             }
+                                           },
+                       "ruleId":  "prefer_final_fields",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "\u0027withOpacity\u0027 is deprecated and shouldn\u0027t be used. Use .withValues() to avoid precision loss.",
+                                               "filePath":  "lib\\features\\vietnam_map\\presentation\\widgets\\map_control_panel.dart",
+                                               "textRange":  {
+                                                                 "startLine":  170,
+                                                                 "endLine":  170
+                                                             }
+                                           },
+                       "ruleId":  "deprecated_member_use",
+                       "engineId":  "dart-analyzer"
+                   }
+               ],
+    "rules":  [
+                  {
+                      "id":  "prefer_final_fields",
+                      "name":  "prefer_final_fields",
+                      "severity":  "MINOR",
+                      "description":  "The private field _activeFilterChips could be \u0027final\u0027.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "deprecated_member_use",
+                      "name":  "deprecated_member_use",
+                      "severity":  "MINOR",
+                      "description":  "\u0027withOpacity\u0027 is deprecated and shouldn\u0027t be used. Use .withValues() to avoid precision loss.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  }
+              ]
+}
