@@ -14,7 +14,7 @@ class CurrentLocationIndicator extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state.isAvailable) {
       return Semantics(
-        label: 'Current location marker',
+        label: 'Điểm đánh dấu vị trí hiện tại',
         child: Stack(
           alignment: Alignment.center,
           children: [

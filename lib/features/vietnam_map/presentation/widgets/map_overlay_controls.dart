@@ -23,7 +23,7 @@ class MapOverlayControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       container: true,
-      label: 'Map controls',
+      label: 'Điều khiển bản đồ',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -38,11 +38,11 @@ class MapOverlayControls extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Tooltip(
-            message: 'Recenter on Viet Nam',
+            message: 'Căn giữa về Việt Nam',
             child: FilledButton.tonalIcon(
               onPressed: onRecenter,
               icon: const Icon(Icons.center_focus_strong),
-              label: const Text('Viet Nam'),
+              label: const Text('Việt Nam'),
             ),
           ),
         ],

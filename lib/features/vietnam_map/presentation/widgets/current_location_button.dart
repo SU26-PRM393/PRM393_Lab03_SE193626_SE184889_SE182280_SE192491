@@ -14,9 +14,10 @@ class CurrentLocationButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: isLoading ? 'Current location loading' : 'Show current location',
+      label:
+          isLoading ? 'Đang tải vị trí hiện tại' : 'Hiển thị vị trí hiện tại',
       child: Tooltip(
-        message: 'Show current location',
+        message: 'Hiển thị vị trí hiện tại',
         child: FilledButton.tonalIcon(
           onPressed: isLoading ? null : onPressed,
           icon: isLoading
@@ -25,7 +26,7 @@ class CurrentLocationButton extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.my_location),
-          label: const Text('Location'),
+          label: const Text('Vị trí'),
         ),
       ),
     );

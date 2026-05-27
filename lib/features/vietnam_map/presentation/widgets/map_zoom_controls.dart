@@ -24,9 +24,9 @@ class MapZoomControls extends StatelessWidget {
         children: [
           Semantics(
             button: true,
-            label: 'Zoom in',
+            label: 'Phóng to',
             child: IconButton(
-              tooltip: 'Zoom in',
+              tooltip: 'Phóng to',
               icon: const Icon(Icons.add),
               onPressed: onZoomIn,
             ),
@@ -34,9 +34,9 @@ class MapZoomControls extends StatelessWidget {
           Divider(height: 1, color: colorScheme.outlineVariant),
           Semantics(
             button: true,
-            label: 'Zoom out',
+            label: 'Thu nhỏ',
             child: IconButton(
-              tooltip: 'Zoom out',
+              tooltip: 'Thu nhỏ',
               icon: const Icon(Icons.remove),
               onPressed: onZoomOut,
             ),

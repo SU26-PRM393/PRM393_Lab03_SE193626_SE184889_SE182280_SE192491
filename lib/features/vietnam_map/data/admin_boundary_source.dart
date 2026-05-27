@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../shared/constants/map_constants.dart';
+import '../../../shared/performance/map_startup_trace.dart';
 import '../domain/administrative_area.dart';
 import '../domain/island_label_override.dart';
 import '../domain/lower_level_place.dart';
@@ -14,20 +15,34 @@ import '../domain/map_scope.dart';
 class AdminBoundarySource {
   const AdminBoundarySource();
 
-  static Future<VietnamBoundaryData>? _cachedBoundaryData;
+  static Future<VietnamBoundaryData>? _cachedInitialBoundaryData;
+  static Future<List<LowerLevelPlace>>? _cachedLowerLevelPlaces;
 
   Future<List<AdministrativeArea>> loadPlaceholders() async {
     return const <AdministrativeArea>[];
   }
 
-  Future<VietnamBoundaryData> loadBoundaryData() {
-    return _cachedBoundaryData ??= _loadBoundaryData();
+  Future<VietnamBoundaryData> loadBoundaryData() async {
+    final initialData = await loadInitialBoundaryData();
+    if (initialData.status != VietnamBoundaryDataStatus.ready) {
+      return initialData;
+    }
+
+    final lowerLevelPlaces = await loadLowerLevelPlaces();
+    return initialData.copyWith(lowerLevelPlaces: lowerLevelPlaces);
   }
 
-  Future<VietnamBoundaryData> _loadBoundaryData() async {
+  Future<VietnamBoundaryData> loadInitialBoundaryData() {
+    return _cachedInitialBoundaryData ??= _loadInitialBoundaryData();
+  }
+
+  Future<List<LowerLevelPlace>> loadLowerLevelPlaces() {
+    return _cachedLowerLevelPlaces ??= _loadLowerLevelPlaces();
+  }
+
+  Future<VietnamBoundaryData> _loadInitialBoundaryData() async {
     try {
       final provinceBoundaries = await _loadProvinceBoundaries();
-      final lowerLevelPlaces = await _loadLowerLevelPlaces();
       final islandLabels = await _loadIslandLabelOverrides();
 
       return VietnamBoundaryData.ready(
@@ -36,34 +51,51 @@ class AdminBoundarySource {
           sourceVersion: '2026.04.16-sapnhap-bando-vn-local',
         ),
         provinceBoundaries: provinceBoundaries,
-        lowerLevelPlaces: lowerLevelPlaces,
+        lowerLevelPlaces: const [],
         islandLabels: islandLabels,
       );
     } catch (_) {
       return VietnamBoundaryData.unavailable(
-        'Province boundary data is unavailable.',
+        'Dữ liệu ranh giới tỉnh/thành không khả dụng.',
       );
     }
   }
 
   Future<List<ProvinceBoundary>> _loadProvinceBoundaries() async {
-    final raw = await rootBundle.loadString(
-      MapConstants.provinceBoundariesAsset,
+    final raw = await MapStartupTrace.timeAsync(
+      'boundary.provinces.read',
+      () => rootBundle.loadString(MapConstants.provinceBoundariesAsset),
     );
-    return compute(_decodeProvinceBoundaries, raw);
+    return MapStartupTrace.timeAsync(
+      'boundary.provinces.decode',
+      () => compute(_decodeProvinceBoundaries, raw),
+      arguments: {'bytes': raw.length},
+    );
   }
 
   Future<List<LowerLevelPlace>> _loadLowerLevelPlaces() async {
-    final raw = await rootBundle.loadString(MapConstants.lowerUnitsAsset);
-    return compute(_decodeLowerLevelPlaces, raw);
+    final raw = await MapStartupTrace.timeAsync(
+      'boundary.lowerUnits.read',
+      () => rootBundle.loadString(MapConstants.lowerUnitsAsset),
+    );
+    return MapStartupTrace.timeAsync(
+      'boundary.lowerUnits.decode',
+      () => compute(_decodeLowerLevelPlaces, raw),
+      arguments: {'bytes': raw.length},
+    );
   }
 
   Future<List<IslandLabelOverride>> _loadIslandLabelOverrides() async {
     try {
-      final raw = await rootBundle.loadString(
-        MapConstants.islandLabelOverridesAsset,
+      final raw = await MapStartupTrace.timeAsync(
+        'boundary.islandLabels.read',
+        () => rootBundle.loadString(MapConstants.islandLabelOverridesAsset),
       );
-      final decoded = jsonDecode(raw) as List<dynamic>;
+      final decoded = MapStartupTrace.timeSync(
+        'boundary.islandLabels.decode',
+        () => jsonDecode(raw) as List<dynamic>,
+        arguments: {'bytes': raw.length},
+      );
 
       return [
         for (final item in decoded)
@@ -157,20 +189,20 @@ List<BoundaryPolygon> _parseGeometry(Map<String, dynamic> geometry) {
   final coordinates = geometry['coordinates'] as List<dynamic>;
 
   if (type == 'Polygon') {
-    return [_parsePolygon(coordinates)];
+    return _parsePolygonGeometry(coordinates);
   }
 
   if (type == 'MultiPolygon') {
     return [
       for (final polygon in coordinates)
-        _parsePolygon(polygon as List<dynamic>),
+        ..._parsePolygonGeometry(polygon as List<dynamic>),
     ];
   }
 
   return const [];
 }
 
-BoundaryPolygon _parsePolygon(List<dynamic> polygonCoordinates) {
+List<BoundaryPolygon> _parsePolygonGeometry(List<dynamic> polygonCoordinates) {
   final rings = [
     for (final ring in polygonCoordinates) _parseRing(ring as List<dynamic>),
   ].where((ring) => ring.points.length >= 4).toList(growable: false);
@@ -179,10 +211,60 @@ BoundaryPolygon _parsePolygon(List<dynamic> polygonCoordinates) {
     throw const FormatException('Boundary polygon has no valid rings.');
   }
 
-  return BoundaryPolygon(
-    outerRing: rings.first,
-    holes: rings.skip(1).toList(growable: false),
-  );
+  final polygons = <_BoundaryPolygonBuilder>[];
+  for (final ring in rings) {
+    final containingPolygon = _containingPolygonFor(ring, polygons);
+    if (containingPolygon == null) {
+      polygons.add(_BoundaryPolygonBuilder(ring));
+    } else {
+      containingPolygon.holes.add(ring);
+    }
+  }
+
+  return [
+    for (final polygon in polygons)
+      BoundaryPolygon(
+        outerRing: polygon.outerRing,
+        holes: polygon.holes,
+      ),
+  ];
+}
+
+_BoundaryPolygonBuilder? _containingPolygonFor(
+  BoundaryRing ring,
+  List<_BoundaryPolygonBuilder> polygons,
+) {
+  final samplePoint = ring.points.first;
+  _BoundaryPolygonBuilder? smallestContainer;
+  var smallestArea = double.infinity;
+
+  for (final polygon in polygons) {
+    final outerRing = polygon.outerRing;
+    if (!outerRing.contains(samplePoint)) {
+      continue;
+    }
+
+    final area = _ringBoundsArea(outerRing);
+    if (area < smallestArea) {
+      smallestContainer = polygon;
+      smallestArea = area;
+    }
+  }
+
+  return smallestContainer;
+}
+
+double _ringBoundsArea(BoundaryRing ring) {
+  final bounds = ring.bounds;
+  return (bounds.north - bounds.south).abs() *
+      (bounds.east - bounds.west).abs();
+}
+
+class _BoundaryPolygonBuilder {
+  _BoundaryPolygonBuilder(this.outerRing);
+
+  final BoundaryRing outerRing;
+  final List<BoundaryRing> holes = [];
 }
 
 BoundaryRing _parseRing(List<dynamic> ringCoordinates) {

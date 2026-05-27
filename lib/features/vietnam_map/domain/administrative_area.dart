@@ -29,9 +29,9 @@ enum AdministrativeAreaSortDirection {
   String get label {
     switch (this) {
       case AdministrativeAreaSortDirection.ascending:
-        return 'Lower to higher';
+        return 'Từ thấp đến cao';
       case AdministrativeAreaSortDirection.descending:
-        return 'Higher to lower';
+        return 'Từ cao đến thấp';
     }
   }
 }
@@ -155,11 +155,11 @@ class AdministrativeAreaSearchResult {
   String get levelLabel {
     switch (filter) {
       case AdministrativeAreaFilter.province:
-        return 'Province';
+        return 'Tỉnh/TP';
       case AdministrativeAreaFilter.city:
-        return 'City';
+        return 'Thành phố';
       case AdministrativeAreaFilter.district:
-        return 'District';
+        return 'Quận/Huyện';
     }
   }
 }
@@ -184,7 +184,7 @@ class AdministrativeAreaSearchEngine {
           id: 'province:${province.id}',
           name: province.name,
           filter: AdministrativeAreaFilter.province,
-          subtitle: 'Province • ${province.provinceCode}',
+          subtitle: 'Mã ${province.provinceCode}',
           coordinate: province.labelCoordinate,
           normalizedSearchText: _normalizeForSearch(
             '${province.name} Province • ${province.provinceCode}',

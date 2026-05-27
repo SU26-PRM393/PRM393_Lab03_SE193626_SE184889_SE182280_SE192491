@@ -21,7 +21,7 @@ class CurrentLocationState {
   factory CurrentLocationState.unknown() {
     return const CurrentLocationState(
       status: CurrentLocationStatus.unknown,
-      message: 'Current location has not been requested.',
+      message: 'Chưa yêu cầu vị trí hiện tại.',
     );
   }
 

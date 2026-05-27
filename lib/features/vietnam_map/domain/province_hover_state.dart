@@ -73,7 +73,7 @@ class ProvinceHoverResolver {
   }) {
     if (boundaries.isEmpty) {
       return ProvinceHoverState.unavailable(
-        'Province boundary data is unavailable.',
+        'Dữ liệu ranh giới tỉnh/thành không khả dụng.',
       );
     }
 

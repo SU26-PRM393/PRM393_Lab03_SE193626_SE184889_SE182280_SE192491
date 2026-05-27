@@ -21,7 +21,7 @@ class MapControlPanel extends StatelessWidget {
         controller.selectedLowerLevelPlace != null;
 
     return Semantics(
-      label: 'Reserved province city district tools',
+      label: 'Công cụ tỉnh, thành phố và quận huyện',
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -36,20 +36,20 @@ class MapControlPanel extends StatelessWidget {
               _LocationDetailsView(controller: controller)
             else ...[
               Text(
-                'Viet Nam Explorer',
+                'Khám phá Việt Nam',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Map-first workspace with room for province, city, and district tools.',
+                'Không gian bản đồ với công cụ tra cứu tỉnh, thành phố và quận huyện.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 24),
-              const _SectionLabel(label: 'Search'),
+              const _SectionLabel(label: 'Tìm kiếm'),
               const SizedBox(height: 8),
               TextField(
                 enabled: true,
@@ -57,36 +57,36 @@ class MapControlPanel extends StatelessWidget {
                 onChanged: controller.updateSearchText,
                 decoration: InputDecoration(
                   prefixIcon: const Icon(Icons.search),
-                  labelText: 'Search provinces, cities, districts',
-                  helperText: 'Type a name to filter the results.',
+                  labelText: 'Tìm tỉnh, thành phố, quận huyện',
+                  helperText: 'Nhập tên để lọc kết quả.',
                   suffixIcon: controller.controlSpace.searchText.isEmpty
                       ? null
                       : IconButton(
                           icon: const Icon(Icons.clear),
-                          tooltip: 'Clear search',
+                          tooltip: 'Xóa tìm kiếm',
                           onPressed: () => controller.updateSearchText(''),
                         ),
                 ),
               ),
               const SizedBox(height: 20),
-              const _SectionLabel(label: 'Level'),
+              const _SectionLabel(label: 'Cấp hành chính'),
               const SizedBox(height: 8),
               SegmentedButton<AdministrativeAreaLevel>(
                 segments: const [
                   ButtonSegment(
                     value: AdministrativeAreaLevel.all,
                     icon: Icon(Icons.public),
-                    label: Text('All'),
+                    label: Text('Tất cả'),
                   ),
                   ButtonSegment(
                     value: AdministrativeAreaLevel.province,
                     icon: Icon(Icons.map),
-                    label: Text('Province'),
+                    label: Text('Tỉnh/TP'),
                   ),
                   ButtonSegment(
                     value: AdministrativeAreaLevel.district,
                     icon: Icon(Icons.location_city),
-                    label: Text('District'),
+                    label: Text('Quận/Huyện'),
                   ),
                 ],
                 selected: {controller.controlSpace.selectedLevel},
@@ -95,7 +95,7 @@ class MapControlPanel extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 20),
-              const _SectionLabel(label: 'Filters'),
+              const _SectionLabel(label: 'Bộ lọc'),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -103,14 +103,14 @@ class MapControlPanel extends StatelessWidget {
                 children: [
                   for (final chip in controller.controlSpace.filterChips)
                     FilterChip(
-                      label: Text(chip),
+                      label: Text(_filterChipLabel(chip)),
                       selected: controller.isFilterChipSelected(chip),
                       onSelected: (_) => controller.toggleFilterChip(chip),
                     ),
                 ],
               ),
               const SizedBox(height: 20),
-              const _SectionLabel(label: 'Sort'),
+              const _SectionLabel(label: 'Sắp xếp'),
               const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,18 +120,18 @@ class MapControlPanel extends StatelessWidget {
                       enabled: true,
                       initialSelection: controller.controlSpace.sortOption,
                       leadingIcon: const Icon(Icons.sort),
-                      label: const Text('Sort by'),
+                      label: const Text('Sắp xếp theo'),
                       onSelected: (value) {
                         controller.updateSortOption(value ?? 'Name');
                       },
                       dropdownMenuEntries: const [
-                        DropdownMenuEntry(value: 'Name', label: 'Name'),
-                        DropdownMenuEntry(value: 'Area', label: 'Area'),
+                        DropdownMenuEntry(value: 'Name', label: 'Tên'),
+                        DropdownMenuEntry(value: 'Area', label: 'Diện tích'),
                         DropdownMenuEntry(
                           value: 'Population',
-                          label: 'Population',
+                          label: 'Dân số',
                         ),
-                        DropdownMenuEntry(value: 'Density', label: 'Density'),
+                        DropdownMenuEntry(value: 'Density', label: 'Mật độ'),
                       ],
                     ),
                   ),
@@ -141,7 +141,7 @@ class MapControlPanel extends StatelessWidget {
                       enabled: true,
                       initialSelection: controller.controlSpace.sortDirection,
                       leadingIcon: const Icon(Icons.swap_vert),
-                      label: const Text('Order'),
+                      label: const Text('Thứ tự'),
                       onSelected: (value) {
                         controller.updateSortDirection(
                           value ?? AdministrativeAreaSortDirection.ascending,
@@ -150,11 +150,11 @@ class MapControlPanel extends StatelessWidget {
                       dropdownMenuEntries: const [
                         DropdownMenuEntry(
                           value: AdministrativeAreaSortDirection.ascending,
-                          label: 'Lower to higher',
+                          label: 'Từ thấp đến cao',
                         ),
                         DropdownMenuEntry(
                           value: AdministrativeAreaSortDirection.descending,
-                          label: 'Higher to lower',
+                          label: 'Từ cao đến thấp',
                         ),
                       ],
                     ),
@@ -162,11 +162,11 @@ class MapControlPanel extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              const _SectionLabel(label: 'Results'),
+              const _SectionLabel(label: 'Kết quả'),
               const SizedBox(height: 8),
               Card(
                 margin: EdgeInsets.zero,
-                color: colorScheme.primaryContainer.withOpacity(0.35),
+                color: colorScheme.primaryContainer.withAlpha(89),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(
@@ -176,7 +176,7 @@ class MapControlPanel extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Sorting: ${controller.controlSpace.sortOption} • ${controller.controlSpace.sortDirection.label}',
+                          'Sắp xếp: ${_sortOptionLabel(controller.controlSpace.sortOption)} • ${controller.controlSpace.sortDirection.label}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -186,6 +186,19 @@ class MapControlPanel extends StatelessWidget {
                   ),
                 ),
               ),
+              if (_showStartupDataMessage(controller)) ...[
+                const SizedBox(height: 12),
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Text(
+                      _startupDataMessage(controller),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               if (!controller.isBoundaryDataReady)
                 Card(
@@ -193,7 +206,7 @@ class MapControlPanel extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Text(
-                      'Loading administrative data…',
+                      'Đang tải dữ liệu hành chính...',
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
@@ -204,7 +217,7 @@ class MapControlPanel extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(14),
                     child: Text(
-                      'No locations match the current search, level, or filters.',
+                      'Không có địa điểm nào khớp với tìm kiếm, cấp hành chính hoặc bộ lọc hiện tại.',
                       style: theme.textTheme.bodySmall,
                     ),
                   ),
@@ -247,7 +260,7 @@ class MapControlPanel extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Search, level, filter, and sort are active. Tap a result to center it on the map.',
+                          'Tìm kiếm, cấp hành chính, bộ lọc và sắp xếp đang hoạt động. Chọn một kết quả để căn giữa trên bản đồ.',
                           style: theme.textTheme.bodySmall,
                         ),
                       ),
@@ -279,6 +292,83 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+String _filterChipLabel(String chip) {
+  switch (chip) {
+    case 'Province':
+      return 'Tỉnh/TP';
+    case 'City':
+      return 'Thành phố';
+    case 'District':
+      return 'Quận/Huyện';
+    default:
+      return chip;
+  }
+}
+
+String _sortOptionLabel(String option) {
+  switch (option) {
+    case 'Name':
+      return 'Tên';
+    case 'Area':
+      return 'Diện tích';
+    case 'Population':
+      return 'Dân số';
+    case 'Density':
+      return 'Mật độ';
+    default:
+      return option;
+  }
+}
+
+bool _showStartupDataMessage(VietnamMapController controller) {
+  return controller.importStatus != AdministrativeImportStatus.idle &&
+          controller.importStatus != AdministrativeImportStatus.ready &&
+          controller.importStatus != AdministrativeImportStatus.skipped ||
+      controller.metricsStatus == MapLoadStatus.loading ||
+      controller.lowerLevelPlacesStatus == MapLoadStatus.loading;
+}
+
+String _startupDataMessage(VietnamMapController controller) {
+  switch (controller.importStatus) {
+    case AdministrativeImportStatus.checking:
+      return 'Äang kiá»ƒm tra dá»¯ liá»‡u hÃ nh chÃ­nh trong ná»n...';
+    case AdministrativeImportStatus.importingProvinces:
+      return 'Äang náº¡p dá»¯ liá»‡u tá»‰nh/thÃ nh trong ná»n...';
+    case AdministrativeImportStatus.importingCommunes:
+      return 'Äang náº¡p dá»¯ liá»‡u xÃ£/phÆ°á»ng trong ná»n...';
+    case AdministrativeImportStatus.importingCommittees:
+      return 'Äang náº¡p dá»¯ liá»‡u á»§y ban trong ná»n...';
+    case AdministrativeImportStatus.unavailable:
+      return 'Dá»¯ liá»‡u chi tiáº¿t táº¡m thá»i khÃ´ng kháº£ dá»¥ng.';
+    case AdministrativeImportStatus.idle:
+    case AdministrativeImportStatus.ready:
+    case AdministrativeImportStatus.skipped:
+      break;
+  }
+
+  if (controller.metricsStatus == MapLoadStatus.loading) {
+    return 'Äang cáº­p nháº­t sá»‘ liá»‡u diá»‡n tÃ­ch vÃ  dÃ¢n sá»‘ trong ná»n...';
+  }
+  if (controller.lowerLevelPlacesStatus == MapLoadStatus.loading) {
+    return 'Äang náº¡p thÃªm Ä‘iá»ƒm xÃ£/phÆ°á»ng trong ná»n...';
+  }
+
+  return 'Äang náº¡p dá»¯ liá»‡u hÃ nh chÃ­nh trong ná»n...';
+}
+
+String _administrativeTypeLabel(String value) {
+  switch (value.toLowerCase()) {
+    case 'province':
+      return 'Tỉnh/TP';
+    case 'city':
+      return 'Thành phố';
+    case 'district':
+      return 'Quận/Huyện';
+    default:
+      return value;
+  }
+}
+
 class _LocationDetailsView extends StatelessWidget {
   const _LocationDetailsView({required this.controller});
 
@@ -305,7 +395,7 @@ class _LocationDetailsView extends StatelessWidget {
       macroRegion = null;
     } else if (selectedProvince != null) {
       title = selectedProvince.name;
-      typeLabel = selectedProvince.level;
+      typeLabel = _administrativeTypeLabel(selectedProvince.level);
       locationContext = 'Việt Nam';
       macroRegion = controller.selectedProvinceDetails?.macroRegion;
     } else {
@@ -357,8 +447,8 @@ class _LocationDetailsView extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.arrow_back),
               tooltip: selectedPlace != null
-                  ? 'Go back to Province'
-                  : 'Go back to Search & Filter',
+                  ? 'Quay lại tỉnh/thành'
+                  : 'Quay lại tìm kiếm và bộ lọc',
               onPressed: () {
                 if (selectedPlace != null) {
                   controller.clearPlaceSelection();
@@ -452,7 +542,7 @@ class _LocationDetailsView extends StatelessWidget {
                 children: [
                   CircularProgressIndicator(strokeWidth: 3),
                   SizedBox(height: 12),
-                  Text('Loading details from database...'),
+                  Text('Đang tải chi tiết từ cơ sở dữ liệu...'),
                 ],
               ),
             ),
@@ -465,27 +555,29 @@ class _LocationDetailsView extends StatelessWidget {
                 Expanded(
                   child: _StatCard(
                     icon: Icons.square_foot_outlined,
-                    label: 'Area',
-                    value: area != null ? '${_formatDouble(area)} km²' : 'N/A',
+                    label: 'Diện tích',
+                    value:
+                        area != null ? '${_formatDouble(area)} km²' : 'Chưa có',
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: _StatCard(
                     icon: Icons.people_outline,
-                    label: 'Population',
-                    value:
-                        population != null ? _formatNumber(population) : 'N/A',
+                    label: 'Dân số',
+                    value: population != null
+                        ? _formatNumber(population)
+                        : 'Chưa có',
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: _StatCard(
                     icon: Icons.density_medium_outlined,
-                    label: 'Density',
+                    label: 'Mật độ',
                     value: density != null
                         ? '${_formatDouble(density)}/km²'
-                        : 'N/A',
+                        : 'Chưa có',
                   ),
                 ),
               ],
@@ -495,25 +587,25 @@ class _LocationDetailsView extends StatelessWidget {
           if (capital != null && capital.isNotEmpty)
             _InfoRow(
               icon: Icons.location_city_outlined,
-              label: selectedPlace != null ? 'Headquarters' : 'Capital',
+              label: selectedPlace != null ? 'Trụ sở' : 'Thủ phủ',
               value: capital,
             ),
           if (address != null && address.isNotEmpty)
             _InfoRow(
               icon: Icons.home_outlined,
-              label: 'Address',
+              label: 'Địa chỉ',
               value: address,
             ),
           if (phone != null && phone.isNotEmpty)
             _InfoRow(
               icon: Icons.phone_outlined,
-              label: 'Phone',
+              label: 'Điện thoại',
               value: phone,
             ),
           if (decree != null && decree.isNotEmpty) ...[
             const SizedBox(height: 12),
             _InfoSection(
-              title: 'Decree / Legal Basis',
+              title: 'Nghị quyết / Cơ sở pháp lý',
               icon: Icons.gavel_outlined,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,12 +618,13 @@ class _LocationDetailsView extends StatelessWidget {
                     const SizedBox(height: 8),
                     OutlinedButton.icon(
                       icon: const Icon(Icons.copy_all, size: 16),
-                      label: const Text('Copy Source Link'),
+                      label: const Text('Sao chép liên kết nguồn'),
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: decreeUrl));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Decree link copied to clipboard!'),
+                            content: Text(
+                                'Đã sao chép liên kết nghị quyết vào bảng tạm!'),
                             duration: Duration(seconds: 2),
                           ),
                         );
@@ -545,7 +638,7 @@ class _LocationDetailsView extends StatelessWidget {
           if (predecessors != null && predecessors.isNotEmpty) ...[
             const SizedBox(height: 12),
             _InfoSection(
-              title: 'Historical Background',
+              title: 'Lịch sử hình thành',
               icon: Icons.history_outlined,
               child: Text(
                 predecessors,
@@ -566,7 +659,7 @@ class _LocationDetailsView extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               icon: const Icon(Icons.center_focus_strong_outlined),
-              label: const Text('Center Location on Map'),
+              label: const Text('Căn giữa vị trí trên bản đồ'),
               onPressed: () {
                 if (selectedPlace != null) {
                   controller.selectLowerLevelPlace(selectedPlace);
@@ -786,7 +879,7 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
             Icon(Icons.list_alt_outlined, size: 16, color: colorScheme.primary),
             const SizedBox(width: 8),
             Text(
-              'Communes & Wards (${widget.places.length})',
+              'Xã/Phường (${widget.places.length})',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -799,7 +892,7 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
           controller: _searchController,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search, size: 18),
-            hintText: 'Search communes/wards...',
+            hintText: 'Tìm xã/phường...',
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             border: OutlineInputBorder(
@@ -834,7 +927,7 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
           ),
           child: filteredPlaces.isEmpty
               ? const Center(
-                  child: Text('No communes match your search.'),
+                  child: Text('Không có xã/phường nào khớp với tìm kiếm.'),
                 )
               : ListView.builder(
                   itemCount: filteredPlaces.length,
@@ -877,7 +970,7 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
 }
 
 String _formatNumber(int? value) {
-  if (value == null) return 'N/A';
+  if (value == null) return 'Chưa có';
   return value.toString().replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
         (Match m) => '${m[1]},',
@@ -885,7 +978,7 @@ String _formatNumber(int? value) {
 }
 
 String _formatDouble(double? value, {int decimalPlaces = 1}) {
-  if (value == null) return 'N/A';
+  if (value == null) return 'Chưa có';
   return value.toStringAsFixed(decimalPlaces);
 }
 
@@ -908,7 +1001,7 @@ class _CommuneVisibilityToggle extends StatelessWidget {
             Icon(Icons.layers_outlined, size: 16, color: colorScheme.primary),
             const SizedBox(width: 8),
             Text(
-              'Map Layer View',
+              'Lớp hiển thị bản đồ',
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -927,9 +1020,9 @@ class _CommuneVisibilityToggle extends StatelessWidget {
               const ButtonSegment<CommuneVisibilityMode>(
                 value: CommuneVisibilityMode.details,
                 icon: Icon(Icons.grid_view_outlined, size: 16),
-                label: Text('Show Details', style: TextStyle(fontSize: 11)),
+                label: Text('Hiện chi tiết', style: TextStyle(fontSize: 11)),
                 tooltip:
-                    'Show all communes on the map with labels (at appropriate zoom)',
+                    'Hiển thị tất cả xã/phường trên bản đồ với nhãn khi đủ mức thu phóng',
               ),
               ButtonSegment<CommuneVisibilityMode>(
                 value: CommuneVisibilityMode.dots,
@@ -939,16 +1032,16 @@ class _CommuneVisibilityToggle extends StatelessWidget {
                       : Icons.blur_on_outlined,
                   size: 16,
                 ),
-                label: const Text('Show Dots', style: TextStyle(fontSize: 11)),
+                label: const Text('Hiện chấm', style: TextStyle(fontSize: 11)),
                 tooltip: hasChosenCommune
-                    ? 'Show details for the chosen commune, other communes as dots'
-                    : 'Show all communes as dots (hide all labels)',
+                    ? 'Hiển thị chi tiết xã/phường đã chọn, các xã/phường khác dưới dạng chấm'
+                    : 'Hiển thị tất cả xã/phường dưới dạng chấm và ẩn nhãn',
               ),
               const ButtonSegment<CommuneVisibilityMode>(
                 value: CommuneVisibilityMode.hide,
                 icon: Icon(Icons.visibility_off_outlined, size: 16),
-                label: Text('Hide All', style: TextStyle(fontSize: 11)),
-                tooltip: 'Hide all communes on the map',
+                label: Text('Ẩn tất cả', style: TextStyle(fontSize: 11)),
+                tooltip: 'Ẩn tất cả xã/phường trên bản đồ',
               ),
             ],
             selected: {controller.communeVisibilityMode},
