@@ -22,7 +22,7 @@ class VietNamMapScope {
   factory VietNamMapScope.empty() {
     return VietNamMapScope(
       id: 'vietnam',
-      displayName: 'Viet Nam',
+      displayName: 'Việt Nam',
       polygons: const [],
     );
   }
@@ -33,7 +33,7 @@ class VietNamMapScope {
   }) {
     return VietNamMapScope(
       id: 'vietnam',
-      displayName: 'Viet Nam',
+      displayName: 'Việt Nam',
       polygons: [
         for (final boundary in boundaries) ...boundary.polygons,
       ],
@@ -105,4 +105,25 @@ class VietnamBoundaryData {
 
   bool get isUnavailable => status == VietnamBoundaryDataStatus.unavailable;
   bool get hasProvinceBoundaries => provinceBoundaries.isNotEmpty;
+
+  VietnamBoundaryData copyWith({
+    VietnamBoundaryDataStatus? status,
+    VietNamMapScope? scope,
+    List<ProvinceBoundary>? provinceBoundaries,
+    List<LowerLevelPlace>? lowerLevelPlaces,
+    List<IslandLabelOverride>? islandLabels,
+    String? message,
+    bool clearMessage = false,
+  }) {
+    return VietnamBoundaryData(
+      status: status ?? this.status,
+      scope: scope ?? this.scope,
+      provinceBoundaries:
+          List.unmodifiable(provinceBoundaries ?? this.provinceBoundaries),
+      lowerLevelPlaces:
+          List.unmodifiable(lowerLevelPlaces ?? this.lowerLevelPlaces),
+      islandLabels: List.unmodifiable(islandLabels ?? this.islandLabels),
+      message: clearMessage ? null : message ?? this.message,
+    );
+  }
 }

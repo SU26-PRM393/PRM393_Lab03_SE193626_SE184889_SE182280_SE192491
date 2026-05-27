@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/performance/map_startup_trace.dart';
 import '../domain/current_location_state.dart';
 import 'vietnam_map_controller.dart';
 import 'widgets/map_control_panel.dart';
@@ -22,8 +23,7 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     _controller = VietnamMapController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _controller.loadBoundaryData();
-        _controller.requestCurrentLocation();
+        _controller.bootstrapAfterFirstFrame();
       }
     });
   }
@@ -37,33 +37,31 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final compact = constraints.maxWidth < 980;
-              final map = _MapSurface(controller: _controller);
-              final panel = MapControlPanel(
-                controller: _controller,
-              );
-
-              if (compact) {
-                return Column(
-                  children: [
-                    SizedBox(height: 250, child: panel),
-                    Expanded(child: map),
-                  ],
-                );
-              }
-
-              return Row(
-                children: [
-                  SizedBox(width: 360, child: panel),
-                  Expanded(child: map),
-                ],
-              );
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 980;
+          final map = _MapSurface(controller: _controller);
+          final panel = AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return MapControlPanel(controller: _controller);
             },
+          );
+
+          if (compact) {
+            return Column(
+              children: [
+                SizedBox(height: 250, child: panel),
+                Expanded(child: map),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              SizedBox(width: 360, child: panel),
+              Expanded(child: map),
+            ],
           );
         },
       ),
@@ -78,32 +76,36 @@ class _MapSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: MapViewport(
-                controller: controller,
-                overlay: MapOverlayControls(
-                  isLocationLoading: controller.locationState.isRequesting,
-                  onZoomIn: controller.zoomIn,
-                  onZoomOut: controller.zoomOut,
-                  onCurrentLocation: controller.requestCurrentLocation,
-                  onRecenter: controller.recenterOnVietnam,
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          return MapStartupTrace.timeSync('widget.mapSurface.build', () {
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: MapViewport(
+                    controller: controller,
+                    overlay: MapOverlayControls(
+                      isLocationLoading: controller.locationState.isRequesting,
+                      onZoomIn: controller.zoomIn,
+                      onZoomOut: controller.zoomOut,
+                      onCurrentLocation: controller.requestCurrentLocation,
+                      onRecenter: controller.recenterOnVietnam,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            if (_showLocationMessage(controller.locationState))
-              Positioned(
-                left: 20,
-                bottom: 20,
-                child: _LocationMessage(state: controller.locationState),
-              ),
-          ],
-        );
-      },
+                if (_showLocationMessage(controller.locationState))
+                  Positioned(
+                    left: 20,
+                    bottom: 20,
+                    child: _LocationMessage(state: controller.locationState),
+                  ),
+              ],
+            );
+          });
+        },
+      ),
     );
   }
 
@@ -144,7 +146,7 @@ class _LocationMessage extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  state.message ?? 'Location state changed.',
+                  state.message ?? 'Trạng thái vị trí đã thay đổi.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),

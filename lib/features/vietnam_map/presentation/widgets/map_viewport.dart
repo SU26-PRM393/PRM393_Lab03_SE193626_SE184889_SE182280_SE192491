@@ -110,7 +110,12 @@ class _MapViewportState extends State<MapViewport> {
                     selectedPlace: controller.selectedLowerLevelPlace,
                     onPlaceSelected: controller.selectLowerLevelPlace,
                   ),
-                  ProvinceHoverOutline(state: controller.provinceHoverState),
+                  ValueListenableBuilder(
+                    valueListenable: controller.provinceHoverNotifier,
+                    builder: (context, state, _) {
+                      return ProvinceHoverOutline(state: state);
+                    },
+                  ),
                   if (controller.locationState.isAvailable)
                     MarkerLayer(
                       markers: [
@@ -136,7 +141,7 @@ class _MapViewportState extends State<MapViewport> {
                 child: _StatusBanner(
                   icon: Icons.cloud_off,
                   message: controller.viewport.message ??
-                      'Map tiles are unavailable.',
+                      'Lớp bản đồ không khả dụng.',
                 ),
               ),
             ),
@@ -148,7 +153,7 @@ class _MapViewportState extends State<MapViewport> {
               child: const IgnorePointer(
                 child: _StatusBanner(
                   icon: Icons.my_location,
-                  message: 'Requesting current location...',
+                  message: 'Đang yêu cầu vị trí hiện tại...',
                 ),
               ),
             ),

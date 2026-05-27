@@ -10,7 +10,7 @@ class MapApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Viet Nam Map',
+      title: 'Bản đồ Việt Nam',
       theme: AppTheme.light(),
       home: const VietnamMapScreen(),
     );

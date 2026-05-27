@@ -64,20 +64,20 @@ class _IslandLabel extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w700,
-              height: 1.05,
-              shadows: const [
-                Shadow(
-                  color: Colors.white,
-                  blurRadius: 4,
-                ),
-                Shadow(
-                  color: Colors.white,
-                  blurRadius: 8,
-                ),
-              ],
+          color: colorScheme.onSurface,
+          fontWeight: FontWeight.w700,
+          height: 1.05,
+          shadows: const [
+            Shadow(
+              color: Colors.white,
+              blurRadius: 4,
             ),
+            Shadow(
+              color: Colors.white,
+              blurRadius: 8,
+            ),
+          ],
+        ),
       ),
     );
   }

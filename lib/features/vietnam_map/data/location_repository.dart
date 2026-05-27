@@ -20,7 +20,7 @@ class GeolocatorLocationRepository implements LocationRepository {
       if (!serviceEnabled) {
         return const CurrentLocationState(
           status: CurrentLocationStatus.unavailable,
-          message: 'Location services are unavailable on this desktop.',
+          message: 'Dịch vụ vị trí không khả dụng trên máy tính này.',
         );
       }
 
@@ -32,14 +32,14 @@ class GeolocatorLocationRepository implements LocationRepository {
       if (permission == LocationPermission.denied) {
         return const CurrentLocationState(
           status: CurrentLocationStatus.denied,
-          message: 'Location permission was denied.',
+          message: 'Quyền truy cập vị trí đã bị từ chối.',
         );
       }
 
       if (permission == LocationPermission.deniedForever) {
         return const CurrentLocationState(
           status: CurrentLocationStatus.denied,
-          message: 'Location permission is permanently denied.',
+          message: 'Quyền truy cập vị trí đã bị từ chối vĩnh viễn.',
         );
       }
 
@@ -55,18 +55,18 @@ class GeolocatorLocationRepository implements LocationRepository {
         status: CurrentLocationStatus.available,
         coordinate: LatLng(position.latitude, position.longitude),
         accuracyMeters: position.accuracy,
-        message: 'Current location found.',
+        message: 'Đã tìm thấy vị trí hiện tại.',
         lastUpdatedAt: DateTime.now(),
       );
     } on TimeoutException {
       return const CurrentLocationState(
         status: CurrentLocationStatus.unavailable,
-        message: 'Location request timed out.',
+        message: 'Yêu cầu vị trí đã hết thời gian chờ.',
       );
     } catch (_) {
       return const CurrentLocationState(
         status: CurrentLocationStatus.error,
-        message: 'Current location could not be loaded.',
+        message: 'Không thể tải vị trí hiện tại.',
       );
     }
   }

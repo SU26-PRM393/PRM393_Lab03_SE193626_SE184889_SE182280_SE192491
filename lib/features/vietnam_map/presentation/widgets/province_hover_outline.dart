@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 import '../../../../shared/constants/map_constants.dart';
+import '../../../../shared/performance/map_startup_trace.dart';
 import '../../domain/map_boundary.dart';
 import '../../domain/province_hover_state.dart';
 
-class ProvinceHoverOutline extends StatelessWidget {
+class ProvinceHoverOutline extends StatefulWidget {
   const ProvinceHoverOutline({
     required this.state,
     super.key,
@@ -14,15 +15,24 @@ class ProvinceHoverOutline extends StatelessWidget {
   final ProvinceHoverState state;
 
   @override
+  State<ProvinceHoverOutline> createState() => _ProvinceHoverOutlineState();
+}
+
+class _ProvinceHoverOutlineState extends State<ProvinceHoverOutline> {
+  ProvinceBoundary? _lastBoundary;
+  List<Polygon>? _outlinePolygons;
+  List<Polygon>? _haloPolygons;
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
     final boundary = state.hoveredBoundary;
     if (!state.isActive || boundary == null) {
       return const SizedBox.shrink();
     }
 
-    final outlinePolygons = [
-      for (final polygon in boundary.polygons) _outlinePolygon(polygon),
-    ];
+    final outlinePolygons = _outlinesFor(boundary);
+    final haloPolygons = _halosFor(boundary);
 
     return IgnorePointer(
       child: Stack(
@@ -33,9 +43,7 @@ class ProvinceHoverOutline extends StatelessWidget {
             polygonCulling: false,
             simplificationTolerance:
                 MapConstants.interactionOutlineSimplificationTolerance,
-            polygons: [
-              for (final polygon in boundary.polygons) _haloPolygon(polygon),
-            ],
+            polygons: haloPolygons,
           ),
           PolygonLayer(
             polygonLabels: false,
@@ -48,6 +56,39 @@ class ProvinceHoverOutline extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  List<Polygon> _outlinesFor(ProvinceBoundary boundary) {
+    if (identical(_lastBoundary, boundary) && _outlinePolygons != null) {
+      return _outlinePolygons!;
+    }
+
+    _lastBoundary = boundary;
+    _outlinePolygons = MapStartupTrace.timeSync(
+      'overlay.hoverOutline.polygons',
+      () => [
+        for (final polygon in boundary.polygons) _outlinePolygon(polygon),
+      ],
+      arguments: {'provinceId': boundary.id},
+    );
+    _haloPolygons = null;
+    return _outlinePolygons!;
+  }
+
+  List<Polygon> _halosFor(ProvinceBoundary boundary) {
+    if (identical(_lastBoundary, boundary) && _haloPolygons != null) {
+      return _haloPolygons!;
+    }
+
+    _lastBoundary = boundary;
+    _haloPolygons = MapStartupTrace.timeSync(
+      'overlay.hoverHalo.polygons',
+      () => [
+        for (final polygon in boundary.polygons) _haloPolygon(polygon),
+      ],
+      arguments: {'provinceId': boundary.id},
+    );
+    return _haloPolygons!;
   }
 
   Polygon _haloPolygon(BoundaryPolygon polygon) {

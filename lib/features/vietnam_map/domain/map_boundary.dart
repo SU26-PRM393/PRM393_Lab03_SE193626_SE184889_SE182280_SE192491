@@ -49,7 +49,8 @@ class ProvinceBoundary {
     required this.level,
     required List<BoundaryPolygon> polygons,
   })  : polygons = List.unmodifiable(polygons),
-        bounds = _extendedBoundsFor(provinceCode, _boundsFromPolygons(polygons)),
+        bounds =
+            _extendedBoundsFor(provinceCode, _boundsFromPolygons(polygons)),
         labelCoordinate = _labelCoordinateFor(polygons);
 
   final String id;
@@ -74,7 +75,8 @@ class ProvinceBoundary {
     return false;
   }
 
-  static LatLngBounds _extendedBoundsFor(String provinceCode, LatLngBounds originalBounds) {
+  static LatLngBounds _extendedBoundsFor(
+      String provinceCode, LatLngBounds originalBounds) {
     if (provinceCode == '48') {
       // Da Nang: include Hoang Sa commune coordinate
       final points = [

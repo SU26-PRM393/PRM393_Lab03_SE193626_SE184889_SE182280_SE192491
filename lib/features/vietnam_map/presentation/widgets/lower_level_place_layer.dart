@@ -49,12 +49,8 @@ class LowerLevelPlaceLayer extends StatelessWidget {
     }
 
     // Use a larger hit target (24px) for the dots so they are easy to click
-    final hitWidth = showLabel
-        ? MapConstants.lowerLevelLabelWidth
-        : 24.0;
-    final hitHeight = showLabel
-        ? MapConstants.lowerLevelLabelHeight
-        : 24.0;
+    final hitWidth = showLabel ? MapConstants.lowerLevelLabelWidth : 24.0;
+    final hitHeight = showLabel ? MapConstants.lowerLevelLabelHeight : 24.0;
 
     return Marker(
       point: place.coordinate,

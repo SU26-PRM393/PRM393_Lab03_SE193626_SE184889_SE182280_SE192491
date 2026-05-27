@@ -41,7 +41,7 @@ class IslandFeatureOverlay extends StatelessWidget {
       height: 44,
       alignment: Alignment.center,
       child: Semantics(
-        label: '${label.displayLabel} island feature',
+        label: 'Cụm đảo ${label.displayLabel}',
         child: CustomPaint(
           painter: _IslandFeaturePainter(seed: label.id),
         ),

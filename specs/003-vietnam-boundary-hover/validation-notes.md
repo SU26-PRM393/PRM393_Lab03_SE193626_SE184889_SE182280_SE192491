@@ -59,6 +59,20 @@
 
 ## Profile Evidence
 
+- 2026-05-27: Startup smoothing implementation moved Isar initialization and
+  administrative JSON import behind the first rendered frame, added profile/debug
+  timeline spans for startup/import/boundary/search/hover/overlay paths, deferred
+  lower-level boundary loading, cached search results and map polygons, and
+  throttled hover resolution to once per frame.
+- 2026-05-27: `flutter analyze` passed with no issues after the startup
+  smoothing changes.
+- 2026-05-27: `flutter test` passed, including new focused coverage for
+  import-needed planning, cached search invalidation, and frame-throttled hover
+  resolution.
+- 2026-05-27: `flutter build windows --debug` and
+  `flutter build windows --profile` both completed successfully.
+- 2026-05-27: Interactive cold/warm launch timing and 60-second profile-mode
+  walkthrough remain pending because they require a live desktop session.
 - `dart format`: Passed with no file changes after the province drill-down
   update.
 - `flutter analyze`: Passed with no issues after the province drill-down and

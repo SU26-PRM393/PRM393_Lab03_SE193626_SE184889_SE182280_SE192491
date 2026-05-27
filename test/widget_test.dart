@@ -5,7 +5,7 @@ void main() {
   testWidgets('Map app shell smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const MapApp());
 
-    expect(find.text('Viet Nam Explorer'), findsOneWidget);
-    expect(find.byTooltip('Recenter on Viet Nam'), findsOneWidget);
+    expect(find.text('Khám phá Việt Nam'), findsOneWidget);
+    expect(find.byTooltip('Căn giữa về Việt Nam'), findsOneWidget);
   });
 }
