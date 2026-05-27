@@ -549,6 +549,8 @@ class VietnamMapController extends ChangeNotifier {
   }
 
   void updateSearchText(String searchText) {
+    // Immediately reflect the typed value in control space for the UI,
+    // but debounce the actual filtering so it uses `_effectiveSearchText`.
     _controlSpace = _controlSpace.copyWith(
       searchText: searchText,
       isFunctional: true,

@@ -132,6 +132,7 @@ class AdministrativeAreaSearchResult {
     required this.filter,
     required this.subtitle,
     required this.coordinate,
+    required this.normalizedSearchText,
     this.provinceBoundary,
     this.lowerLevelPlace,
     this.areaKm2,
@@ -144,6 +145,7 @@ class AdministrativeAreaSearchResult {
   final AdministrativeAreaFilter filter;
   final String subtitle;
   final LatLng coordinate;
+  final String normalizedSearchText;
   final ProvinceBoundary? provinceBoundary;
   final LowerLevelPlace? lowerLevelPlace;
   final double? areaKm2;
@@ -184,6 +186,9 @@ class AdministrativeAreaSearchEngine {
           filter: AdministrativeAreaFilter.province,
           subtitle: 'Mã ${province.provinceCode}',
           coordinate: province.labelCoordinate,
+          normalizedSearchText: _normalizeForSearch(
+            '${province.name} Province • ${province.provinceCode}',
+          ),
           provinceBoundary: province,
           areaKm2: provinceMetricsByCode[province.provinceCode]?.areaKm2,
           population: provinceMetricsByCode[province.provinceCode]?.population,
@@ -196,6 +201,8 @@ class AdministrativeAreaSearchEngine {
           filter: _filterForLowerLevel(place),
           subtitle: place.parentName,
           coordinate: place.coordinate,
+          normalizedSearchText:
+              _normalizeForSearch('${place.name} ${place.parentName}'),
           lowerLevelPlace: place,
           areaKm2: lowerLevelMetricsByCode[place.code]?.areaKm2,
           population: lowerLevelMetricsByCode[place.code]?.population,
@@ -217,10 +224,7 @@ class AdministrativeAreaSearchEngine {
           return true;
         }
 
-        final searchableText = _normalizeForSearch(
-          '${result.name} ${result.subtitle}',
-        );
-        return searchableText.contains(normalizedQuery);
+        return result.normalizedSearchText.contains(normalizedQuery);
       });
 
     results.sort((left, right) {
@@ -236,11 +240,25 @@ class AdministrativeAreaSearchEngine {
       }
 
       if (sortOption == 'Name') {
-        return _compareNames(left.name, right.name, sortDirection);
+        final comparison =
+            left.normalizedSearchText.compareTo(right.normalizedSearchText);
+        if (comparison != 0) {
+          return sortDirection == AdministrativeAreaSortDirection.ascending
+              ? comparison
+              : -comparison;
+        }
+
+        final fallback = left.name.compareTo(right.name);
+        return sortDirection == AdministrativeAreaSortDirection.ascending
+            ? fallback
+            : -fallback;
       }
 
       return _compareNames(
-          left.name, right.name, AdministrativeAreaSortDirection.ascending);
+        left.name,
+        right.name,
+        AdministrativeAreaSortDirection.ascending,
+      );
     });
 
     return results;

@@ -44,3 +44,29 @@ flutter run -d windows --profile
 During profile validation, drag continuously, zoom repeatedly, resize the
 window, and confirm map controls remain responsive while the performance overlay
 or DevTools shows no repeated jank during normal map exploration.
+
+## Code Quality Analysis
+
+This project uses **SonarQube Community Edition** for code quality analysis.
+
+### Quick Start
+
+1. **Install SonarScanner** (if not already installed):
+   - Download from: https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner/
+   - Add `bin` directory to your PATH
+
+2. **Start SonarQube** (using Docker):
+   ```powershell
+   docker run -d --name sonarqube -p 9000:9000 -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLED=true sonarqube:community
+   ```
+
+3. **Run Analysis**:
+   ```powershell
+   .\scripts\sonarqube-analyze.ps1
+   ```
+
+4. **View Results**: http://localhost:9000
+
+For detailed setup and configuration, see [SONARQUBE_SETUP.md](SONARQUBE_SETUP.md)
+
+
