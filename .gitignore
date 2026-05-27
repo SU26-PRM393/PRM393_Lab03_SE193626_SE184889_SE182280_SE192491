@@ -27,3 +27,9 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.swp
+
+# SonarQube analysis
+.sonar/
+.sonarqube/
+analysis.json
+
