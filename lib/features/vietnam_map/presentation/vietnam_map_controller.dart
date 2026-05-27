@@ -64,6 +64,10 @@ class VietnamMapController extends ChangeNotifier {
   DateTime? _lastTileFailureNoticeAt;
   bool _isLoadingBoundaryData = false;
   Timer? _cameraAnimationTimer;
+  // Debounce state for search input: UI shows immediate searchText in
+  // control space, but filtering uses the debounced `_effectiveSearchText`.
+  Timer? _searchDebounceTimer;
+  String _effectiveSearchText = '';
 
   MapViewport get viewport => _viewport;
   CurrentLocationState get locationState => _locationState;
@@ -93,7 +97,9 @@ class VietnamMapController extends ChangeNotifier {
     return AdministrativeAreaSearchEngine.filterAndSort(
       provinces: _boundaryData.provinceBoundaries,
       lowerLevelPlaces: _boundaryData.lowerLevelPlaces,
-      searchText: _controlSpace.searchText,
+      // Use the debounced effective search text for filtering/sorting so
+      // that UI updates remain snappy while expensive work is throttled.
+      searchText: _effectiveSearchText,
       selectedLevel: _controlSpace.selectedLevel,
       selectedFilters: _selectedFilters,
       sortOption: _controlSpace.sortOption,
@@ -295,10 +301,19 @@ class VietnamMapController extends ChangeNotifier {
   }
 
   void updateSearchText(String searchText) {
+    // Immediately reflect the typed value in control space for the UI,
+    // but debounce the actual filtering so it uses `_effectiveSearchText`.
     _controlSpace = _controlSpace.copyWith(
       searchText: searchText,
       isFunctional: true,
     );
+    // Restart debounce timer (250ms)
+    _searchDebounceTimer?.cancel();
+    _searchDebounceTimer = Timer(const Duration(milliseconds: 250), () {
+      _effectiveSearchText = searchText;
+      notifyListeners();
+    });
+    // Notify now so UI shows the immediate search text change (e.g., TextField)
     notifyListeners();
   }
 
@@ -610,6 +625,7 @@ class VietnamMapController extends ChangeNotifier {
   @override
   void dispose() {
     _cancelCameraAnimation();
+    _searchDebounceTimer?.cancel();
     mapController.dispose();
     super.dispose();
   }
