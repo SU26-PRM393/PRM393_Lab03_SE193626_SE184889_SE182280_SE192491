@@ -1,6 +1,6 @@
 # VietNam-Map-Flutter
 
-Desktop Viet Nam map UI built with Flutter and Material 3.
+Desktop Viet Nam map UI built with Flutter and Material 3
 
 ## Map Stack
 
