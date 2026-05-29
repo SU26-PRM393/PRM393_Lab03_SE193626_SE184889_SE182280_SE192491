@@ -121,6 +121,9 @@ $cmdArgs = @(
     "-D", "sonar.sources=lib",
     "-D", "sonar.tests=test",
     "-D", "sonar.exclusions=**/*.g.dart,**/*.freezed.dart,**/generated/**,build/**,.dart_tool/**",
+    "-D", "sonar.test.inclusions=**/*_test.dart",
+    "-D", "sonar.dart.lcov.reportPaths=coverage/lcov.info",
+    "-D", "sonar.coverage.exclusions=lib/main.dart,lib/features/vietnam_map/model/**,lib/features/vietnam_map/presentation/**,lib/features/vietnam_map/database/isar_service.dart,lib/features/vietnam_map/data/location_repository.dart",
     "-D", "sonar.host.url=$SonarHost"
 )
 
