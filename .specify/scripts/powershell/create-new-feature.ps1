@@ -143,7 +143,7 @@ function Get-NextBranchNumber {
         try {
             git fetch --all --prune 2>$null | Out-Null
         } catch {
-            # Ignore fetch errors
+            Write-Verbose "Could not fetch Git remotes before selecting branch number: $_"
         }
         $highestBranch = Get-HighestNumberFromBranches
     }
@@ -305,7 +305,11 @@ if (-not $DryRun) {
 
         if (-not $branchCreated) {
             $currentBranch = ''
-            try { $currentBranch = (git rev-parse --abbrev-ref HEAD 2>$null).Trim() } catch {}
+            try {
+                $currentBranch = (git rev-parse --abbrev-ref HEAD 2>$null).Trim()
+            } catch {
+                Write-Verbose "Could not determine current Git branch: $_"
+            }
             # Check if branch already exists
             $existingBranch = git branch --list $branchName 2>$null
             if ($existingBranch) {

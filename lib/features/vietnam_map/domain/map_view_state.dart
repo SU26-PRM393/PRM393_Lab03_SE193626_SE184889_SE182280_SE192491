@@ -83,8 +83,6 @@ class MapViewport {
   MapViewport copyWith({
     LatLng? center,
     double? zoom,
-    double? minZoom,
-    double? maxZoom,
     MapViewportStatus? status,
     DateTime? lastInteractionAt,
     String? message,
@@ -92,10 +90,9 @@ class MapViewport {
   }) {
     return MapViewport(
       center: center ?? this.center,
-      zoom: (zoom ?? this.zoom)
-          .clamp(minZoom ?? this.minZoom, maxZoom ?? this.maxZoom),
-      minZoom: minZoom ?? this.minZoom,
-      maxZoom: maxZoom ?? this.maxZoom,
+      zoom: (zoom ?? this.zoom).clamp(minZoom, maxZoom),
+      minZoom: minZoom,
+      maxZoom: maxZoom,
       status: status ?? this.status,
       lastInteractionAt: lastInteractionAt ?? this.lastInteractionAt,
       message: clearMessage ? null : message ?? this.message,

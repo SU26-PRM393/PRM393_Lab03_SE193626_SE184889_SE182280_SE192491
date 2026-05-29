@@ -3,7 +3,15 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 
 import '../../domain/administrative_area.dart';
 import '../../domain/lower_level_place.dart';
+import '../../domain/map_boundary.dart';
 import '../vietnam_map_controller.dart';
+
+const _provinceCityLabel = 'Tỉnh/TP';
+const _districtLabel = 'Quận/Huyện';
+const _areaLabel = 'Diện tích';
+const _populationLabel = 'Dân số';
+const _densityLabel = 'Mật độ';
+const _missingValueLabel = 'Chưa có';
 
 class MapControlPanel extends StatelessWidget {
   const MapControlPanel({
@@ -81,12 +89,12 @@ class MapControlPanel extends StatelessWidget {
                   ButtonSegment(
                     value: AdministrativeAreaLevel.province,
                     icon: Icon(Icons.map),
-                    label: Text('Tỉnh/TP'),
+                    label: Text(_provinceCityLabel),
                   ),
                   ButtonSegment(
                     value: AdministrativeAreaLevel.district,
                     icon: Icon(Icons.location_city),
-                    label: Text('Quận/Huyện'),
+                    label: Text(_districtLabel),
                   ),
                 ],
                 selected: {controller.controlSpace.selectedLevel},
@@ -126,12 +134,13 @@ class MapControlPanel extends StatelessWidget {
                       },
                       dropdownMenuEntries: const [
                         DropdownMenuEntry(value: 'Name', label: 'Tên'),
-                        DropdownMenuEntry(value: 'Area', label: 'Diện tích'),
+                        DropdownMenuEntry(value: 'Area', label: _areaLabel),
                         DropdownMenuEntry(
                           value: 'Population',
-                          label: 'Dân số',
+                          label: _populationLabel,
                         ),
-                        DropdownMenuEntry(value: 'Density', label: 'Mật độ'),
+                        DropdownMenuEntry(
+                            value: 'Density', label: _densityLabel),
                       ],
                     ),
                   ),
@@ -295,11 +304,11 @@ class _SectionLabel extends StatelessWidget {
 String _filterChipLabel(String chip) {
   switch (chip) {
     case 'Province':
-      return 'Tỉnh/TP';
+      return _provinceCityLabel;
     case 'City':
       return 'Thành phố';
     case 'District':
-      return 'Quận/Huyện';
+      return _districtLabel;
     default:
       return chip;
   }
@@ -310,11 +319,11 @@ String _sortOptionLabel(String option) {
     case 'Name':
       return 'Tên';
     case 'Area':
-      return 'Diện tích';
+      return _areaLabel;
     case 'Population':
-      return 'Dân số';
+      return _populationLabel;
     case 'Density':
-      return 'Mật độ';
+      return _densityLabel;
     default:
       return option;
   }
@@ -359,11 +368,11 @@ String _startupDataMessage(VietnamMapController controller) {
 String _administrativeTypeLabel(String value) {
   switch (value.toLowerCase()) {
     case 'province':
-      return 'Tỉnh/TP';
+      return _provinceCityLabel;
     case 'city':
       return 'Thành phố';
     case 'district':
-      return 'Quận/Huyện';
+      return _districtLabel;
     default:
       return value;
   }
@@ -376,158 +385,31 @@ class _LocationDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    final selectedProvince = controller.selectedProvince;
-    final selectedPlace = controller.selectedLowerLevelPlace;
-
-    final String title;
-    final String typeLabel;
-    final String locationContext;
-    final String? macroRegion;
-
-    if (selectedPlace != null) {
-      title = selectedPlace.name;
-      typeLabel = selectedPlace.level == 'ward' ? 'Phường' : 'Xã/Thị trấn';
-      locationContext =
-          '${selectedPlace.parentName}, ${selectedProvince?.name ?? ''}';
-      macroRegion = null;
-    } else if (selectedProvince != null) {
-      title = selectedProvince.name;
-      typeLabel = _administrativeTypeLabel(selectedProvince.level);
-      locationContext = 'Việt Nam';
-      macroRegion = controller.selectedProvinceDetails?.macroRegion;
-    } else {
+    final details = _LocationDetailsData.fromController(controller);
+    if (details == null) {
       return const SizedBox.shrink();
     }
-
-    final double? area = selectedPlace != null
-        ? controller.selectedCommuneDetails?.areaKm2
-        : controller.selectedProvinceDetails?.areaKm2;
-
-    final int? population = selectedPlace != null
-        ? controller.selectedCommuneDetails?.population
-        : controller.selectedProvinceDetails?.population;
-
-    final double? density = selectedPlace != null
-        ? controller.selectedCommuneDetails?.density
-        : controller.selectedProvinceDetails?.density;
-
-    final String? capital = selectedPlace != null
-        ? controller.selectedCommuneDetails?.capital
-        : controller.selectedProvinceDetails?.capital;
-
-    final String? decree = selectedPlace != null
-        ? controller.selectedCommuneDetails?.decree
-        : controller.selectedProvinceDetails?.decree;
-
-    final String? decreeUrl = selectedPlace != null
-        ? controller.selectedCommuneDetails?.decreeUrl
-        : controller.selectedProvinceDetails?.decreeUrl;
-
-    final String? predecessors = selectedPlace != null
-        ? controller.selectedCommuneDetails?.predecessors
-        : controller.selectedProvinceDetails?.predecessors;
-
-    final String? address = selectedPlace != null
-        ? null
-        : controller.selectedProvinceDetails?.address;
-
-    final String? phone = selectedPlace != null
-        ? null
-        : controller.selectedProvinceDetails?.phone;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              tooltip: selectedPlace != null
-                  ? 'Quay lại tỉnh/thành'
-                  : 'Quay lại tìm kiếm và bộ lọc',
-              onPressed: () {
-                if (selectedPlace != null) {
-                  controller.clearPlaceSelection();
-                } else {
-                  controller.clearSelection();
-                }
-              },
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    title,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          typeLabel.toUpperCase(),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 9,
-                          ),
-                        ),
-                      ),
-                      if (macroRegion != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            macroRegion.replaceAll('_', ' ').toUpperCase(),
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSecondaryContainer,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 9,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+        _LocationHeader(
+          controller: controller,
+          details: details,
         ),
         const SizedBox(height: 12),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Text(
-            locationContext,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              fontStyle: FontStyle.italic,
-            ),
+            details.locationContext,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
           ),
         ),
         const SizedBox(height: 16),
-        if (selectedProvince != null) ...[
+        if (details.selectedProvince != null) ...[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: _CommuneVisibilityToggle(controller: controller),
@@ -535,143 +417,476 @@ class _LocationDetailsView extends StatelessWidget {
           const SizedBox(height: 16),
         ],
         if (controller.isLoadingDetails)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24.0),
-            child: Center(
-              child: Column(
-                children: [
-                  CircularProgressIndicator(strokeWidth: 3),
-                  SizedBox(height: 12),
-                  Text('Đang tải chi tiết từ cơ sở dữ liệu...'),
-                ],
+          const _LocationDetailsLoading()
+        else
+          _LocationLoadedDetails(
+            controller: controller,
+            details: details,
+          ),
+      ],
+    );
+  }
+}
+
+class _LocationDetailsData {
+  const _LocationDetailsData({
+    required this.title,
+    required this.typeLabel,
+    required this.locationContext,
+    required this.selectedProvince,
+    required this.selectedPlace,
+    required this.area,
+    required this.population,
+    required this.density,
+    required this.capital,
+    required this.decree,
+    required this.decreeUrl,
+    required this.predecessors,
+    required this.address,
+    required this.phone,
+    required this.lowerLevelPlaces,
+    this.macroRegion,
+  });
+
+  factory _LocationDetailsData.forPlace(
+    VietnamMapController controller,
+    ProvinceBoundary? selectedProvince,
+    LowerLevelPlace selectedPlace,
+  ) {
+    final details = controller.selectedCommuneDetails;
+    return _LocationDetailsData(
+      title: selectedPlace.name,
+      typeLabel: selectedPlace.level == 'ward' ? 'Phường' : 'Xã/Thị trấn',
+      locationContext:
+          '${selectedPlace.parentName}, ${selectedProvince?.name ?? ''}',
+      selectedProvince: selectedProvince,
+      selectedPlace: selectedPlace,
+      area: details?.areaKm2,
+      population: details?.population,
+      density: details?.density,
+      capital: details?.capital,
+      decree: details?.decree,
+      decreeUrl: details?.decreeUrl,
+      predecessors: details?.predecessors,
+      address: null,
+      phone: null,
+      lowerLevelPlaces: controller.selectedLowerLevelPlaces,
+    );
+  }
+
+  factory _LocationDetailsData.forProvince(
+    VietnamMapController controller,
+    ProvinceBoundary selectedProvince,
+  ) {
+    final details = controller.selectedProvinceDetails;
+    return _LocationDetailsData(
+      title: selectedProvince.name,
+      typeLabel: _administrativeTypeLabel(selectedProvince.level),
+      locationContext: 'Việt Nam',
+      selectedProvince: selectedProvince,
+      selectedPlace: null,
+      area: details?.areaKm2,
+      population: details?.population,
+      density: details?.density,
+      capital: details?.capital,
+      decree: details?.decree,
+      decreeUrl: details?.decreeUrl,
+      predecessors: details?.predecessors,
+      address: details?.address,
+      phone: details?.phone,
+      lowerLevelPlaces: controller.selectedLowerLevelPlaces,
+      macroRegion: details?.macroRegion,
+    );
+  }
+
+  static _LocationDetailsData? fromController(
+    VietnamMapController controller,
+  ) {
+    final selectedProvince = controller.selectedProvince;
+    final selectedPlace = controller.selectedLowerLevelPlace;
+
+    if (selectedPlace != null) {
+      return _LocationDetailsData.forPlace(
+        controller,
+        selectedProvince,
+        selectedPlace,
+      );
+    }
+
+    if (selectedProvince != null) {
+      return _LocationDetailsData.forProvince(controller, selectedProvince);
+    }
+
+    return null;
+  }
+
+  bool get showsCommuneList =>
+      selectedPlace == null && lowerLevelPlaces.isNotEmpty;
+
+  final String title;
+  final String typeLabel;
+  final String locationContext;
+  final ProvinceBoundary? selectedProvince;
+  final LowerLevelPlace? selectedPlace;
+  final double? area;
+  final int? population;
+  final double? density;
+  final String? capital;
+  final String? decree;
+  final String? decreeUrl;
+  final String? predecessors;
+  final String? address;
+  final String? phone;
+  final List<LowerLevelPlace> lowerLevelPlaces;
+  final String? macroRegion;
+}
+
+class _LocationHeader extends StatelessWidget {
+  const _LocationHeader({
+    required this.controller,
+    required this.details,
+  });
+
+  final VietnamMapController controller;
+  final _LocationDetailsData details;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: details.selectedPlace != null
+              ? 'Quay lại tỉnh/thành'
+              : 'Quay lại tìm kiếm và bộ lọc',
+          onPressed: _handleBack,
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Text(
+                details.title,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
               ),
+              const SizedBox(height: 4),
+              _LocationBadges(details: details),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleBack() {
+    if (details.selectedPlace != null) {
+      controller.clearPlaceSelection();
+      return;
+    }
+    controller.clearSelection();
+  }
+}
+
+class _LocationBadges extends StatelessWidget {
+  const _LocationBadges({required this.details});
+
+  final _LocationDetailsData details;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: [
+        _LocationBadge(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          textColor: Theme.of(context).colorScheme.onPrimaryContainer,
+          label: details.typeLabel.toUpperCase(),
+        ),
+        if (details.macroRegion != null)
+          _LocationBadge(
+            color: Theme.of(context).colorScheme.secondaryContainer,
+            textColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            label: details.macroRegion!.replaceAll('_', ' ').toUpperCase(),
+          ),
+      ],
+    );
+  }
+}
+
+class _LocationBadge extends StatelessWidget {
+  const _LocationBadge({
+    required this.color,
+    required this.textColor,
+    required this.label,
+  });
+
+  final Color color;
+  final Color textColor;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 9,
             ),
-          )
-        else ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    icon: Icons.square_foot_outlined,
-                    label: 'Diện tích',
-                    value:
-                        area != null ? '${_formatDouble(area)} km²' : 'Chưa có',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _StatCard(
-                    icon: Icons.people_outline,
-                    label: 'Dân số',
-                    value: population != null
-                        ? _formatNumber(population)
-                        : 'Chưa có',
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _StatCard(
-                    icon: Icons.density_medium_outlined,
-                    label: 'Mật độ',
-                    value: density != null
-                        ? '${_formatDouble(density)}/km²'
-                        : 'Chưa có',
-                  ),
-                ),
-              ],
+      ),
+    );
+  }
+}
+
+class _LocationDetailsLoading extends StatelessWidget {
+  const _LocationDetailsLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 24.0),
+      child: Center(
+        child: Column(
+          children: [
+            CircularProgressIndicator(strokeWidth: 3),
+            SizedBox(height: 12),
+            Text('Đang tải chi tiết từ cơ sở dữ liệu...'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LocationLoadedDetails extends StatelessWidget {
+  const _LocationLoadedDetails({
+    required this.controller,
+    required this.details,
+  });
+
+  final VietnamMapController controller;
+  final _LocationDetailsData details;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _LocationStatsRow(details: details),
+        const SizedBox(height: 20),
+        if (details.capital != null && details.capital!.isNotEmpty)
+          _InfoRow(
+            icon: Icons.location_city_outlined,
+            label: details.selectedPlace != null ? 'Trụ sở' : 'Thủ phủ',
+            value: details.capital!,
+          ),
+        if (details.address != null && details.address!.isNotEmpty)
+          _InfoRow(
+            icon: Icons.home_outlined,
+            label: 'Địa chỉ',
+            value: details.address!,
+          ),
+        if (details.phone != null && details.phone!.isNotEmpty)
+          _InfoRow(
+            icon: Icons.phone_outlined,
+            label: 'Điện thoại',
+            value: details.phone!,
+          ),
+        if (details.decree != null && details.decree!.isNotEmpty)
+          _DecreeInfoSection(decree: details.decree!, url: details.decreeUrl),
+        if (details.predecessors != null && details.predecessors!.isNotEmpty)
+          _PredecessorsInfoSection(predecessors: details.predecessors!),
+        if (details.showsCommuneList)
+          _CommuneListSection(
+            places: details.lowerLevelPlaces,
+            onPlaceSelected: controller.selectLowerLevelPlace,
+          ),
+        const SizedBox(height: 24),
+        _CenterLocationButton(
+          controller: controller,
+          details: details,
+        ),
+      ],
+    );
+  }
+}
+
+class _LocationStatsRow extends StatelessWidget {
+  const _LocationStatsRow({required this.details});
+
+  final _LocationDetailsData details;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _StatCard(
+              icon: Icons.square_foot_outlined,
+              label: _areaLabel,
+              value: details.area != null
+                  ? '${_formatDouble(details.area)} km²'
+                  : _missingValueLabel,
             ),
           ),
-          const SizedBox(height: 20),
-          if (capital != null && capital.isNotEmpty)
-            _InfoRow(
-              icon: Icons.location_city_outlined,
-              label: selectedPlace != null ? 'Trụ sở' : 'Thủ phủ',
-              value: capital,
+          const SizedBox(width: 8),
+          Expanded(
+            child: _StatCard(
+              icon: Icons.people_outline,
+              label: _populationLabel,
+              value: details.population != null
+                  ? _formatNumber(details.population)
+                  : _missingValueLabel,
             ),
-          if (address != null && address.isNotEmpty)
-            _InfoRow(
-              icon: Icons.home_outlined,
-              label: 'Địa chỉ',
-              value: address,
-            ),
-          if (phone != null && phone.isNotEmpty)
-            _InfoRow(
-              icon: Icons.phone_outlined,
-              label: 'Điện thoại',
-              value: phone,
-            ),
-          if (decree != null && decree.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _InfoSection(
-              title: 'Nghị quyết / Cơ sở pháp lý',
-              icon: Icons.gavel_outlined,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    decree,
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  if (decreeUrl != null && decreeUrl.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.copy_all, size: 16),
-                      label: const Text('Sao chép liên kết nguồn'),
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: decreeUrl));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Đã sao chép liên kết nghị quyết vào bảng tạm!'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-          if (predecessors != null && predecessors.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _InfoSection(
-              title: 'Lịch sử hình thành',
-              icon: Icons.history_outlined,
-              child: Text(
-                predecessors,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-          ],
-          if (selectedPlace == null &&
-              controller.selectedLowerLevelPlaces.isNotEmpty)
-            _CommuneListSection(
-              places: controller.selectedLowerLevelPlaces,
-              onPlaceSelected: controller.selectLowerLevelPlace,
-            ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.center_focus_strong_outlined),
-              label: const Text('Căn giữa vị trí trên bản đồ'),
-              onPressed: () {
-                if (selectedPlace != null) {
-                  controller.selectLowerLevelPlace(selectedPlace);
-                } else if (selectedProvince != null) {
-                  controller.selectProvinceAt(selectedProvince.labelCoordinate);
-                }
-              },
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _StatCard(
+              icon: Icons.density_medium_outlined,
+              label: _densityLabel,
+              value: details.density != null
+                  ? '${_formatDouble(details.density)}/km²'
+                  : _missingValueLabel,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DecreeInfoSection extends StatelessWidget {
+  const _DecreeInfoSection({
+    required this.decree,
+    required this.url,
+  });
+
+  final String decree;
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    final decreeUrl = url;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 12),
+        _InfoSection(
+          title: 'Nghị quyết / Cơ sở pháp lý',
+          icon: Icons.gavel_outlined,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                decree,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              if (decreeUrl != null && decreeUrl.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.copy_all, size: 16),
+                  label: const Text('Sao chép liên kết nguồn'),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: decreeUrl));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Đã sao chép liên kết nghị quyết vào bảng tạm!',
+                        ),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
       ],
     );
+  }
+}
+
+class _PredecessorsInfoSection extends StatelessWidget {
+  const _PredecessorsInfoSection({required this.predecessors});
+
+  final String predecessors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 12),
+        _InfoSection(
+          title: 'Lịch sử hình thành',
+          icon: Icons.history_outlined,
+          child: Text(
+            predecessors,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontStyle: FontStyle.italic,
+                ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CenterLocationButton extends StatelessWidget {
+  const _CenterLocationButton({
+    required this.controller,
+    required this.details,
+  });
+
+  final VietnamMapController controller;
+  final _LocationDetailsData details;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.center_focus_strong_outlined),
+        label: const Text('Căn giữa vị trí trên bản đồ'),
+        onPressed: _centerLocation,
+      ),
+    );
+  }
+
+  void _centerLocation() {
+    final selectedPlace = details.selectedPlace;
+    if (selectedPlace != null) {
+      controller.selectLowerLevelPlace(selectedPlace);
+      return;
+    }
+
+    final selectedProvince = details.selectedProvince;
+    if (selectedProvince != null) {
+      controller.selectProvinceAt(selectedProvince.labelCoordinate);
+    }
   }
 }
 
@@ -970,7 +1185,7 @@ class _CommuneListSectionState extends State<_CommuneListSection> {
 }
 
 String _formatNumber(int? value) {
-  if (value == null) return 'Chưa có';
+  if (value == null) return _missingValueLabel;
   return value.toString().replaceAllMapped(
         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
         (Match m) => '${m[1]},',
@@ -978,7 +1193,7 @@ String _formatNumber(int? value) {
 }
 
 String _formatDouble(double? value, {int decimalPlaces = 1}) {
-  if (value == null) return 'Chưa có';
+  if (value == null) return _missingValueLabel;
   return value.toStringAsFixed(decimalPlaces);
 }
 

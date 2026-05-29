@@ -1,7 +1,7 @@
 #ifndef RUNNER_WIN32_WINDOW_H_
 #define RUNNER_WIN32_WINDOW_H_
 
-#include <windows.h>
+#include <Windows.h>
 
 #include <functional>
 #include <memory>
@@ -89,6 +89,8 @@ class Win32Window {
 
   // Update the window frame's theme to match the system theme.
   static void UpdateTheme(HWND const window);
+
+  void DestroyWindowHandle();
 
   bool quit_on_close_ = false;
 

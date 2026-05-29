@@ -6,9 +6,13 @@
 # Check if we have git available at the repo root
 has_git() {
     local repo_root="${1:-$(pwd)}"
-    { [ -d "$repo_root/.git" ] || [ -f "$repo_root/.git" ]; } && \
-        command -v git >/dev/null 2>&1 && \
-        git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1
+    if [[ -d "$repo_root/.git" || -f "$repo_root/.git" ]] &&
+        command -v git >/dev/null 2>&1 &&
+        git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        return 0
+    fi
+
+    return 1
 }
 
 # Strip a single optional path segment (e.g. gitflow "feat/004-name" -> "004-name").
@@ -20,6 +24,8 @@ spec_kit_effective_branch_name() {
     else
         printf '%s\n' "$raw"
     fi
+
+    return 0
 }
 
 # Validate that a branch name matches the expected feature branch pattern.

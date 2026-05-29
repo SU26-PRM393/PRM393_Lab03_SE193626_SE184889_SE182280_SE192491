@@ -1,5 +1,7 @@
 #include "win32_window.h"
 
+#include <cstring>
+
 #include <dwmapi.h>
 #include <flutter_windows.h>
 
@@ -26,10 +28,23 @@ constexpr const wchar_t kGetPreferredBrightnessRegKey[] =
   L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
 constexpr const wchar_t kGetPreferredBrightnessRegValue[] = L"AppsUseLightTheme";
 
-// The number of Win32Window objects that currently exist.
-static int g_active_window_count = 0;
-
 using EnableNonClientDpiScaling = BOOL __stdcall(HWND hwnd);
+
+int active_window_count = 0;
+
+template <typename Target, typename Source>
+Target Win32InteropCast(Source value) noexcept {
+  static_assert(sizeof(Target) == sizeof(Source),
+                "Win32 interop casts must preserve pointer-sized values");
+  Target result;
+  std::memcpy(&result, &value, sizeof(result));
+  return result;
+}
+
+int& ActiveWindowCount() {
+  // The number of Win32Window objects that currently exist.
+  return active_window_count;
+}
 
 // Scale helper to convert logical scaler values to physical using passed in
 // scale factor
@@ -44,10 +59,10 @@ void EnableFullDpiSupportIfAvailable(HWND hwnd) {
   if (!user32_module) {
     return;
   }
-  auto enable_non_client_dpi_scaling =
-      reinterpret_cast<EnableNonClientDpiScaling*>(
-          GetProcAddress(user32_module, "EnableNonClientDpiScaling"));
-  if (enable_non_client_dpi_scaling != nullptr) {
+  if (auto enable_non_client_dpi_scaling =
+          Win32InteropCast<EnableNonClientDpiScaling*>(
+              GetProcAddress(user32_module, "EnableNonClientDpiScaling"));
+      enable_non_client_dpi_scaling != nullptr) {
     enable_non_client_dpi_scaling(hwnd);
   }
   FreeLibrary(user32_module);
@@ -62,10 +77,8 @@ class WindowClassRegistrar {
 
   // Returns the singleton registrar instance.
   static WindowClassRegistrar* GetInstance() {
-    if (!instance_) {
-      instance_ = new WindowClassRegistrar();
-    }
-    return instance_;
+    static WindowClassRegistrar instance;
+    return &instance;
   }
 
   // Returns the name of the window class, registering the class if it hasn't
@@ -79,12 +92,8 @@ class WindowClassRegistrar {
  private:
   WindowClassRegistrar() = default;
 
-  static WindowClassRegistrar* instance_;
-
   bool class_registered_ = false;
 };
-
-WindowClassRegistrar* WindowClassRegistrar::instance_ = nullptr;
 
 const wchar_t* WindowClassRegistrar::GetWindowClass() {
   if (!class_registered_) {
@@ -97,7 +106,7 @@ const wchar_t* WindowClassRegistrar::GetWindowClass() {
     window_class.hInstance = GetModuleHandle(nullptr);
     window_class.hIcon =
         LoadIcon(window_class.hInstance, MAKEINTRESOURCE(IDI_APP_ICON));
-    window_class.hbrBackground = 0;
+    window_class.hbrBackground = nullptr;
     window_class.lpszMenuName = nullptr;
     window_class.lpfnWndProc = Win32Window::WndProc;
     RegisterClass(&window_class);
@@ -112,12 +121,12 @@ void WindowClassRegistrar::UnregisterWindowClass() {
 }
 
 Win32Window::Win32Window() {
-  ++g_active_window_count;
+  ++ActiveWindowCount();
 }
 
 Win32Window::~Win32Window() {
-  --g_active_window_count;
-  Destroy();
+  --ActiveWindowCount();
+  DestroyWindowHandle();
 }
 
 bool Win32Window::Create(const std::wstring& title,
@@ -159,9 +168,10 @@ LRESULT CALLBACK Win32Window::WndProc(HWND const window,
                                       WPARAM const wparam,
                                       LPARAM const lparam) noexcept {
   if (message == WM_NCCREATE) {
-    auto window_struct = reinterpret_cast<CREATESTRUCT*>(lparam);
+    auto window_struct = Win32InteropCast<CREATESTRUCT*>(lparam);
     SetWindowLongPtr(window, GWLP_USERDATA,
-                     reinterpret_cast<LONG_PTR>(window_struct->lpCreateParams));
+                     Win32InteropCast<LONG_PTR>(
+                         window_struct->lpCreateParams));
 
     auto that = static_cast<Win32Window*>(window_struct->lpCreateParams);
     EnableFullDpiSupportIfAvailable(window);
@@ -188,7 +198,7 @@ Win32Window::MessageHandler(HWND hwnd,
       return 0;
 
     case WM_DPICHANGED: {
-      auto newRectSize = reinterpret_cast<RECT*>(lparam);
+      auto newRectSize = Win32InteropCast<RECT*>(lparam);
       LONG newWidth = newRectSize->right - newRectSize->left;
       LONG newHeight = newRectSize->bottom - newRectSize->top;
 
@@ -223,19 +233,22 @@ Win32Window::MessageHandler(HWND hwnd,
 
 void Win32Window::Destroy() {
   OnDestroy();
+  DestroyWindowHandle();
+}
 
+void Win32Window::DestroyWindowHandle() {
   if (window_handle_) {
-    DestroyWindow(window_handle_);
+    HWND window = window_handle_;
     window_handle_ = nullptr;
+    DestroyWindow(window);
   }
-  if (g_active_window_count == 0) {
+  if (ActiveWindowCount() == 0) {
     WindowClassRegistrar::GetInstance()->UnregisterWindowClass();
   }
 }
 
 Win32Window* Win32Window::GetThisFromHandle(HWND const window) noexcept {
-  return reinterpret_cast<Win32Window*>(
-      GetWindowLongPtr(window, GWLP_USERDATA));
+  return Win32InteropCast<Win32Window*>(GetWindowLongPtr(window, GWLP_USERDATA));
 }
 
 void Win32Window::SetChildContent(HWND content) {

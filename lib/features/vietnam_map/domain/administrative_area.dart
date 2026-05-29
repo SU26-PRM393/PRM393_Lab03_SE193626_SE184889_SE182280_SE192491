@@ -125,6 +125,36 @@ class AdministrativeAreaMetric {
   final double? density;
 }
 
+class AdministrativeAreaSearchData {
+  const AdministrativeAreaSearchData({
+    required this.provinces,
+    required this.lowerLevelPlaces,
+    required this.provinceMetricsByCode,
+    required this.lowerLevelMetricsByCode,
+  });
+
+  final List<ProvinceBoundary> provinces;
+  final List<LowerLevelPlace> lowerLevelPlaces;
+  final Map<String, AdministrativeAreaMetric> provinceMetricsByCode;
+  final Map<String, AdministrativeAreaMetric> lowerLevelMetricsByCode;
+}
+
+class AdministrativeAreaSearchCriteria {
+  const AdministrativeAreaSearchCriteria({
+    required this.searchText,
+    required this.selectedLevel,
+    required this.selectedFilters,
+    required this.sortOption,
+    required this.sortDirection,
+  });
+
+  final String searchText;
+  final AdministrativeAreaLevel selectedLevel;
+  final Set<AdministrativeAreaFilter> selectedFilters;
+  final String sortOption;
+  final AdministrativeAreaSortDirection sortDirection;
+}
+
 class AdministrativeAreaSearchResult {
   const AdministrativeAreaSearchResult({
     required this.id,
@@ -166,20 +196,13 @@ class AdministrativeAreaSearchResult {
 
 class AdministrativeAreaSearchEngine {
   static List<AdministrativeAreaSearchResult> filterAndSort({
-    required List<ProvinceBoundary> provinces,
-    required List<LowerLevelPlace> lowerLevelPlaces,
-    required String searchText,
-    required AdministrativeAreaLevel selectedLevel,
-    required Set<AdministrativeAreaFilter> selectedFilters,
-    required String sortOption,
-    required AdministrativeAreaSortDirection sortDirection,
-    required Map<String, AdministrativeAreaMetric> provinceMetricsByCode,
-    required Map<String, AdministrativeAreaMetric> lowerLevelMetricsByCode,
+    required AdministrativeAreaSearchData data,
+    required AdministrativeAreaSearchCriteria criteria,
   }) {
-    final normalizedQuery = _normalizeForSearch(searchText);
+    final normalizedQuery = _normalizeForSearch(criteria.searchText);
 
     final results = <AdministrativeAreaSearchResult>[
-      for (final province in provinces)
+      for (final province in data.provinces)
         AdministrativeAreaSearchResult(
           id: 'province:${province.id}',
           name: province.name,
@@ -190,11 +213,12 @@ class AdministrativeAreaSearchEngine {
             '${province.name} Province • ${province.provinceCode}',
           ),
           provinceBoundary: province,
-          areaKm2: provinceMetricsByCode[province.provinceCode]?.areaKm2,
-          population: provinceMetricsByCode[province.provinceCode]?.population,
-          density: provinceMetricsByCode[province.provinceCode]?.density,
+          areaKm2: data.provinceMetricsByCode[province.provinceCode]?.areaKm2,
+          population:
+              data.provinceMetricsByCode[province.provinceCode]?.population,
+          density: data.provinceMetricsByCode[province.provinceCode]?.density,
         ),
-      for (final place in lowerLevelPlaces)
+      for (final place in data.lowerLevelPlaces)
         AdministrativeAreaSearchResult(
           id: 'place:${place.id}',
           name: place.name,
@@ -204,64 +228,99 @@ class AdministrativeAreaSearchEngine {
           normalizedSearchText:
               _normalizeForSearch('${place.name} ${place.parentName}'),
           lowerLevelPlace: place,
-          areaKm2: lowerLevelMetricsByCode[place.code]?.areaKm2,
-          population: lowerLevelMetricsByCode[place.code]?.population,
-          density: lowerLevelMetricsByCode[place.code]?.density,
+          areaKm2: data.lowerLevelMetricsByCode[place.code]?.areaKm2,
+          population: data.lowerLevelMetricsByCode[place.code]?.population,
+          density: data.lowerLevelMetricsByCode[place.code]?.density,
         ),
     ]
-      ..retainWhere((result) => selectedFilters.contains(result.filter))
-      ..retainWhere((result) {
-        if (selectedLevel == AdministrativeAreaLevel.all) {
-          return true;
-        }
+      ..retainWhere(
+        (result) => criteria.selectedFilters.contains(result.filter),
+      )
+      ..retainWhere(
+        (result) => _matchesSelectedLevel(result, criteria.selectedLevel),
+      )
+      ..retainWhere((result) => _matchesSearchText(result, normalizedQuery));
 
-        return selectedLevel == AdministrativeAreaLevel.province
-            ? result.filter == AdministrativeAreaFilter.province
-            : result.filter != AdministrativeAreaFilter.province;
-      })
-      ..retainWhere((result) {
-        if (normalizedQuery.isEmpty) {
-          return true;
-        }
-
-        return result.normalizedSearchText.contains(normalizedQuery);
-      });
-
-    results.sort((left, right) {
-      final comparison = _compareSortValues(
+    results.sort(
+      (left, right) => _compareResults(
         left,
         right,
-        sortOption,
-        sortDirection,
-      );
-
-      if (comparison != 0) {
-        return comparison;
-      }
-
-      if (sortOption == 'Name') {
-        final comparison =
-            left.normalizedSearchText.compareTo(right.normalizedSearchText);
-        if (comparison != 0) {
-          return sortDirection == AdministrativeAreaSortDirection.ascending
-              ? comparison
-              : -comparison;
-        }
-
-        final fallback = left.name.compareTo(right.name);
-        return sortDirection == AdministrativeAreaSortDirection.ascending
-            ? fallback
-            : -fallback;
-      }
-
-      return _compareNames(
-        left.name,
-        right.name,
-        AdministrativeAreaSortDirection.ascending,
-      );
-    });
+        criteria.sortOption,
+        criteria.sortDirection,
+      ),
+    );
 
     return results;
+  }
+
+  static bool _matchesSelectedLevel(
+    AdministrativeAreaSearchResult result,
+    AdministrativeAreaLevel selectedLevel,
+  ) {
+    switch (selectedLevel) {
+      case AdministrativeAreaLevel.all:
+        return true;
+      case AdministrativeAreaLevel.province:
+        return result.filter == AdministrativeAreaFilter.province;
+      case AdministrativeAreaLevel.city:
+      case AdministrativeAreaLevel.district:
+        return result.filter != AdministrativeAreaFilter.province;
+    }
+  }
+
+  static bool _matchesSearchText(
+    AdministrativeAreaSearchResult result,
+    String normalizedQuery,
+  ) {
+    return normalizedQuery.isEmpty ||
+        result.normalizedSearchText.contains(normalizedQuery);
+  }
+
+  static int _compareResults(
+    AdministrativeAreaSearchResult left,
+    AdministrativeAreaSearchResult right,
+    String sortOption,
+    AdministrativeAreaSortDirection sortDirection,
+  ) {
+    final comparison = _compareSortValues(
+      left,
+      right,
+      sortOption,
+      sortDirection,
+    );
+
+    if (comparison != 0) {
+      return comparison;
+    }
+
+    if (sortOption == 'Name') {
+      return _compareSearchTextAndName(left, right, sortDirection);
+    }
+
+    return _compareNames(
+      left.name,
+      right.name,
+      AdministrativeAreaSortDirection.ascending,
+    );
+  }
+
+  static int _compareSearchTextAndName(
+    AdministrativeAreaSearchResult left,
+    AdministrativeAreaSearchResult right,
+    AdministrativeAreaSortDirection sortDirection,
+  ) {
+    final comparison =
+        left.normalizedSearchText.compareTo(right.normalizedSearchText);
+    if (comparison != 0) {
+      return sortDirection == AdministrativeAreaSortDirection.ascending
+          ? comparison
+          : -comparison;
+    }
+
+    final fallback = left.name.compareTo(right.name);
+    return sortDirection == AdministrativeAreaSortDirection.ascending
+        ? fallback
+        : -fallback;
   }
 
   static int _compareSortValues(

@@ -10,6 +10,8 @@ import 'package:vietnam_map_flutter/features/vietnam_map/database/import_service
 import 'dart:io';
 
 void main() {
+  const committeeName = 'Ủy ban nhân dân';
+
   setUpAll(() async {
     // Initialize Isar for testing
     await Isar.initializeIsarCore(download: true);
@@ -33,7 +35,7 @@ void main() {
   group('Isar Data Consistency Tests', () {
     test('Can import and verify all real Provinces', () async {
       // Use the absolute path or relative path to the json file for the test
-      final jsonPath = 'lib/features/vietnam_map/assets/data/provinces.json';
+      const jsonPath = 'lib/features/vietnam_map/assets/data/provinces.json';
 
       await ImportService.importProvinces(jsonPath);
 
@@ -100,7 +102,7 @@ void main() {
       final committee = Committee()
         ..dataId = 'committee_1'
         ..ma = 'comm_ma_1'
-        ..ten = 'Ủy ban nhân dân'
+        ..ten = committeeName
         ..address = '456 Committee Rd'
         ..phone = '0123456789'
         ..areaKm2 = 12.34
@@ -114,11 +116,11 @@ void main() {
 
       final savedCommittee = await IsarService.isar.committees
           .filter()
-          .tenEqualTo('Ủy ban nhân dân')
+          .tenEqualTo(committeeName)
           .findFirst();
 
       expect(savedCommittee, isNotNull);
-      expect(savedCommittee!.ten, equals('Ủy ban nhân dân'));
+      expect(savedCommittee!.ten, equals(committeeName));
       expect(savedCommittee.ma, equals('comm_ma_1'));
       expect(savedCommittee.address, equals('456 Committee Rd'));
       expect(savedCommittee.phone, equals('0123456789'));
@@ -138,7 +140,7 @@ void main() {
       }
     });
     test('Can import and verify all real Communes', () async {
-      final jsonPath = 'lib/features/vietnam_map/assets/data/communes.json';
+      const jsonPath = 'lib/features/vietnam_map/assets/data/communes.json';
 
       await ImportService.importCommunes(jsonPath);
 
@@ -177,7 +179,7 @@ void main() {
       print('Verified commune: ${truongSa.ten} (${truongSa.ma})');
     });
     test('Can import and verify all real Committees', () async {
-      final jsonPath = 'lib/features/vietnam_map/assets/data/committees.json';
+      const jsonPath = 'lib/features/vietnam_map/assets/data/committees.json';
 
       await ImportService.importCommittees(jsonPath);
 

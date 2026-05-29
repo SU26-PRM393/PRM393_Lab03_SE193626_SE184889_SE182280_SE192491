@@ -12,7 +12,7 @@ param(
     [string]$SonarVersion = "community"
 )
 
-Write-Host "=== SonarQube Integration Setup ===" -ForegroundColor Cyan
+Write-Output "=== SonarQube Integration Setup ==="
 
 # Function to check if Docker is installed
 function Test-Docker {
@@ -27,11 +27,11 @@ function Test-Docker {
 
 # Function to start SonarQube with Docker
 function Start-SonarQubeDocker {
-    Write-Host "Starting SonarQube Community Edition with Docker..." -ForegroundColor Yellow
+    Write-Output "Starting SonarQube Community Edition with Docker..."
 
     if (-not (Test-Docker)) {
-        Write-Host "Docker is not installed. Please install Docker first." -ForegroundColor Red
-        Write-Host "Download from: https://www.docker.com/products/docker-desktop" -ForegroundColor White
+        Write-Output "Docker is not installed. Please install Docker first."
+        Write-Output "Download from: https://www.docker.com/products/docker-desktop"
         return $false
     }
 
@@ -39,11 +39,11 @@ function Start-SonarQubeDocker {
     $existingContainer = docker ps -a --filter "name=sonarqube" --format "{{.Names}}"
 
     if ($existingContainer) {
-        Write-Host "SonarQube container already exists. Starting it..." -ForegroundColor Yellow
+        Write-Output "SonarQube container already exists. Starting it..."
         docker start sonarqube
     }
     else {
-        Write-Host "Creating and starting new SonarQube container..." -ForegroundColor Yellow
+        Write-Output "Creating and starting new SonarQube container..."
         docker run -d `
             --name sonarqube `
             -p 9000:9000 `
@@ -52,7 +52,7 @@ function Start-SonarQubeDocker {
             sonarqube:community
     }
 
-    Write-Host "Waiting for SonarQube to start (this may take 30-60 seconds)..." -ForegroundColor Yellow
+    Write-Output "Waiting for SonarQube to start (this may take 30-60 seconds)..."
     Start-Sleep -Seconds 10
 
     # Wait for SonarQube to be ready
@@ -63,7 +63,7 @@ function Start-SonarQubeDocker {
         try {
             $response = Invoke-WebRequest -Uri "http://localhost:9000/api/system/health" -ErrorAction SilentlyContinue
             if ($response.StatusCode -eq 200) {
-                Write-Host "SonarQube is ready!" -ForegroundColor Green
+                Write-Output "SonarQube is ready!"
                 return $true
             }
         }
@@ -73,38 +73,38 @@ function Start-SonarQubeDocker {
         }
     }
 
-    Write-Host "SonarQube started (may still be initializing). Proceeding..." -ForegroundColor Yellow
+    Write-Output "SonarQube started (may still be initializing). Proceeding..."
     return $true
 }
 
 # Function to generate Dart analysis report
 function Generate-DartAnalysisReport {
-    Write-Host "Generating Dart analysis report..." -ForegroundColor Yellow
+    Write-Output "Generating Dart analysis report..."
 
     dart analyze lib/ --format=json > analysis.json
 
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "Dart analysis report generated: analysis.json" -ForegroundColor Green
+        Write-Output "Dart analysis report generated: analysis.json"
         return $true
     }
     else {
-        Write-Host "Warning: Dart analysis completed with issues (non-zero exit code)" -ForegroundColor Yellow
+        Write-Output "Warning: Dart analysis completed with issues (non-zero exit code)"
         return $true
     }
 }
 
 # Function to generate code coverage report
 function Generate-CoverageReport {
-    Write-Host "Generating code coverage report..." -ForegroundColor Yellow
+    Write-Output "Generating code coverage report..."
 
     flutter test --coverage
 
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "Code coverage report generated: coverage/lcov.info" -ForegroundColor Green
+        Write-Output "Code coverage report generated: coverage/lcov.info"
         return $true
     }
     else {
-        Write-Host "Warning: Some tests may have failed" -ForegroundColor Yellow
+        Write-Output "Warning: Some tests may have failed"
         return $true
     }
 }
@@ -116,22 +116,22 @@ function Run-SonarAnalysis {
         [string]$Token
     )
 
-    Write-Host "Running SonarQube analysis..." -ForegroundColor Yellow
+    Write-Output "Running SonarQube analysis..."
 
-    # Check if sonar-scanner is available
-    $sonarScannerPath = (Get-Command sonar-scanner -ErrorAction SilentlyContinue).Path
+    # Check if SonarScanner is available
+    $sonarScannerPath = (Get-Command Sonar-Scanner -ErrorAction SilentlyContinue).Path
 
     if (-not $sonarScannerPath) {
-        Write-Host "SonarScanner not found in PATH" -ForegroundColor Red
-        Write-Host "Please install SonarScanner:" -ForegroundColor White
-        Write-Host "  1. Download from: https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner/" -ForegroundColor White
-        Write-Host "  2. Extract and add 'bin' directory to PATH" -ForegroundColor White
-        Write-Host "  3. Run this script again" -ForegroundColor White
+        Write-Output "SonarScanner not found in PATH"
+        Write-Output "Please install SonarScanner:"
+        Write-Output "  1. Download from: https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner/"
+        Write-Output "  2. Extract and add 'bin' directory to PATH"
+        Write-Output "  3. Run this script again"
         return $false
     }
 
     # Run analysis
-    sonar-scanner `
+    Sonar-Scanner `
         -Dsonar.projectKey=vietnam-map-flutter `
         -Dsonar.sources=lib `
         -Dsonar.tests=test `
@@ -139,52 +139,52 @@ function Run-SonarAnalysis {
         -Dsonar.login=$Token
 
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "SonarQube analysis completed successfully!" -ForegroundColor Green
+        Write-Output "SonarQube analysis completed successfully!"
         return $true
     }
     else {
-        Write-Host "SonarQube analysis failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+        Write-Output "SonarQube analysis failed with exit code: $LASTEXITCODE"
         return $false
     }
 }
 
 # Main execution
-Write-Host ""
-Write-Host "Configuration:" -ForegroundColor Cyan
-Write-Host "  SonarQube Host: $SonarHost"
-Write-Host "  SonarQube Version: $SonarVersion"
-Write-Host ""
+Write-Output ""
+Write-Output "Configuration:"
+Write-Output "  SonarQube Host: $SonarHost"
+Write-Output "  SonarQube Version: $SonarVersion"
+Write-Output ""
 
 # Step 1: Start SonarQube
 $sonarStarted = Start-SonarQubeDocker
 if (-not $sonarStarted) {
-    Write-Host "Failed to start SonarQube. Exiting." -ForegroundColor Red
+    Write-Output "Failed to start SonarQube. Exiting."
     exit 1
 }
 
-Write-Host ""
+Write-Output ""
 
 # Step 2: Generate reports
 $dartAnalysisGenerated = Generate-DartAnalysisReport
-Write-Host ""
+Write-Output ""
 
 $coverageGenerated = Generate-CoverageReport
-Write-Host ""
+Write-Output ""
 
 # Step 3: Run analysis
 $analysisCompleted = Run-SonarAnalysis -Host $SonarHost -Token $SonarToken
-Write-Host ""
+Write-Output ""
 
 if ($analysisCompleted) {
-    Write-Host "=== Setup Complete ===" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "View your analysis results:" -ForegroundColor Cyan
-    Write-Host "  URL: $SonarHost" -ForegroundColor White
-    Write-Host "  Project Key: vietnam-map-flutter" -ForegroundColor White
-    Write-Host ""
+    Write-Output "=== Setup Complete ==="
+    Write-Output ""
+    Write-Output "View your analysis results:"
+    Write-Output "  URL: $SonarHost"
+    Write-Output "  Project Key: vietnam-map-flutter"
+    Write-Output ""
 }
 else {
-    Write-Host "=== Setup Incomplete ===" -ForegroundColor Yellow
-    Write-Host "Please review errors above and try again." -ForegroundColor Yellow
+    Write-Output "=== Setup Incomplete ==="
+    Write-Output "Please review errors above and try again."
 }
 

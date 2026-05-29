@@ -6,11 +6,14 @@ import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_boundary.dar
 
 void main() {
   group('AdministrativeAreaSearchEngine', () {
+    const hanoiName = 'Hà Nội';
+    const hoChiMinhName = 'Hồ Chí Minh';
+
     final provinces = <ProvinceBoundary>[
       ProvinceBoundary(
         id: 'p1',
         provinceCode: '01',
-        name: 'Hà Nội',
+        name: hanoiName,
         level: 'Province',
         polygons: [
           BoundaryPolygon(
@@ -29,7 +32,7 @@ void main() {
       ProvinceBoundary(
         id: 'p2',
         provinceCode: '79',
-        name: 'Hồ Chí Minh',
+        name: hoChiMinhName,
         level: 'Province',
         polygons: [
           BoundaryPolygon(
@@ -54,7 +57,7 @@ void main() {
         name: 'Bạch Mai',
         level: 'ward',
         parentCode: '01',
-        parentName: 'Hà Nội',
+        parentName: hanoiName,
         coordinate: LatLng(21.0, 105.85),
       ),
       const LowerLevelPlace(
@@ -63,7 +66,7 @@ void main() {
         name: 'Đống Đa',
         level: 'commune',
         parentCode: '01',
-        parentName: 'Hà Nội',
+        parentName: hanoiName,
         coordinate: LatLng(21.02, 105.83),
       ),
       const LowerLevelPlace(
@@ -72,7 +75,7 @@ void main() {
         name: 'Thành phố Sài Gòn',
         level: 'special_zone',
         parentCode: '79',
-        parentName: 'Hồ Chí Minh',
+        parentName: hoChiMinhName,
         coordinate: LatLng(10.76, 106.66),
       ),
     ];
@@ -110,34 +113,42 @@ void main() {
 
     test('filters by search text and selected level, then sorts by name', () {
       final results = AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: provinces,
-        lowerLevelPlaces: places,
-        searchText: 'ha',
-        selectedLevel: AdministrativeAreaLevel.province,
-        selectedFilters: {AdministrativeAreaFilter.province},
-        sortOption: 'Name',
-        sortDirection: AdministrativeAreaSortDirection.ascending,
-        provinceMetricsByCode: provinceMetrics,
-        lowerLevelMetricsByCode: lowerLevelMetrics,
+        data: AdministrativeAreaSearchData(
+          provinces: provinces,
+          lowerLevelPlaces: places,
+          provinceMetricsByCode: provinceMetrics,
+          lowerLevelMetricsByCode: lowerLevelMetrics,
+        ),
+        criteria: const AdministrativeAreaSearchCriteria(
+          searchText: 'ha',
+          selectedLevel: AdministrativeAreaLevel.province,
+          selectedFilters: {AdministrativeAreaFilter.province},
+          sortOption: 'Name',
+          sortDirection: AdministrativeAreaSortDirection.ascending,
+        ),
       );
 
-      expect(results.map((result) => result.name).toList(), ['Hà Nội']);
+      expect(results.map((result) => result.name).toList(), [hanoiName]);
     });
 
     test('filters by city and district chips and keeps alphabetical order', () {
       final results = AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: provinces,
-        lowerLevelPlaces: places,
-        searchText: '',
-        selectedLevel: AdministrativeAreaLevel.district,
-        selectedFilters: {
-          AdministrativeAreaFilter.city,
-          AdministrativeAreaFilter.district,
-        },
-        sortOption: 'Name',
-        sortDirection: AdministrativeAreaSortDirection.ascending,
-        provinceMetricsByCode: provinceMetrics,
-        lowerLevelMetricsByCode: lowerLevelMetrics,
+        data: AdministrativeAreaSearchData(
+          provinces: provinces,
+          lowerLevelPlaces: places,
+          provinceMetricsByCode: provinceMetrics,
+          lowerLevelMetricsByCode: lowerLevelMetrics,
+        ),
+        criteria: const AdministrativeAreaSearchCriteria(
+          searchText: '',
+          selectedLevel: AdministrativeAreaLevel.district,
+          selectedFilters: {
+            AdministrativeAreaFilter.city,
+            AdministrativeAreaFilter.district,
+          },
+          sortOption: 'Name',
+          sortDirection: AdministrativeAreaSortDirection.ascending,
+        ),
       );
 
       expect(
@@ -148,82 +159,102 @@ void main() {
 
     test('sorts by area, population, and density when requested', () {
       final areaResults = AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: provinces,
-        lowerLevelPlaces: const [],
-        searchText: '',
-        selectedLevel: AdministrativeAreaLevel.all,
-        selectedFilters: {AdministrativeAreaFilter.province},
-        sortOption: 'Area',
-        sortDirection: AdministrativeAreaSortDirection.descending,
-        provinceMetricsByCode: provinceMetrics,
-        lowerLevelMetricsByCode: const {},
+        data: AdministrativeAreaSearchData(
+          provinces: provinces,
+          lowerLevelPlaces: const [],
+          provinceMetricsByCode: provinceMetrics,
+          lowerLevelMetricsByCode: const {},
+        ),
+        criteria: const AdministrativeAreaSearchCriteria(
+          searchText: '',
+          selectedLevel: AdministrativeAreaLevel.all,
+          selectedFilters: {AdministrativeAreaFilter.province},
+          sortOption: 'Area',
+          sortDirection: AdministrativeAreaSortDirection.descending,
+        ),
       );
 
       final populationResults = AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: provinces,
-        lowerLevelPlaces: const [],
-        searchText: '',
-        selectedLevel: AdministrativeAreaLevel.all,
-        selectedFilters: {AdministrativeAreaFilter.province},
-        sortOption: 'Population',
-        sortDirection: AdministrativeAreaSortDirection.descending,
-        provinceMetricsByCode: provinceMetrics,
-        lowerLevelMetricsByCode: const {},
+        data: AdministrativeAreaSearchData(
+          provinces: provinces,
+          lowerLevelPlaces: const [],
+          provinceMetricsByCode: provinceMetrics,
+          lowerLevelMetricsByCode: const {},
+        ),
+        criteria: const AdministrativeAreaSearchCriteria(
+          searchText: '',
+          selectedLevel: AdministrativeAreaLevel.all,
+          selectedFilters: {AdministrativeAreaFilter.province},
+          sortOption: 'Population',
+          sortDirection: AdministrativeAreaSortDirection.descending,
+        ),
       );
 
       final densityResults = AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: provinces,
-        lowerLevelPlaces: const [],
-        searchText: '',
-        selectedLevel: AdministrativeAreaLevel.all,
-        selectedFilters: {AdministrativeAreaFilter.province},
-        sortOption: 'Density',
-        sortDirection: AdministrativeAreaSortDirection.descending,
-        provinceMetricsByCode: provinceMetrics,
-        lowerLevelMetricsByCode: const {},
+        data: AdministrativeAreaSearchData(
+          provinces: provinces,
+          lowerLevelPlaces: const [],
+          provinceMetricsByCode: provinceMetrics,
+          lowerLevelMetricsByCode: const {},
+        ),
+        criteria: const AdministrativeAreaSearchCriteria(
+          searchText: '',
+          selectedLevel: AdministrativeAreaLevel.all,
+          selectedFilters: {AdministrativeAreaFilter.province},
+          sortOption: 'Density',
+          sortDirection: AdministrativeAreaSortDirection.descending,
+        ),
       );
 
       expect(areaResults.map((result) => result.name).toList(),
-          ['Hà Nội', 'Hồ Chí Minh']);
+          [hanoiName, hoChiMinhName]);
       expect(
         populationResults.map((result) => result.name).toList(),
-        ['Hồ Chí Minh', 'Hà Nội'],
+        [hoChiMinhName, hanoiName],
       );
       expect(
         densityResults.map((result) => result.name).toList(),
-        ['Hồ Chí Minh', 'Hà Nội'],
+        [hoChiMinhName, hanoiName],
       );
     });
 
     test('supports ascending and descending order for the selected metric', () {
       final ascending = AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: provinces,
-        lowerLevelPlaces: const [],
-        searchText: '',
-        selectedLevel: AdministrativeAreaLevel.all,
-        selectedFilters: {AdministrativeAreaFilter.province},
-        sortOption: 'Area',
-        sortDirection: AdministrativeAreaSortDirection.ascending,
-        provinceMetricsByCode: provinceMetrics,
-        lowerLevelMetricsByCode: const {},
+        data: AdministrativeAreaSearchData(
+          provinces: provinces,
+          lowerLevelPlaces: const [],
+          provinceMetricsByCode: provinceMetrics,
+          lowerLevelMetricsByCode: const {},
+        ),
+        criteria: const AdministrativeAreaSearchCriteria(
+          searchText: '',
+          selectedLevel: AdministrativeAreaLevel.all,
+          selectedFilters: {AdministrativeAreaFilter.province},
+          sortOption: 'Area',
+          sortDirection: AdministrativeAreaSortDirection.ascending,
+        ),
       );
 
       final descending = AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: provinces,
-        lowerLevelPlaces: const [],
-        searchText: '',
-        selectedLevel: AdministrativeAreaLevel.all,
-        selectedFilters: {AdministrativeAreaFilter.province},
-        sortOption: 'Area',
-        sortDirection: AdministrativeAreaSortDirection.descending,
-        provinceMetricsByCode: provinceMetrics,
-        lowerLevelMetricsByCode: const {},
+        data: AdministrativeAreaSearchData(
+          provinces: provinces,
+          lowerLevelPlaces: const [],
+          provinceMetricsByCode: provinceMetrics,
+          lowerLevelMetricsByCode: const {},
+        ),
+        criteria: const AdministrativeAreaSearchCriteria(
+          searchText: '',
+          selectedLevel: AdministrativeAreaLevel.all,
+          selectedFilters: {AdministrativeAreaFilter.province},
+          sortOption: 'Area',
+          sortDirection: AdministrativeAreaSortDirection.descending,
+        ),
       );
 
       expect(ascending.map((result) => result.name).toList(),
-          ['Hồ Chí Minh', 'Hà Nội']);
+          [hoChiMinhName, hanoiName]);
       expect(descending.map((result) => result.name).toList(),
-          ['Hà Nội', 'Hồ Chí Minh']);
+          [hanoiName, hoChiMinhName]);
     });
   });
 }

@@ -9,24 +9,24 @@ param(
     [string]$SonarToken = ""
 )
 
-Write-Host "=== Running SonarQube Analysis ===" -ForegroundColor Cyan
-Write-Host ""
+Write-Output "=== Running SonarQube Analysis ==="
+Write-Output ""
 
 # Step 1: Flutter analyze
-Write-Host "Step 1: Running Flutter analysis..." -ForegroundColor Yellow
+Write-Output "Step 1: Running Flutter analysis..."
 flutter analyze lib/
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "Warning: Flutter analysis found issues" -ForegroundColor Yellow
+    Write-Output "Warning: Flutter analysis found issues"
 }
-Write-Host ""
+Write-Output ""
 
 # Step 2: Dart analysis (JSON)
-Write-Host "Step 2: Generating Dart analysis report..." -ForegroundColor Yellow
+Write-Output "Step 2: Generating Dart analysis report..."
 dart analyze lib/ --format=json > analysis.json
-Write-Host "Analysis report saved to: analysis.json" -ForegroundColor Green
+Write-Output "Analysis report saved to: analysis.json"
 
 # Convert Dart analysis to SonarQube Generic Issue Report format
-Write-Host "Step 2b: Converting Dart analysis to SonarQube format..." -ForegroundColor Yellow
+Write-Output "Step 2b: Converting Dart analysis to SonarQube format..."
 $dartAnalysis = Get-Content analysis.json | ConvertFrom-Json
 $sonarReport = @{
     rules = @()
@@ -91,27 +91,27 @@ foreach ($diagnostic in $dartAnalysis.diagnostics) {
 }
 
 $sonarReport | ConvertTo-Json -Depth 10 | Set-Content sonar-issues.json
-Write-Host "SonarQube issues report saved to: sonar-issues.json" -ForegroundColor Green
-Write-Host ""
+Write-Output "SonarQube issues report saved to: sonar-issues.json"
+Write-Output ""
 
 # Step 3: Coverage report
-Write-Host "Step 3: Generating coverage report..." -ForegroundColor Yellow
+Write-Output "Step 3: Generating coverage report..."
 flutter test --coverage 2>&1 | Out-Null
 if (Test-Path "coverage/lcov.info") {
-    Write-Host "Coverage report saved to: coverage/lcov.info" -ForegroundColor Green
+    Write-Output "Coverage report saved to: coverage/lcov.info"
 }
 else {
-    Write-Host "Warning: Coverage report not generated" -ForegroundColor Yellow
+    Write-Output "Warning: Coverage report not generated"
 }
-Write-Host ""
+Write-Output ""
 
 # Step 4: SonarQube Scanner
-Write-Host "Step 4: Running SonarQube scanner..." -ForegroundColor Yellow
-$sonarScannerPath = (Get-Command sonar-scanner -ErrorAction SilentlyContinue).Path
+Write-Output "Step 4: Running SonarQube scanner..."
+$sonarScannerPath = (Get-Command Sonar-Scanner -ErrorAction SilentlyContinue).Path
 
 if (-not $sonarScannerPath) {
-    Write-Host "Error: sonar-scanner not found in PATH" -ForegroundColor Red
-    Write-Host "Please install SonarScanner first: https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner/" -ForegroundColor White
+    Write-Output "Error: SonarScanner not found in PATH"
+    Write-Output "Please install SonarScanner first: https://docs.sonarqube.org/latest/analyzing-source-code/scanners/sonarscanner/"
     exit 1
 }
 
@@ -128,13 +128,13 @@ $cmdArgs = @(
 if ($SonarToken) {
     $cmdArgs += "-D", "sonar.login=$SonarToken"
 } else {
-    Write-Host "Warning: No authentication token provided. Analysis may fail if SonarQube requires authentication." -ForegroundColor Yellow
+    Write-Output "Warning: No authentication token provided. Analysis may fail if SonarQube requires authentication."
 }
 
-# Execute sonar-scanner with arguments
-& sonar-scanner $cmdArgs
+# Execute SonarScanner with arguments
+& Sonar-Scanner $cmdArgs
 
-Write-Host ""
-Write-Host "=== Analysis Complete ===" -ForegroundColor Green
-Write-Host "View results at: $SonarHost/dashboard?id=vietnam-map-flutter" -ForegroundColor Cyan
+Write-Output ""
+Write-Output "=== Analysis Complete ==="
+Write-Output "View results at: $SonarHost/dashboard?id=vietnam-map-flutter"
 

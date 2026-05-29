@@ -138,15 +138,19 @@ class VietnamMapController extends ChangeNotifier {
     final results = MapStartupTrace.timeSync(
       'search.filterAndSort',
       () => AdministrativeAreaSearchEngine.filterAndSort(
-        provinces: _boundaryData.provinceBoundaries,
-        lowerLevelPlaces: _boundaryData.lowerLevelPlaces,
-        searchText: _controlSpace.searchText,
-        selectedLevel: _controlSpace.selectedLevel,
-        selectedFilters: _selectedFilters,
-        sortOption: _controlSpace.sortOption,
-        sortDirection: _controlSpace.sortDirection,
-        provinceMetricsByCode: _provinceMetricsByCode,
-        lowerLevelMetricsByCode: _lowerLevelMetricsByCode,
+        data: AdministrativeAreaSearchData(
+          provinces: _boundaryData.provinceBoundaries,
+          lowerLevelPlaces: _boundaryData.lowerLevelPlaces,
+          provinceMetricsByCode: _provinceMetricsByCode,
+          lowerLevelMetricsByCode: _lowerLevelMetricsByCode,
+        ),
+        criteria: AdministrativeAreaSearchCriteria(
+          searchText: _controlSpace.searchText,
+          selectedLevel: _controlSpace.selectedLevel,
+          selectedFilters: _selectedFilters,
+          sortOption: _controlSpace.sortOption,
+          sortDirection: _controlSpace.sortDirection,
+        ),
       ),
       arguments: {
         'provinceCount': _boundaryData.provinceBoundaries.length,
@@ -859,7 +863,7 @@ class VietnamMapController extends ChangeNotifier {
     final startCenter = startViewport.center;
     final startZoom = startViewport.zoom;
     final startAt = DateTime.now();
-    final duration = MapConstants.provinceFitAnimationDuration;
+    const duration = MapConstants.provinceFitAnimationDuration;
 
     _cameraAnimationTimer = Timer.periodic(
       const Duration(milliseconds: 16),
