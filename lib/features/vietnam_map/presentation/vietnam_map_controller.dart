@@ -4,16 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart' show EdgeInsets;
 import 'package:flutter_map/flutter_map.dart';
-import 'package:isar/isar.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../shared/constants/map_constants.dart';
 import '../../../shared/performance/map_startup_trace.dart';
 import '../data/admin_boundary_source.dart';
+import '../data/firestore_repository.dart';
 import '../data/location_repository.dart';
 import '../data/map_tile_source.dart';
-import '../database/import_service.dart';
-import '../database/isar_service.dart';
 import '../domain/administrative_area.dart';
 import '../domain/current_location_state.dart';
 import '../domain/island_label_override.dart';
@@ -258,24 +256,11 @@ class VietnamMapController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await IsarService.init();
+      // Firestore không cần init — đọc thẳng từ cloud (có offline cache)
       _databaseReady = true;
-      await ImportService.importDataIfNeeded(
-        onProgress: (phase) {
-          if (_isDisposed) {
-            return;
-          }
-          _importStatus = _importStatusForPhase(phase);
-          notifyListeners();
-        },
-      );
-      if (_isDisposed) {
-        return;
-      }
-      if (_importStatus != AdministrativeImportStatus.skipped) {
-        _importStatus = AdministrativeImportStatus.ready;
-      }
       await _loadAdministrativeMetrics();
+      if (_isDisposed) return;
+      _importStatus = AdministrativeImportStatus.ready;
       _refreshSelectedDetailsAfterDatabaseReady();
     } catch (error, stackTrace) {
       debugPrint('Administrative data bootstrap failed: $error');
@@ -288,25 +273,6 @@ class VietnamMapController extends ChangeNotifier {
       if (!_isDisposed) {
         notifyListeners();
       }
-    }
-  }
-
-  AdministrativeImportStatus _importStatusForPhase(
-    AdministrativeDataImportPhase phase,
-  ) {
-    switch (phase) {
-      case AdministrativeDataImportPhase.checking:
-        return AdministrativeImportStatus.checking;
-      case AdministrativeDataImportPhase.provinces:
-        return AdministrativeImportStatus.importingProvinces;
-      case AdministrativeDataImportPhase.communes:
-        return AdministrativeImportStatus.importingCommunes;
-      case AdministrativeDataImportPhase.committees:
-        return AdministrativeImportStatus.importingCommittees;
-      case AdministrativeDataImportPhase.ready:
-        return AdministrativeImportStatus.ready;
-      case AdministrativeDataImportPhase.skipped:
-        return AdministrativeImportStatus.skipped;
     }
   }
 
@@ -343,43 +309,40 @@ class VietnamMapController extends ChangeNotifier {
   }
 
   Future<void> _loadAdministrativeMetrics() async {
-    if (!_databaseReady) {
-      return;
-    }
+    if (!_databaseReady) return;
 
     _metricsStatus = MapLoadStatus.loading;
     notifyListeners();
 
-    final rows = await MapStartupTrace.timeAsync(
+    final results = await MapStartupTrace.timeAsync(
       'metrics.load',
-      () => Future.wait<dynamic>([
-        IsarService.isar.provinces.where().findAll(),
-        IsarService.isar.communes.where().findAll(),
+      () => Future.wait([
+        FirestoreRepository.instance.getAllProvinces(),
+        FirestoreRepository.instance.getAllCommunes(),
       ]),
     );
-    if (_isDisposed) {
-      return;
-    }
-    final provinceRows = rows[0] as List<Province>;
-    final communeRows = rows[1] as List<Commune>;
+    if (_isDisposed) return;
+
+    final provinceRows = results[0] as List<Province>;
+    final communeRows = results[1] as List<Commune>;
 
     _provinceMetricsByCode = {
-      for (final province in provinceRows)
-        if (province.ma.isNotEmpty)
-          province.ma: AdministrativeAreaMetric(
-            areaKm2: province.areaKm2,
-            population: province.population,
-            density: province.density,
+      for (final p in provinceRows)
+        if (p.ma.isNotEmpty)
+          p.ma: AdministrativeAreaMetric(
+            areaKm2: p.areaKm2,
+            population: p.population,
+            density: p.density,
           ),
     };
 
     _lowerLevelMetricsByCode = {
-      for (final commune in communeRows)
-        if (commune.ma.isNotEmpty)
-          commune.ma: AdministrativeAreaMetric(
-            areaKm2: commune.areaKm2,
-            population: commune.population,
-            density: commune.density,
+      for (final c in communeRows)
+        if (c.ma.isNotEmpty)
+          c.ma: AdministrativeAreaMetric(
+            areaKm2: c.areaKm2,
+            population: c.population,
+            density: c.density,
           ),
     };
     _metricsStatus = MapLoadStatus.ready;
@@ -718,34 +681,20 @@ class VietnamMapController extends ChangeNotifier {
   }
 
   Future<void> _loadProvinceDetails(String provinceCode) async {
-    if (!_databaseReady) {
-      _isLoadingDetails = _isBootstrappingDatabase;
-      notifyListeners();
-      return;
-    }
-
     _isLoadingDetails = true;
     notifyListeners();
 
     try {
-      final details = await MapStartupTrace.timeAsync(
+      _selectedProvinceDetails = await MapStartupTrace.timeAsync(
         'details.province.load',
-        () => IsarService.isar.provinces
-            .filter()
-            .maEqualTo(provinceCode)
-            .findFirst(),
+        () => FirestoreRepository.instance.getProvinceByMa(provinceCode),
       );
-      if (_isDisposed) {
-        return;
-      }
-      _selectedProvinceDetails = details;
+      if (_isDisposed) return;
     } catch (e) {
       debugPrint('Error loading province details: $e');
     } finally {
       _isLoadingDetails = false;
-      if (!_isDisposed) {
-        notifyListeners();
-      }
+      if (!_isDisposed) notifyListeners();
     }
   }
 
@@ -764,31 +713,17 @@ class VietnamMapController extends ChangeNotifier {
   }
 
   Future<void> _loadCommuneDetails(String communeCode) async {
-    if (!_databaseReady) {
-      _isLoadingDetails = _isBootstrappingDatabase;
-      notifyListeners();
-      return;
-    }
-
     try {
-      final details = await MapStartupTrace.timeAsync(
+      _selectedCommuneDetails = await MapStartupTrace.timeAsync(
         'details.commune.load',
-        () => IsarService.isar.communes
-            .filter()
-            .maEqualTo(communeCode)
-            .findFirst(),
+        () => FirestoreRepository.instance.getCommuneByMa(communeCode),
       );
-      if (_isDisposed) {
-        return;
-      }
-      _selectedCommuneDetails = details;
+      if (_isDisposed) return;
     } catch (e) {
       debugPrint('Error loading commune details: $e');
     } finally {
       _isLoadingDetails = false;
-      if (!_isDisposed) {
-        notifyListeners();
-      }
+      if (!_isDisposed) notifyListeners();
     }
   }
 
