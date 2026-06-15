@@ -12,6 +12,12 @@ const _areaLabel = 'Diện tích';
 const _populationLabel = 'Dân số';
 const _densityLabel = 'Mật độ';
 const _missingValueLabel = 'Chưa có';
+const _kTeal = Color(0xFF0D9488);
+const _kTealLight = Color(0xFFCCFBF1);
+const _kBg = Color(0xFFF8FAFB);
+const _kCardBg = Colors.white;
+const _kRadius = 12.0;
+const _kChipRadius = 20.0;
 
 class MapControlPanel extends StatelessWidget {
   const MapControlPanel({
@@ -25,276 +31,679 @@ class MapControlPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final hasSelection = controller.selectedProvince != null ||
         controller.selectedLowerLevelPlace != null;
+    final details = _LocationDetailsData.fromController(controller);
+
+    Widget header;
+    if (hasSelection && details != null) {
+      header = _MapStickyHeader(
+        title: details.title,
+        showBack: true,
+        onBack: () {
+          if (details.selectedPlace != null) {
+            controller.clearPlaceSelection();
+          } else {
+            controller.clearSelection();
+          }
+        },
+        onClose: onClose ?? () {},
+      );
+    } else {
+      header = _MapStickyHeader(
+        title: 'Khám phá Việt Nam',
+        showBack: false,
+        onClose: onClose ?? () {},
+      );
+    }
 
     return Semantics(
       label: 'Công cụ tỉnh, thành phố và quận huyện',
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: colorScheme.surface,
+          color: _kBg,
           border: Border(
-            right: BorderSide(color: colorScheme.outlineVariant),
+            right: BorderSide(color: Colors.grey.shade200, width: 1.5),
           ),
         ),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            if (hasSelection)
-              _LocationDetailsView(controller: controller, onClose: onClose)
-            else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Khám phá Việt Nam',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+            header,
+            Expanded(
+              child: hasSelection && details != null
+                  ? _LocationDetailsView(
+                      controller: controller,
+                      details: details,
+                    )
+                  : _ExploreView(
+                      controller: controller,
                     ),
-                  ),
-                  if (onClose != null)
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: onClose,
-                      tooltip: 'Đóng bảng điều khiển',
-                    ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Không gian bản đồ với công cụ tra cứu tỉnh, thành phố và quận huyện.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const _SectionLabel(label: 'Tìm kiếm'),
-              const SizedBox(height: 8),
-              TextField(
-                enabled: true,
-                textInputAction: TextInputAction.search,
-                onChanged: controller.updateSearchText,
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.search),
-                  labelText: 'Tìm tỉnh, thành phố, quận huyện',
-                  helperText: 'Nhập tên để lọc kết quả.',
-                  suffixIcon: controller.controlSpace.searchText.isEmpty
-                      ? null
-                      : IconButton(
-                          icon: const Icon(Icons.clear),
-                          tooltip: 'Xóa tìm kiếm',
-                          onPressed: () => controller.updateSearchText(''),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'Cấp hành chính'),
-              const SizedBox(height: 8),
-              SegmentedButton<AdministrativeAreaLevel>(
-                segments: const [
-                  ButtonSegment(
-                    value: AdministrativeAreaLevel.all,
-                    icon: Icon(Icons.public),
-                    label: Text('Tất cả'),
-                  ),
-                  ButtonSegment(
-                    value: AdministrativeAreaLevel.province,
-                    icon: Icon(Icons.map),
-                    label: Text(_provinceCityLabel),
-                  ),
-                  ButtonSegment(
-                    value: AdministrativeAreaLevel.district,
-                    icon: Icon(Icons.location_city),
-                    label: Text(_districtLabel),
-                  ),
-                ],
-                selected: {controller.controlSpace.selectedLevel},
-                onSelectionChanged: (selection) {
-                  controller.updateSelectedLevel(selection.first);
-                },
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'Bộ lọc'),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final chip in controller.controlSpace.filterChips)
-                    FilterChip(
-                      label: Text(_filterChipLabel(chip)),
-                      selected: controller.isFilterChipSelected(chip),
-                      onSelected: (_) => controller.toggleFilterChip(chip),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'Sắp xếp'),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: DropdownMenu<String>(
-                      enabled: true,
-                      initialSelection: controller.controlSpace.sortOption,
-                      leadingIcon: const Icon(Icons.sort),
-                      label: const Text('Sắp xếp theo'),
-                      onSelected: (value) {
-                        controller.updateSortOption(value ?? 'Name');
-                      },
-                      dropdownMenuEntries: const [
-                        DropdownMenuEntry(value: 'Name', label: 'Tên'),
-                        DropdownMenuEntry(value: 'Area', label: _areaLabel),
-                        DropdownMenuEntry(
-                          value: 'Population',
-                          label: _populationLabel,
-                        ),
-                        DropdownMenuEntry(
-                            value: 'Density', label: _densityLabel),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownMenu<AdministrativeAreaSortDirection>(
-                      enabled: true,
-                      initialSelection: controller.controlSpace.sortDirection,
-                      leadingIcon: const Icon(Icons.swap_vert),
-                      label: const Text('Thứ tự'),
-                      onSelected: (value) {
-                        controller.updateSortDirection(
-                          value ?? AdministrativeAreaSortDirection.ascending,
-                        );
-                      },
-                      dropdownMenuEntries: const [
-                        DropdownMenuEntry(
-                          value: AdministrativeAreaSortDirection.ascending,
-                          label: 'Từ thấp đến cao',
-                        ),
-                        DropdownMenuEntry(
-                          value: AdministrativeAreaSortDirection.descending,
-                          label: 'Từ cao đến thấp',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'Kết quả'),
-              const SizedBox(height: 8),
-              Card(
-                margin: EdgeInsets.zero,
-                color: colorScheme.primaryContainer.withAlpha(89),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.sort, color: colorScheme.primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Sắp xếp: ${_sortOptionLabel(controller.controlSpace.sortOption)} • ${controller.controlSpace.sortDirection.label}',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_showStartupDataMessage(controller)) ...[
-                const SizedBox(height: 12),
-                Card(
-                  margin: EdgeInsets.zero,
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Text(
-                      _startupDataMessage(controller),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              if (!controller.isBoundaryDataReady)
-                Card(
-                  margin: EdgeInsets.zero,
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Text(
-                      'Đang tải dữ liệu hành chính...',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                )
-              else if (controller.filteredAdministrativeEntries.isEmpty)
-                Card(
-                  margin: EdgeInsets.zero,
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Text(
-                      'Không có địa điểm nào khớp với tìm kiếm, cấp hành chính hoặc bộ lọc hiện tại.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ),
-                )
-              else
-                SizedBox(
-                  height: 240,
-                  child: Card(
-                    margin: EdgeInsets.zero,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount:
-                          controller.filteredAdministrativeEntries.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final result =
-                            controller.filteredAdministrativeEntries[index];
-                        return ListTile(
-                          dense: true,
-                          title: Text(result.name),
-                          subtitle:
-                              Text('${result.levelLabel} • ${result.subtitle}'),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () =>
-                              controller.selectAdministrativeEntry(result),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 24),
-              Card(
-                margin: EdgeInsets.zero,
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.info_outline, color: colorScheme.primary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Tìm kiếm, cấp hành chính, bộ lọc và sắp xếp đang hoạt động. Chọn một kết quả để căn giữa trên bản đồ.',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MapStickyHeader extends StatelessWidget {
+  const _MapStickyHeader({
+    required this.title,
+    this.showBack = false,
+    this.onBack,
+    required this.onClose,
+  });
+
+  final String title;
+  final bool showBack;
+  final VoidCallback? onBack;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
+      child: Row(
+        children: [
+          if (showBack) ...[
+            _CircleBtn(
+              icon: Icons.arrow_back_rounded,
+              tooltip: 'Quay lại',
+              onTap: onBack ?? () {},
+            ),
+            const SizedBox(width: 8),
+          ],
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          _CircleBtn(
+            icon: Icons.close_rounded,
+            tooltip: 'Đóng',
+            onTap: onClose,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleBtn extends StatefulWidget {
+  const _CircleBtn({required this.icon, required this.tooltip, required this.onTap});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  State<_CircleBtn> createState() => _CircleBtnState();
+}
+
+class _CircleBtnState extends State<_CircleBtn> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: widget.tooltip,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _hovered ? _kTealLight : Colors.grey.shade100,
+            ),
+            child: Icon(
+              widget.icon,
+              size: 18,
+              color: _hovered ? _kTeal : Colors.grey.shade700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ExploreView extends StatefulWidget {
+  const _ExploreView({required this.controller});
+  final VietnamMapController controller;
+
+  @override
+  State<_ExploreView> createState() => _ExploreViewState();
+}
+
+class _ExploreViewState extends State<_ExploreView> {
+  late final TextEditingController _searchTextController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchTextController = TextEditingController(text: widget.controller.controlSpace.searchText);
+  }
+
+  @override
+  void didUpdateWidget(_ExploreView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller.controlSpace.searchText != _searchTextController.text) {
+      _searchTextController.text = widget.controller.controlSpace.searchText;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchTextController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = widget.controller;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'Không gian bản đồ với công cụ tra cứu tỉnh, thành phố và quận huyện.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+        ),
+        const SizedBox(height: 16),
+        
+        // Search section
+        const _SectionLabel(label: 'Tìm kiếm'),
+        const SizedBox(height: 8),
+        _MapSearchField(
+          hint: 'Tìm tỉnh, thành phố, quận huyện...',
+          controller: _searchTextController,
+          onChanged: controller.updateSearchText,
+        ),
+        const SizedBox(height: 16),
+
+        // Cấp hành chính
+        const _SectionLabel(label: 'Cấp hành chính'),
+        const SizedBox(height: 8),
+        _SegmentedChips<AdministrativeAreaLevel>(
+          options: const {
+            AdministrativeAreaLevel.all: 'Tất cả',
+            AdministrativeAreaLevel.province: _provinceCityLabel,
+            AdministrativeAreaLevel.district: _districtLabel,
+          },
+          selected: controller.controlSpace.selectedLevel,
+          onChanged: controller.updateSelectedLevel,
+        ),
+        const SizedBox(height: 16),
+
+        // Bộ lọc
+        const _SectionLabel(label: 'Bộ lọc'),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: controller.controlSpace.filterChips.map((chip) {
+            final active = controller.isFilterChipSelected(chip);
+            return _StatusChipButton(
+              label: _filterChipLabel(chip),
+              selected: active,
+              onTap: () => controller.toggleFilterChip(chip),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+
+        // Sắp xếp
+        const _SectionLabel(label: 'Sắp xếp'),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _SaaSDropdown<String>(
+                value: controller.controlSpace.sortOption,
+                label: 'Sắp xếp theo',
+                icon: Icons.sort,
+                items: const [
+                  DropdownMenuItem(value: 'Name', child: Text('Tên')),
+                  DropdownMenuItem(value: 'Area', child: Text(_areaLabel)),
+                  DropdownMenuItem(value: 'Population', child: Text(_populationLabel)),
+                  DropdownMenuItem(value: 'Density', child: Text(_densityLabel)),
+                ],
+                onChanged: (value) {
+                  controller.updateSortOption(value ?? 'Name');
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SaaSDropdown<AdministrativeAreaSortDirection>(
+                value: controller.controlSpace.sortDirection,
+                label: 'Thứ tự',
+                icon: Icons.swap_vert,
+                items: const [
+                  DropdownMenuItem(
+                    value: AdministrativeAreaSortDirection.ascending,
+                    child: Text('Tăng dần'),
+                  ),
+                  DropdownMenuItem(
+                    value: AdministrativeAreaSortDirection.descending,
+                    child: Text('Giảm dần'),
+                  ),
+                ],
+                onChanged: (value) {
+                  controller.updateSortDirection(
+                    value ?? AdministrativeAreaSortDirection.ascending,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Kết quả
+        Row(
+          children: [
+            const _SectionLabel(label: 'Kết quả'),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+              decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
+              child: Text(
+                '${controller.filteredAdministrativeEntries.length}',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        if (_showStartupDataMessage(controller)) ...[
+          _InfoBar(
+            icon: Icons.info_outline,
+            text: _startupDataMessage(controller),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        if (!controller.isBoundaryDataReady)
+          const _InfoBar(
+            icon: Icons.hourglass_empty,
+            text: 'Đang tải dữ liệu hành chính...',
+          )
+        else if (controller.filteredAdministrativeEntries.isEmpty)
+          const _EmptyState(
+            title: 'Không tìm thấy địa điểm',
+            subtitle: 'Thử thay đổi từ khóa hoặc bộ lọc của bạn.',
+          )
+        else
+          ...controller.filteredAdministrativeEntries.map((result) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _ResultCard(
+                title: result.name,
+                status: _administrativeTypeLabel(result.levelLabel),
+                line2: result.subtitle,
+                onTap: () => controller.selectAdministrativeEntry(result),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+}
+
+class _MapSearchField extends StatefulWidget {
+  const _MapSearchField({required this.hint, required this.controller, required this.onChanged});
+  final String hint;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_MapSearchField> createState() => _MapSearchFieldState();
+}
+
+class _MapSearchFieldState extends State<_MapSearchField> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: TextField(
+        controller: widget.controller,
+        onChanged: widget.onChanged,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
+          suffixIcon: widget.controller.text.isEmpty ? null : IconButton(
+            icon: Icon(Icons.close_rounded, size: 18, color: Colors.grey.shade400),
+            onPressed: () {
+              widget.controller.clear();
+              widget.onChanged('');
+            },
+          ),
+          filled: true,
+          fillColor: _kCardBg,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(_kChipRadius), borderSide: BorderSide(color: Colors.grey.shade200)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_kChipRadius), borderSide: BorderSide(color: Colors.grey.shade200)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_kChipRadius), borderSide: const BorderSide(color: _kTeal, width: 1.5)),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChipButton extends StatefulWidget {
+  const _StatusChipButton({required this.label, required this.selected, required this.onTap});
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<_StatusChipButton> createState() => _StatusChipButtonState();
+}
+
+class _StatusChipButtonState extends State<_StatusChipButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = widget.selected;
+    Color bg;
+    Color borderCol;
+    Color textCol;
+
+    if (active) {
+      bg = _hovered ? _kTeal.withAlpha(220) : _kTeal;
+      borderCol = _hovered ? _kTeal.withAlpha(220) : _kTeal;
+      textCol = Colors.white;
+    } else {
+      bg = _hovered ? _kTealLight.withAlpha(100) : _kCardBg;
+      borderCol = _hovered ? _kTeal.withAlpha(120) : Colors.grey.shade300;
+      textCol = _hovered ? _kTeal : Colors.grey.shade600;
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(_kChipRadius),
+            border: Border.all(color: borderCol),
+            boxShadow: [
+              if (_hovered && !active)
+                BoxShadow(color: _kTeal.withAlpha(10), blurRadius: 4, offset: const Offset(0, 1))
+            ],
+          ),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: textCol,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SegmentedChips<T> extends StatelessWidget {
+  const _SegmentedChips({
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final Map<T, String> options;
+  final T selected;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: options.entries.map((e) {
+        return _StatusChipButton(
+          label: e.value,
+          selected: selected == e.key,
+          onTap: () => onChanged(e.key),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _SaaSDropdown<T> extends StatelessWidget {
+  const _SaaSDropdown({
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    required this.label,
+    required this.icon,
+  });
+  
+  final T value;
+  final List<DropdownMenuItem<T>> items;
+  final ValueChanged<T?> onChanged;
+  final String label;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withAlpha(4), blurRadius: 4, offset: const Offset(0, 1)),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<T>(
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          icon: Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Colors.grey.shade600),
+          hint: Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black87),
+          isExpanded: true,
+        ),
+      ),
+    );
+  }
+}
+
+class _ResultCard extends StatefulWidget {
+  const _ResultCard({
+    required this.title,
+    required this.status,
+    required this.line2,
+    required this.onTap,
+  });
+
+  final String title, status, line2;
+  final VoidCallback onTap;
+
+  @override
+  State<_ResultCard> createState() => _ResultCardState();
+}
+
+class _ResultCardState extends State<_ResultCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: _hovered ? Colors.grey.shade100 : _kCardBg,
+            borderRadius: BorderRadius.circular(_kRadius),
+            border: Border.all(
+              color: _hovered ? _kTeal.withAlpha(100) : Colors.grey.shade200,
+              width: 1,
+            ),
+            boxShadow: [
+              if (_hovered)
+                BoxShadow(color: Colors.black.withAlpha(12), blurRadius: 12, offset: const Offset(0, 4))
+              else
+                BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 6, offset: const Offset(0, 2)),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.title,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _kTealLight,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            widget.status,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: _kTeal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      widget.line2,
+                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, size: 18, color: _hovered ? _kTeal : Colors.grey.shade400),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoBar extends StatelessWidget {
+  const _InfoBar({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _kTealLight.withAlpha(50),
+        borderRadius: BorderRadius.circular(_kRadius),
+        border: Border.all(color: _kTealLight),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: _kTeal, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 12, color: _kTeal, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.title, required this.subtitle});
+  final String title, subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
+          child: Icon(Icons.search_off_rounded, size: 32, color: Colors.grey.shade400),
+        ),
+        const SizedBox(height: 16),
+        Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 6),
+        Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+      ]),
     );
   }
 }
@@ -328,20 +737,6 @@ String _filterChipLabel(String chip) {
   }
 }
 
-String _sortOptionLabel(String option) {
-  switch (option) {
-    case 'Name':
-      return 'Tên';
-    case 'Area':
-      return _areaLabel;
-    case 'Population':
-      return _populationLabel;
-    case 'Density':
-      return _densityLabel;
-    default:
-      return option;
-  }
-}
 
 bool _showStartupDataMessage(VietnamMapController controller) {
   return controller.importStatus != AdministrativeImportStatus.idle &&
@@ -393,41 +788,32 @@ String _administrativeTypeLabel(String value) {
 }
 
 class _LocationDetailsView extends StatelessWidget {
-  const _LocationDetailsView({required this.controller, this.onClose});
+  const _LocationDetailsView({required this.controller, required this.details});
 
   final VietnamMapController controller;
-  final VoidCallback? onClose;
+  final _LocationDetailsData details;
 
   @override
   Widget build(BuildContext context) {
-    final details = _LocationDetailsData.fromController(controller);
-    if (details == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
-        _LocationHeader(
-          controller: controller,
-          details: details,
-          onClose: onClose,
-        ),
-        const SizedBox(height: 12),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
           child: Text(
             details.locationContext,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: Colors.grey.shade600,
                   fontStyle: FontStyle.italic,
                 ),
           ),
         ),
+        const SizedBox(height: 12),
+        _LocationBadges(details: details),
         const SizedBox(height: 16),
         if (details.selectedProvince != null) ...[
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: _CommuneVisibilityToggle(controller: controller),
           ),
           const SizedBox(height: 16),
@@ -555,69 +941,6 @@ class _LocationDetailsData {
   final String? phone;
   final List<LowerLevelPlace> lowerLevelPlaces;
   final String? macroRegion;
-}
-
-class _LocationHeader extends StatelessWidget {
-  const _LocationHeader({
-    required this.controller,
-    required this.details,
-    this.onClose,
-  });
-
-  final VietnamMapController controller;
-  final _LocationDetailsData details;
-  final VoidCallback? onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: details.selectedPlace != null
-              ? 'Quay lại tỉnh/thành'
-              : 'Quay lại tìm kiếm và bộ lọc',
-          onPressed: _handleBack,
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              Text(
-                details.title,
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              _LocationBadges(details: details),
-            ],
-          ),
-        ),
-        if (onClose != null)
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: onClose,
-            tooltip: 'Đóng bảng điều khiển',
-          ),
-      ],
-    );
-  }
-
-  void _handleBack() {
-    if (details.selectedPlace != null) {
-      controller.clearPlaceSelection();
-      return;
-    }
-    controller.clearSelection();
-  }
 }
 
 class _LocationBadges extends StatelessWidget {

@@ -91,10 +91,11 @@ class _MapViewportState extends State<MapViewport> {
                     boundaries: controller.provinceBoundaries,
                     selectedBoundary: controller.selectedProvince,
                   ),
-                  ProvinceLabelLayer(
-                    boundaries: controller.provinceBoundaries,
-                    zoom: controller.viewport.zoom,
-                  ),
+                  if (controller.showProvinceLabels)
+                    ProvinceLabelLayer(
+                      boundaries: controller.provinceBoundaries,
+                      zoom: controller.viewport.zoom,
+                    ),
                   IslandFeatureOverlay(
                     labels: controller.islandLabelOverrides,
                     zoom: controller.viewport.zoom,
@@ -116,6 +117,57 @@ class _MapViewportState extends State<MapViewport> {
                       return ProvinceHoverOutline(state: state);
                     },
                   ),
+                  if (controller.eventCoordinates.isNotEmpty)
+                    MarkerLayer(
+                      markers: controller.selectedCampaignEvents.map((event) {
+                        final coord = controller.eventCoordinates[event.id];
+                        if (coord == null) return null;
+                        
+                        Color color;
+                        switch (event.status) {
+                          case 'in-progress':
+                            color = Colors.blue;
+                            break;
+                          case 'completed':
+                            color = Colors.green;
+                            break;
+                          case 'canceled':
+                            color = Colors.red;
+                            break;
+                          default:
+                            color = Colors.grey;
+                        }
+                        
+                        final isSelected = controller.selectedEvent?.id == event.id;
+                        final size = isSelected ? 22.0 : 14.0;
+                        
+                        return Marker(
+                          point: coord,
+                          width: size,
+                          height: size,
+                          child: GestureDetector(
+                            onTap: () => controller.selectEvent(event),
+                            child: Tooltip(
+                              message: event.name,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: isSelected ? 2 : 1.5),
+                                  boxShadow: const [
+                                    BoxShadow(blurRadius: 4, color: Colors.black45),
+                                  ],
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.location_on, size: 12, color: Colors.white)
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).whereType<Marker>().toList(),
+                    ),
                   if (controller.locationState.isAvailable)
                     MarkerLayer(
                       markers: [

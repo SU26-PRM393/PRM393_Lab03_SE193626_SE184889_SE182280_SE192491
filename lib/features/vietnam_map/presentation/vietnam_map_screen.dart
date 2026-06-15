@@ -8,6 +8,7 @@ import 'vietnam_map_controller.dart';
 import 'widgets/map_control_panel.dart';
 import 'widgets/map_overlay_controls.dart';
 import 'widgets/map_viewport.dart';
+import 'widgets/campaign_control_panel.dart';
 
 class VietnamMapScreen extends StatefulWidget {
   const VietnamMapScreen({super.key, this.appUser});
@@ -41,11 +42,13 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   }
 
   void _onMapControllerChanged() {
-    if (_controller.selectedProvince != null || _controller.selectedLowerLevelPlace != null) {
-      if (!_isSearchExpanded) {
-        setState(() => _isSearchExpanded = true);
-      }
+    final hasSelection = _controller.selectedProvince != null || _controller.selectedLowerLevelPlace != null;
+    if (hasSelection && !_isSearchExpanded) {
+      _isSearchExpanded = true;
+      _controller.toggleCampaignPanel(false);
+      _controller.deselectCampaign();
     }
+    setState(() {});
   }
 
   @override
@@ -77,7 +80,23 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
             builder: (context, _) {
               return MapControlPanel(
                 controller: _controller,
-                onClose: () => setState(() => _isSearchExpanded = false),
+                onClose: () {
+                  _controller.clearSelection();
+                  setState(() => _isSearchExpanded = false);
+                },
+              );
+            },
+          );
+
+          final campaignPanel = AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return CampaignControlPanel(
+                controller: _controller,
+                onClose: () {
+                  _controller.toggleCampaignPanel(false);
+                  _controller.deselectCampaign();
+                },
               );
             },
           );
@@ -86,12 +105,14 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
               ? Column(
                   children: [
                     if (_isSearchExpanded) SizedBox(height: 250, child: panel),
+                    if (_controller.isCampaignPanelExpanded) SizedBox(height: 300, child: campaignPanel),
                     Expanded(child: map),
                   ],
                 )
               : Row(
                   children: [
                     if (_isSearchExpanded) SizedBox(width: 360, child: panel),
+                    if (_controller.isCampaignPanelExpanded) SizedBox(width: 400, child: campaignPanel),
                     Expanded(child: map),
                   ],
                 );
@@ -99,17 +120,38 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
           return Stack(
             children: [
               body,
-              if (!_isSearchExpanded)
+              if (!_isSearchExpanded && !_controller.isCampaignPanelExpanded)
                 Positioned(
                   left: 16,
                   top: 12,
-                  child: FloatingActionButton(
-                    heroTag: 'expand_search_btn',
-                    elevation: 4,
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    foregroundColor: Theme.of(context).colorScheme.primary,
-                    onPressed: () => setState(() => _isSearchExpanded = true),
-                    child: const Icon(Icons.search),
+                  child: Column(
+                    children: [
+                      FloatingActionButton(
+                        heroTag: 'expand_search_btn',
+                        elevation: 4,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                        onPressed: () {
+                          _controller.deselectCampaign();
+                          _controller.toggleCampaignPanel(false);
+                          setState(() => _isSearchExpanded = true);
+                        },
+                        child: const Icon(Icons.search),
+                      ),
+                      const SizedBox(height: 12),
+                      FloatingActionButton(
+                        heroTag: 'expand_campaign_btn',
+                        elevation: 4,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        foregroundColor: Theme.of(context).colorScheme.secondary,
+                        onPressed: () {
+                          _controller.clearSelection();
+                          setState(() => _isSearchExpanded = false);
+                          _controller.toggleCampaignPanel(true);
+                        },
+                        child: const Icon(Icons.campaign),
+                      ),
+                    ],
                   ),
                 ),
               if (widget.appUser != null)
@@ -175,6 +217,8 @@ class _MapSurface extends StatelessWidget {
                       onZoomOut: controller.zoomOut,
                       onCurrentLocation: controller.requestCurrentLocation,
                       onRecenter: controller.recenterOnVietnam,
+                      showProvinceLabels: controller.showProvinceLabels,
+                      onToggleProvinceLabels: controller.toggleProvinceLabels,
                     ),
                   ),
                 ),

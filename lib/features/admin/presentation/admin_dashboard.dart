@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../auth/data/auth_service.dart';
 import 'user_management_screen.dart';
 
+import 'admin_shell.dart';
+
 enum AdminSection { overview, userManagement }
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
@@ -19,13 +21,43 @@ class AdminDashboard extends StatefulWidget {
   final UserManagementServiceInterface? _service;
 
   @override
-  State<AdminDashboard> createState() => _AdminDashboardState();
+  State<AdminDashboard> createState() => AdminDashboardState();
 }
 
-class _AdminDashboardState extends State<AdminDashboard> {
+class AdminDashboardState extends State<AdminDashboard> {
   AdminSection _section = AdminSection.overview;
+  String? _searchEmail;
 
   static const _expandedWidth = 210.0;
+
+  @override
+  void initState() {
+    super.initState();
+    AdminNavigation.searchEmailNotifier.addListener(_onSearchEmailChanged);
+    final email = AdminNavigation.searchEmailNotifier.value;
+    if (email != null) {
+      _section = AdminSection.userManagement;
+      _searchEmail = email;
+      AdminNavigation.searchEmailNotifier.value = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    AdminNavigation.searchEmailNotifier.removeListener(_onSearchEmailChanged);
+    super.dispose();
+  }
+
+  void _onSearchEmailChanged() {
+    final email = AdminNavigation.searchEmailNotifier.value;
+    if (email != null) {
+      setState(() {
+        _section = AdminSection.userManagement;
+        _searchEmail = email;
+      });
+      AdminNavigation.searchEmailNotifier.value = null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +69,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
             section: _section,
             onSelect: (s) => setState(() {
               _section = s;
+              if (s != AdminSection.userManagement) {
+                _searchEmail = null;
+              }
             }),
           ),
         ),
@@ -58,6 +93,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       case AdminSection.userManagement:
         return UserManagementScreen(
           currentUserId: widget.admin.uid,
+          initialSearchText: _searchEmail,
           service: widget._service,
         );
     }

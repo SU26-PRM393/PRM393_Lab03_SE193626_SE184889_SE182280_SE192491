@@ -7,6 +7,18 @@ import 'admin_dashboard.dart';
 enum AdminTab { dashboard, vietmap }
 
 /// Layout chính cho admin — navbar trên cùng với 2 tab: Dashboard và VietMap
+class AdminNavigation {
+  static final searchEmailNotifier = ValueNotifier<String?>(null);
+
+  static void navigateToUserAndSearch(BuildContext context, String email) {
+    searchEmailNotifier.value = email;
+    final shell = context.findAncestorStateOfType<AdminShellState>();
+    if (shell != null) {
+      shell.setTab(AdminTab.dashboard);
+    }
+  }
+}
+
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key, required this.admin, required this.onLogout});
 
@@ -14,11 +26,15 @@ class AdminShell extends StatefulWidget {
   final VoidCallback onLogout;
 
   @override
-  State<AdminShell> createState() => _AdminShellState();
+  State<AdminShell> createState() => AdminShellState();
 }
 
-class _AdminShellState extends State<AdminShell> {
+class AdminShellState extends State<AdminShell> {
   AdminTab _tab = AdminTab.dashboard;
+
+  void setTab(AdminTab tab) {
+    setState(() => _tab = tab);
+  }
 
   @override
   Widget build(BuildContext context) {

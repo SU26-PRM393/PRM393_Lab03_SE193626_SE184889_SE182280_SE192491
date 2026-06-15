@@ -10,10 +10,12 @@ class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({
     super.key,
     required this.currentUserId,
+    this.initialSearchText,
     UserManagementServiceInterface? service,
   }) : _service = service;
 
   final String currentUserId;
+  final String? initialSearchText;
   final UserManagementServiceInterface? _service;
 
   @override
@@ -40,7 +42,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   @override
   void initState() {
     super.initState();
+    _searchText = widget.initialSearchText ?? '';
+    _searchCtrl.text = _searchText;
     _load();
+  }
+
+  @override
+  void didUpdateWidget(UserManagementScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialSearchText != oldWidget.initialSearchText) {
+      setState(() {
+        _searchText = widget.initialSearchText ?? '';
+        _searchCtrl.text = _searchText;
+      });
+    }
   }
 
   @override
