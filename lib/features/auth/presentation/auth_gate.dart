@@ -66,7 +66,7 @@ class _AuthGateState extends State<AuthGate> {
               );
             }
             return UserShell(
-              user: user ?? const AppUser(uid: '', email: '', role: UserRole.user),
+              user: user ?? const AppUser(uid: '', email: '', role: UserRole.user, name: ''),
               onLogout: _authController.signOut,
             );
         }

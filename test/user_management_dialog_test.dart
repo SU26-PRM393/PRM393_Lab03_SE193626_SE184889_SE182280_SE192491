@@ -39,6 +39,7 @@ class _MockUserManagementService implements UserManagementServiceInterface {
         email: _users[idx].email,
         role: _users[idx].role,
         disabled: disabled,
+        name: _users[idx].name,
       );
     }
   }
@@ -60,6 +61,7 @@ class _MockUserManagementService implements UserManagementServiceInterface {
         email: _users[idx].email,
         role: role,
         disabled: _users[idx].disabled,
+        name: _users[idx].name,
       );
     }
   }
@@ -102,8 +104,9 @@ UserRecord _user({
   String email = 'user@test.com',
   String role = 'user',
   bool disabled = false,
+  String name = '',
 }) =>
-    UserRecord(uid: uid, email: email, role: role, disabled: disabled);
+    UserRecord(uid: uid, email: email, role: role, disabled: disabled, name: name);
 
 // ---------------------------------------------------------------------------
 // Tests

@@ -23,6 +23,10 @@ import '../domain/map_view_state.dart';
 import '../domain/province_hover_state.dart';
 import '../model/province.dart';
 import '../model/commune.dart';
+import '../../admin/domain/campaign.dart';
+import '../../admin/domain/event.dart';
+import '../../admin/domain/school.dart';
+import '../../admin/data/campaign_repository.dart';
 
 enum CommuneVisibilityMode {
   details,
@@ -98,6 +102,21 @@ class VietnamMapController extends ChangeNotifier {
   Timer? _cameraAnimationTimer;
   Timer? _deferredLowerLevelLoadTimer;
 
+  // --- Campaign States ---
+  bool _isCampaignPanelExpanded = false;
+  List<Campaign> _campaigns = [];
+  Campaign? _selectedCampaign;
+  List<Event> _selectedCampaignEvents = [];
+  Event? _selectedEvent;
+  bool _isLoadingCampaigns = false;
+  bool _isLoadingEvents = false;
+  Map<String, LatLng> _eventCoordinates = {}; 
+  Map<String, School> _eventSchools = {};
+  Map<String, String> _employeeNames = {};
+  Map<String, String> _employeeEmails = {};
+  bool _showProvinceLabels = true;
+  // -----------------------
+
   MapViewport get viewport => _viewport;
   CurrentLocationState get locationState => _locationState;
   AdministrativeAreaControlSpace get controlSpace => _controlSpace;
@@ -120,6 +139,166 @@ class VietnamMapController extends ChangeNotifier {
   MapLoadStatus get metricsStatus => _metricsStatus;
   MapLoadStatus get lowerLevelPlacesStatus => _lowerLevelPlacesStatus;
   AdministrativeImportStatus get importStatus => _importStatus;
+  bool get showProvinceLabels => _showProvinceLabels;
+
+  // --- Campaign Getters ---
+  bool get isCampaignPanelExpanded => _isCampaignPanelExpanded;
+  List<Campaign> get campaigns => _campaigns;
+  Campaign? get selectedCampaign => _selectedCampaign;
+  List<Event> get selectedCampaignEvents => _selectedCampaignEvents;
+  Event? get selectedEvent => _selectedEvent;
+  bool get isLoadingCampaigns => _isLoadingCampaigns;
+  bool get isLoadingEvents => _isLoadingEvents;
+  Map<String, LatLng> get eventCoordinates => _eventCoordinates;
+  Map<String, School> get eventSchools => _eventSchools;
+  Map<String, String> get employeeNames => _employeeNames;
+  Map<String, String> get employeeEmails => _employeeEmails;
+
+  void toggleCampaignPanel(bool expanded) {
+    if (_isCampaignPanelExpanded == expanded) return;
+    _isCampaignPanelExpanded = expanded;
+    if (expanded) {
+      _loadCampaigns();
+    }
+    notifyListeners();
+  }
+
+  Future<void> _loadCampaigns() async {
+    if (_isLoadingCampaigns || _campaigns.isNotEmpty) return;
+    _isLoadingCampaigns = true;
+    notifyListeners();
+    try {
+      _campaigns = await CampaignRepository.instance.getAllCampaigns();
+    } catch (e) {
+      debugPrint('Load campaigns error: $e');
+    } finally {
+      _isLoadingCampaigns = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> selectCampaign(Campaign campaign) async {
+    _selectedCampaign = campaign;
+    _selectedEvent = null;
+    _selectedCampaignEvents = [];
+    _eventCoordinates = {};
+    _eventSchools = {};
+    _employeeNames = {};
+    _employeeEmails = {};
+    _isLoadingEvents = true;
+    notifyListeners();
+
+    try {
+      final events = await CampaignRepository.instance.getEventsForCampaign(campaign.id);
+      _selectedCampaignEvents = events;
+      
+      // Ensure lowerLevelPlaces are loaded so we can resolve commune coordinates
+      if (_lowerLevelPlacesStatus != MapLoadStatus.ready) {
+        await _ensureLowerLevelPlacesLoaded();
+      }
+      
+      // Resolve coordinates
+      final Map<String, LatLng> resolvedCoords = {};
+      
+      // Extract all unique school IDs
+      final Set<String> schoolIdsToFetch = {};
+      for (final event in events) {
+        schoolIdsToFetch.addAll(event.schoolIds);
+      }
+      
+      // Fetch schools
+      final schools = await CampaignRepository.instance.getSchoolsByIds(schoolIdsToFetch.toList());
+      final Map<String, School> schoolMap = {for (var s in schools) s.id: s};
+      
+      // Map event ID to first available school's commune coordinate
+      for (final event in events) {
+        if (event.schoolIds.isNotEmpty) {
+          final firstSchoolId = event.schoolIds.first;
+          final school = schoolMap[firstSchoolId];
+          if (school != null) {
+            final communeCode = school.communeCode;
+            final targetCodeValue = int.tryParse(communeCode);
+            // Find coordinate from lowerLevelPlaces
+            final place = _boundaryData.lowerLevelPlaces.where((p) {
+              return p.code == communeCode || (targetCodeValue != null && int.tryParse(p.code) == targetCodeValue);
+            }).firstOrNull;
+            if (place != null) {
+              resolvedCoords[event.id] = place.coordinate;
+            } else {
+               // Fallback: If not found, use province center
+               final provCode = school.provinceCode;
+               final provTargetValue = int.tryParse(provCode);
+               final provPlace = _boundaryData.provinceBoundaries.where((p) => p.provinceCode == provCode || (provTargetValue != null && int.tryParse(p.provinceCode) == provTargetValue)).firstOrNull;
+               if (provPlace != null && provPlace.polygons.isNotEmpty) {
+                   resolvedCoords[event.id] = provPlace.polygons.first.outerRing.bounds.center;
+               }
+            }
+          }
+        }
+      }
+      
+      // Fetch employee names & emails
+      final Set<String> employeeIdsToFetch = {};
+      for (final event in events) {
+        employeeIdsToFetch.addAll(event.assignedEmployeeIds);
+      }
+      final employeeDetails = await CampaignRepository.instance.getUserDetailsByIds(employeeIdsToFetch.toList());
+      final Map<String, String> employeeNames = {};
+      final Map<String, String> employeeEmails = {};
+      for (var entry in employeeDetails.entries) {
+        employeeNames[entry.key] = entry.value['name'] ?? 'Unknown';
+        employeeEmails[entry.key] = entry.value['email'] ?? '';
+      }
+      
+      _eventCoordinates = resolvedCoords;
+      _eventSchools = schoolMap;
+      _employeeNames = employeeNames;
+      _employeeEmails = employeeEmails;
+      
+      if (resolvedCoords.isNotEmpty) {
+        final bounds = LatLngBounds.fromPoints(resolvedCoords.values.toList());
+        final targetCamera = CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(56.0),
+          maxZoom: 9.5,
+          minZoom: viewport.minZoom,
+        ).fit(mapController.camera);
+        
+        _animateCameraTo(
+          center: targetCamera.center,
+          zoom: targetCamera.zoom,
+        );
+      }
+    } catch (e) {
+      debugPrint('Load events error: $e');
+    } finally {
+      _isLoadingEvents = false;
+      notifyListeners();
+    }
+  }
+
+  void selectEvent(Event event) {
+    _selectedEvent = event;
+    notifyListeners();
+    
+    // Zoom to event coordinate
+    final coord = _eventCoordinates[event.id];
+    if (coord != null) {
+      _animateCameraTo(center: coord, zoom: 12.0);
+    }
+  }
+
+  void deselectCampaign() {
+    _selectedCampaign = null;
+    _selectedEvent = null;
+    _selectedCampaignEvents = [];
+    _eventCoordinates = {};
+    _eventSchools = {};
+    _employeeNames = {};
+    _employeeEmails = {};
+    notifyListeners();
+  }
+  // ------------------------
 
   bool get isBoundaryDataReady =>
       _boundaryData.status == VietnamBoundaryDataStatus.ready;
@@ -494,10 +673,19 @@ class VietnamMapController extends ChangeNotifier {
     if (coordinate != null) {
       final viewport = _currentViewport();
       _moveTo(coordinate, viewport.zoom < 9 ? 9 : viewport.zoom);
-      return;
+    } else {
+      notifyListeners();
     }
 
-    notifyListeners();
+    // Auto-hide the message after 4 seconds
+    if (nextState.hasMessage) {
+      Future.delayed(const Duration(seconds: 4), () {
+        if (!_isDisposed && _locationState.message == nextState.message) {
+          _locationState = _locationState.copyWith(message: '');
+          notifyListeners();
+        }
+      });
+    }
   }
 
   void markMapSourceUnavailable(Object error) {
@@ -734,6 +922,12 @@ class VietnamMapController extends ChangeNotifier {
     _selectedCommuneDetails = null;
     _communeVisibilityMode = CommuneVisibilityMode.details;
     _isLoadingDetails = false;
+    notifyListeners();
+  }
+
+  void toggleProvinceLabels(bool show) {
+    if (_showProvinceLabels == show) return;
+    _showProvinceLabels = show;
     notifyListeners();
   }
 

@@ -91,10 +91,11 @@ class _MapViewportState extends State<MapViewport> {
                     boundaries: controller.provinceBoundaries,
                     selectedBoundary: controller.selectedProvince,
                   ),
-                  ProvinceLabelLayer(
-                    boundaries: controller.provinceBoundaries,
-                    zoom: controller.viewport.zoom,
-                  ),
+                  if (controller.showProvinceLabels)
+                    ProvinceLabelLayer(
+                      boundaries: controller.provinceBoundaries,
+                      zoom: controller.viewport.zoom,
+                    ),
                   IslandFeatureOverlay(
                     labels: controller.islandLabelOverrides,
                     zoom: controller.viewport.zoom,
@@ -116,6 +117,57 @@ class _MapViewportState extends State<MapViewport> {
                       return ProvinceHoverOutline(state: state);
                     },
                   ),
+                  if (controller.eventCoordinates.isNotEmpty)
+                    MarkerLayer(
+                      markers: controller.selectedCampaignEvents.map((event) {
+                        final coord = controller.eventCoordinates[event.id];
+                        if (coord == null) return null;
+                        
+                        Color color;
+                        switch (event.status) {
+                          case 'in-progress':
+                            color = Colors.blue;
+                            break;
+                          case 'completed':
+                            color = Colors.green;
+                            break;
+                          case 'canceled':
+                            color = Colors.red;
+                            break;
+                          default:
+                            color = Colors.grey;
+                        }
+                        
+                        final isSelected = controller.selectedEvent?.id == event.id;
+                        final size = isSelected ? 22.0 : 14.0;
+                        
+                        return Marker(
+                          point: coord,
+                          width: size,
+                          height: size,
+                          child: GestureDetector(
+                            onTap: () => controller.selectEvent(event),
+                            child: Tooltip(
+                              message: event.name,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: isSelected ? 2 : 1.5),
+                                  boxShadow: const [
+                                    BoxShadow(blurRadius: 4, color: Colors.black45),
+                                  ],
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.location_on, size: 12, color: Colors.white)
+                                    : null,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).whereType<Marker>().toList(),
+                    ),
                   if (controller.locationState.isAvailable)
                     MarkerLayer(
                       markers: [
@@ -136,7 +188,7 @@ class _MapViewportState extends State<MapViewport> {
           if (controller.viewport.isSourceUnavailable)
             Positioned(
               top: 16,
-              left: 16,
+              left: 80,
               child: IgnorePointer(
                 child: _StatusBanner(
                   icon: Icons.cloud_off,
@@ -145,15 +197,20 @@ class _MapViewportState extends State<MapViewport> {
                 ),
               ),
             ),
-          if (controller.locationState.status ==
-              CurrentLocationStatus.requesting)
+          if (controller.hasLocationMessage)
             Positioned(
               top: controller.viewport.isSourceUnavailable ? 72 : 16,
-              left: 16,
-              child: const IgnorePointer(
+              left: 80,
+              child: IgnorePointer(
                 child: _StatusBanner(
-                  icon: Icons.my_location,
-                  message: 'Đang yêu cầu vị trí hiện tại...',
+                  icon: controller.locationState.status ==
+                          CurrentLocationStatus.available
+                      ? Icons.location_on
+                      : controller.locationState.status ==
+                              CurrentLocationStatus.requesting
+                          ? Icons.my_location
+                          : Icons.location_off,
+                  message: controller.locationState.message!,
                 ),
               ),
             ),
@@ -161,7 +218,7 @@ class _MapViewportState extends State<MapViewport> {
               controller.boundaryDataMessage != null)
             Positioned(
               top: controller.viewport.isSourceUnavailable ? 72 : 16,
-              left: 16,
+              left: 80,
               child: IgnorePointer(
                 child: _StatusBanner(
                   icon: Icons.map_outlined,

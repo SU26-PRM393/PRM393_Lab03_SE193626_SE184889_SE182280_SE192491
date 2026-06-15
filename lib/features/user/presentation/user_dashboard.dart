@@ -20,26 +20,19 @@ class UserDashboard extends StatefulWidget {
 }
 
 class _UserDashboardState extends State<UserDashboard> {
-  bool _expanded = false;
   _UserSection _section = _UserSection.overview;
 
-  static const _collapsedWidth = 56.0;
   static const _expandedWidth = 210.0;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          width: _expanded ? _expandedWidth : _collapsedWidth,
+        SizedBox(
+          width: _expandedWidth,
           child: _Sidebar(
-            expanded: _expanded,
             section: _section,
-            onToggle: () => setState(() => _expanded = !_expanded),
             onSelect: (s) => setState(() => _section = s),
-            onLogout: widget.onLogout,
           ),
         ),
         const VerticalDivider(width: 1, thickness: 1),
@@ -57,18 +50,12 @@ class _UserDashboardState extends State<UserDashboard> {
 
 class _Sidebar extends StatelessWidget {
   const _Sidebar({
-    required this.expanded,
     required this.section,
-    required this.onToggle,
     required this.onSelect,
-    required this.onLogout,
   });
 
-  final bool expanded;
   final _UserSection section;
-  final VoidCallback onToggle;
   final ValueChanged<_UserSection> onSelect;
-  final VoidCallback onLogout;
 
   @override
   Widget build(BuildContext context) {
@@ -79,33 +66,14 @@ class _Sidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Toggle button
-          SizedBox(
-            height: 48,
-            child: Row(
-              mainAxisAlignment:
-                  expanded ? MainAxisAlignment.end : MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    expanded ? Icons.chevron_left : Icons.menu,
-                    color: cs.onSurfaceVariant,
-                  ),
-                  tooltip: expanded ? 'Thu gọn' : 'Mở rộng',
-                  onPressed: onToggle,
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
 
           // Nav items
           _SidebarItem(
             icon: Icons.dashboard_outlined,
             label: 'Dashboard',
             selected: section == _UserSection.overview,
-            expanded: expanded,
+            expanded: true,
             onTap: () => onSelect(_UserSection.overview),
           ),
           // Placeholder items — sẽ phát triển sau
@@ -113,7 +81,7 @@ class _Sidebar extends StatelessWidget {
             icon: Icons.history_outlined,
             label: 'Lịch sử',
             selected: false,
-            expanded: expanded,
+            expanded: true,
             disabled: true,
             onTap: null,
           ),
@@ -121,40 +89,19 @@ class _Sidebar extends StatelessWidget {
             icon: Icons.bookmark_outline,
             label: 'Đã lưu',
             selected: false,
-            expanded: expanded,
-            disabled: true,
-            onTap: null,
-          ),
-          _SidebarItem(
-            icon: Icons.settings_outlined,
-            label: 'Cài đặt',
-            selected: false,
-            expanded: expanded,
+            expanded: true,
             disabled: true,
             onTap: null,
           ),
 
           const Spacer(),
-          const Divider(height: 1),
-          const SizedBox(height: 4),
-
-          // Logout
-          _SidebarItem(
-            icon: Icons.logout,
-            label: 'Đăng xuất',
-            selected: false,
-            expanded: expanded,
-            onTap: onLogout,
-            iconColor: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 8),
         ],
       ),
     );
   }
 }
 
-class _SidebarItem extends StatelessWidget {
+class _SidebarItem extends StatefulWidget {
   const _SidebarItem({
     required this.icon,
     required this.label,
@@ -174,52 +121,76 @@ class _SidebarItem extends StatelessWidget {
   final Color? iconColor;
 
   @override
+  State<_SidebarItem> createState() => _SidebarItemState();
+}
+
+class _SidebarItemState extends State<_SidebarItem> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final defaultColor = selected ? cs.primary : cs.onSurfaceVariant;
-    final activeColor = iconColor ?? defaultColor;
-    final effectiveColor = disabled
+    final defaultColor = widget.selected
+        ? cs.primary
+        : (_hovered ? cs.primary : cs.onSurfaceVariant);
+    final activeColor = widget.iconColor ?? defaultColor;
+    final effectiveColor = widget.disabled
         ? cs.onSurface.withValues(alpha: 0.35)
         : activeColor;
 
-    return Tooltip(
-      message: expanded ? '' : label,
-      preferBelow: false,
-      child: InkWell(
-        onTap: disabled ? null : onTap,
+    BoxDecoration? decoration;
+    if (widget.selected) {
+      decoration = BoxDecoration(
+        color: cs.primary.withValues(alpha: _hovered ? 0.18 : 0.12),
         borderRadius: BorderRadius.circular(8),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          height: 44,
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          padding: EdgeInsets.symmetric(horizontal: expanded ? 10 : 0),
-          decoration: selected
-              ? BoxDecoration(
-                  color: cs.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                )
-              : null,
-          child: Row(
-            mainAxisAlignment:
-                expanded ? MainAxisAlignment.start : MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 20, color: effectiveColor),
-              if (expanded) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: effectiveColor,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.normal,
+      );
+    } else if (_hovered) {
+      decoration = BoxDecoration(
+        color: cs.onSurface.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+      );
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: widget.disabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+      child: Tooltip(
+        message: widget.expanded ? '' : widget.label,
+        preferBelow: false,
+        child: InkWell(
+          onTap: widget.disabled ? null : widget.onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 44,
+            margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: EdgeInsets.symmetric(horizontal: widget.expanded ? 10 : 0),
+            decoration: decoration,
+            child: Row(
+              mainAxisAlignment: widget.expanded
+                  ? MainAxisAlignment.start
+                  : MainAxisAlignment.center,
+              children: [
+                Icon(widget.icon, size: 20, color: effectiveColor),
+                if (widget.expanded) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.label,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: effectiveColor,
+                        fontWeight: widget.selected || _hovered
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

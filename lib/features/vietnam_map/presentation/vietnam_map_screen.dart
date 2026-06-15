@@ -8,6 +8,7 @@ import 'vietnam_map_controller.dart';
 import 'widgets/map_control_panel.dart';
 import 'widgets/map_overlay_controls.dart';
 import 'widgets/map_viewport.dart';
+import 'widgets/campaign_control_panel.dart';
 
 class VietnamMapScreen extends StatefulWidget {
   const VietnamMapScreen({super.key, this.appUser});
@@ -21,6 +22,7 @@ class VietnamMapScreen extends StatefulWidget {
 
 class _VietnamMapScreenState extends State<VietnamMapScreen> {
   late final VietnamMapController _controller;
+  bool _isSearchExpanded = false;
 
   // ValueNotifier thay vì Offset? thông thường.
   // Khi cập nhật _avatarOffset.value, chỉ ValueListenableBuilder rebuild,
@@ -31,6 +33,7 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   void initState() {
     super.initState();
     _controller = VietnamMapController();
+    _controller.addListener(_onMapControllerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _controller.bootstrapAfterFirstFrame();
@@ -38,9 +41,20 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     });
   }
 
+  void _onMapControllerChanged() {
+    final hasSelection = _controller.selectedProvince != null || _controller.selectedLowerLevelPlace != null;
+    if (hasSelection && !_isSearchExpanded) {
+      _isSearchExpanded = true;
+      _controller.toggleCampaignPanel(false);
+      _controller.deselectCampaign();
+    }
+    setState(() {});
+  }
+
   @override
   void dispose() {
     _avatarOffset.dispose();
+    _controller.removeListener(_onMapControllerChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -64,20 +78,41 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
           final panel = AnimatedBuilder(
             animation: _controller,
             builder: (context, _) {
-              return MapControlPanel(controller: _controller);
+              return MapControlPanel(
+                controller: _controller,
+                onClose: () {
+                  _controller.clearSelection();
+                  setState(() => _isSearchExpanded = false);
+                },
+              );
+            },
+          );
+
+          final campaignPanel = AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              return CampaignControlPanel(
+                controller: _controller,
+                onClose: () {
+                  _controller.toggleCampaignPanel(false);
+                  _controller.deselectCampaign();
+                },
+              );
             },
           );
 
           final body = compact
               ? Column(
                   children: [
-                    SizedBox(height: 250, child: panel),
+                    if (_isSearchExpanded) SizedBox(height: 250, child: panel),
+                    if (_controller.isCampaignPanelExpanded) SizedBox(height: 300, child: campaignPanel),
                     Expanded(child: map),
                   ],
                 )
               : Row(
                   children: [
-                    SizedBox(width: 360, child: panel),
+                    if (_isSearchExpanded) SizedBox(width: 360, child: panel),
+                    if (_controller.isCampaignPanelExpanded) SizedBox(width: 400, child: campaignPanel),
                     Expanded(child: map),
                   ],
                 );
@@ -85,6 +120,40 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
           return Stack(
             children: [
               body,
+              if (!_isSearchExpanded && !_controller.isCampaignPanelExpanded)
+                Positioned(
+                  left: 16,
+                  top: 12,
+                  child: Column(
+                    children: [
+                      FloatingActionButton(
+                        heroTag: 'expand_search_btn',
+                        elevation: 4,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                        onPressed: () {
+                          _controller.deselectCampaign();
+                          _controller.toggleCampaignPanel(false);
+                          setState(() => _isSearchExpanded = true);
+                        },
+                        child: const Icon(Icons.search),
+                      ),
+                      const SizedBox(height: 12),
+                      FloatingActionButton(
+                        heroTag: 'expand_campaign_btn',
+                        elevation: 4,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
+                        foregroundColor: Theme.of(context).colorScheme.secondary,
+                        onPressed: () {
+                          _controller.clearSelection();
+                          setState(() => _isSearchExpanded = false);
+                          _controller.toggleCampaignPanel(true);
+                        },
+                        child: const Icon(Icons.campaign),
+                      ),
+                    ],
+                  ),
+                ),
               if (widget.appUser != null)
                 // ValueListenableBuilder chỉ rebuild Positioned + avatar
                 // Map và panel KHÔNG bị rebuild khi kéo → mượt hơn
@@ -148,27 +217,17 @@ class _MapSurface extends StatelessWidget {
                       onZoomOut: controller.zoomOut,
                       onCurrentLocation: controller.requestCurrentLocation,
                       onRecenter: controller.recenterOnVietnam,
+                      showProvinceLabels: controller.showProvinceLabels,
+                      onToggleProvinceLabels: controller.toggleProvinceLabels,
                     ),
                   ),
                 ),
-                if (_showLocationMessage(controller.locationState))
-                  Positioned(
-                    left: 20,
-                    bottom: 20,
-                    child: _LocationMessage(state: controller.locationState),
-                  ),
               ],
             );
           });
         },
       ),
     );
-  }
-
-  bool _showLocationMessage(CurrentLocationState state) {
-    return state.hasMessage &&
-        state.status != CurrentLocationStatus.unknown &&
-        state.status != CurrentLocationStatus.requesting;
   }
 }
 
@@ -278,45 +337,3 @@ class _UserBadge extends StatelessWidget {
 }
 
 enum _UserMenuAction { manageUsers, logout }
-
-class _LocationMessage extends StatelessWidget {
-  const _LocationMessage({required this.state});
-
-  final CurrentLocationState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isError = state.status == CurrentLocationStatus.denied ||
-        state.status == CurrentLocationStatus.unavailable ||
-        state.status == CurrentLocationStatus.error;
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 360),
-      child: Material(
-        color: colorScheme.surface,
-        elevation: 3,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isError ? Icons.location_off : Icons.my_location,
-                color: isError ? colorScheme.error : colorScheme.primary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  state.message ?? 'Trạng thái vị trí đã thay đổi.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
