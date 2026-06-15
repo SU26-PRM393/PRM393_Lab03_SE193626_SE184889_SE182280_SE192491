@@ -1,7 +1,9 @@
 import 'model_helpers.dart';
 
-class Province {
-  Province({
+/// Cấu trúc dữ liệu chung cho đơn vị hành chính (Tỉnh/Huyện/Xã/Phường...)
+/// Committee và Commune đều có cùng schema này → kế thừa để tránh lặp code
+class AdministrativeUnit {
+  AdministrativeUnit({
     required this.dataId,
     required this.ma,
     required this.ten,
@@ -16,6 +18,7 @@ class Province {
     this.decree,
     this.decreeUrl,
     this.predecessors,
+    this.nPredecessors,
     this.parentMa,
     this.parentTen,
     this.centroidLon,
@@ -30,8 +33,8 @@ class Province {
     this.parentTenXa,
   });
 
-  factory Province.fromMap(Map<String, dynamic> e) {
-    return Province(
+  factory AdministrativeUnit.fromMap(Map<String, dynamic> e) {
+    return AdministrativeUnit(
       dataId: mapStr(e['id']),
       ma: mapStr(e['ma']),
       ten: mapStr(e['ten']),
@@ -46,6 +49,7 @@ class Province {
       decree: e['decree'] as String?,
       decreeUrl: e['decree_url'] as String?,
       predecessors: e['predecessors'] as String?,
+      nPredecessors: mapInt(e['n_predecessors']),
       parentMa: e['parent_ma'] as String?,
       parentTen: e['parent_ten'] as String?,
       centroidLon: mapDouble(e['centroid_lon']),
@@ -75,6 +79,7 @@ class Province {
   final String? decree;
   final String? decreeUrl;
   final String? predecessors;
+  final int? nPredecessors;
   final String? parentMa;
   final String? parentTen;
   final double? centroidLon;

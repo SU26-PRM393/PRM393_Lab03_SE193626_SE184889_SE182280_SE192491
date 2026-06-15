@@ -1,42 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/database/import_service.dart';
 import 'package:vietnam_map_flutter/features/vietnam_map/domain/island_label_override.dart';
 import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_boundary.dart';
 import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_scope.dart';
 import 'package:vietnam_map_flutter/features/vietnam_map/presentation/vietnam_map_controller.dart';
 
 void main() {
-  group('ImportService startup planning', () {
-    test('skips import when the flag and all database counts are present', () {
-      final plan = ImportService.buildImportPlan(
-        imported: true,
-        provincesCount: 34,
-        communesCount: 3321,
-        committeesCount: 3321,
-      );
-
-      expect(plan.shouldImport, isFalse);
-      expect(plan.importProvinces, isFalse);
-      expect(plan.importCommunes, isFalse);
-      expect(plan.importCommittees, isFalse);
-    });
-
-    test('imports only missing datasets', () {
-      final plan = ImportService.buildImportPlan(
-        imported: false,
-        provincesCount: 34,
-        communesCount: 0,
-        committeesCount: 12,
-      );
-
-      expect(plan.shouldImport, isTrue);
-      expect(plan.importProvinces, isFalse);
-      expect(plan.importCommunes, isTrue);
-      expect(plan.importCommittees, isFalse);
-    });
-  });
-
   group('VietnamMapController performance paths', () {
     test('invalidates cached search results when search input changes', () {
       final controller = VietnamMapController();

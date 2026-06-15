@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../features/vietnam_map/presentation/vietnam_map_screen.dart';
+import '../features/auth/presentation/auth_gate.dart';
 import 'app_theme.dart';
 
 class MapApp extends StatelessWidget {
@@ -12,7 +12,7 @@ class MapApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Bản đồ Việt Nam',
       theme: AppTheme.light(),
-      home: const VietnamMapScreen(),
+      home: const AuthGate(),
     );
   }
 }
