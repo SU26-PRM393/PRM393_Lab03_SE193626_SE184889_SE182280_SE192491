@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../admin/presentation/admin_shell.dart';
 import '../../vietnam_map/presentation/vietnam_map_screen.dart';
 import '../data/auth_controller.dart';
 import 'login_screen.dart';
@@ -12,20 +13,34 @@ import 'login_screen.dart';
 ///   unauthenticated → LoginScreen
 ///   authenticated   → VietnamMapScreen (truyền AppUser vào để biết role)
 class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
+  const AuthGate({super.key, this.controller});
+
+  /// Injection point để test — production để null (tự tạo)
+  final AuthController? controller;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
 }
 
 class _AuthGateState extends State<AuthGate> {
-  // AuthController tạo ở đây để tồn tại suốt vòng đời app
-  // (không tạo trong build() vì mỗi rebuild sẽ tạo instance mới → reset state)
-  final _authController = AuthController();
+  late final AuthController _authController;
+  late final bool _ownsController;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.controller != null) {
+      _authController = widget.controller!;
+      _ownsController = false;
+    } else {
+      _authController = AuthController();
+      _ownsController = true;
+    }
+  }
 
   @override
   void dispose() {
-    _authController.dispose();
+    if (_ownsController) _authController.dispose();
     super.dispose();
   }
 
@@ -42,7 +57,14 @@ class _AuthGateState extends State<AuthGate> {
             return LoginScreen(controller: _authController);
 
           case AuthStatus.authenticated:
-            return VietnamMapScreen(appUser: _authController.user);
+            final user = _authController.user;
+            if (user != null && user.isAdmin) {
+              return AdminShell(
+                admin: user,
+                onLogout: _authController.signOut,
+              );
+            }
+            return VietnamMapScreen(appUser: user);
         }
       },
     );

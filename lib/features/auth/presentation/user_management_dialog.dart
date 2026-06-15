@@ -3,9 +3,16 @@ import 'package:flutter/material.dart';
 import '../data/auth_service.dart';
 
 class UserManagementDialog extends StatefulWidget {
-  const UserManagementDialog({super.key, required this.currentUserId});
+  const UserManagementDialog({
+    super.key,
+    required this.currentUserId,
+    UserManagementServiceInterface? service,
+  }) : _service = service;
 
   final String currentUserId;
+
+  /// Injection point để test — production để null (dùng AuthService.instance)
+  final UserManagementServiceInterface? _service;
 
   @override
   State<UserManagementDialog> createState() => _UserManagementDialogState();
@@ -16,6 +23,9 @@ class _UserManagementDialogState extends State<UserManagementDialog> {
   String? _error;
   // uid đang xử lý action — để disable button tránh bấm nhiều lần
   String? _loadingUid;
+
+  UserManagementServiceInterface get _svc =>
+      widget._service ?? AuthService.instance;
 
   @override
   void initState() {
@@ -29,8 +39,7 @@ class _UserManagementDialogState extends State<UserManagementDialog> {
       _error = null;
     });
     try {
-      final users =
-          await AuthService.instance.getOtherUsers(widget.currentUserId);
+      final users = await _svc.getOtherUsers(widget.currentUserId);
       setState(() => _users = users);
     } catch (e) {
       setState(() => _error = e.toString());
@@ -40,10 +49,7 @@ class _UserManagementDialogState extends State<UserManagementDialog> {
   Future<void> _toggleDisable(UserRecord record) async {
     setState(() => _loadingUid = record.uid);
     try {
-      await AuthService.instance.setUserDisabled(
-        record.uid,
-        disabled: !record.disabled,
-      );
+      await _svc.setUserDisabled(record.uid, disabled: !record.disabled);
       await _load();
     } catch (e) {
       _showError('Không thể cập nhật: $e');
@@ -75,7 +81,7 @@ class _UserManagementDialogState extends State<UserManagementDialog> {
 
     setState(() => _loadingUid = record.uid);
     try {
-      await AuthService.instance.deleteUserDocument(record.uid);
+      await _svc.deleteUserDocument(record.uid);
       await _load();
     } catch (e) {
       _showError('Không thể xóa: $e');

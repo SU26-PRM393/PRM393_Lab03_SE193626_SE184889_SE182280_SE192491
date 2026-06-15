@@ -4,6 +4,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// Role của user trong hệ thống
 enum UserRole { user, admin }
 
+/// Interface để AuthController có thể test được mà không cần Firebase thật
+/// Chỉ khai báo những method mà AuthController cần gọi
+abstract class AuthServiceInterface {
+  Stream<bool> get isSignedIn;
+  Future<AppUser?> getCurrentUser();
+  Future<AppUser> signIn(String email, String password);
+  Future<AppUser> signUp(String email, String password);
+  Future<void> signOut();
+}
+
+/// Interface để UserManagementDialog có thể test được
+abstract class UserManagementServiceInterface {
+  Future<List<UserRecord>> getOtherUsers(String excludeUid);
+  Future<void> setUserDisabled(String uid, {required bool disabled});
+  Future<void> deleteUserDocument(String uid);
+  Future<void> setUserRole(String uid, String role);
+}
+
 /// Thông tin user sau khi đăng nhập thành công
 class AppUser {
   const AppUser({
@@ -21,16 +39,16 @@ class AppUser {
 
 /// Tương tự @Service trong Spring Boot — xử lý toàn bộ logic Auth
 /// UI chỉ gọi qua class này, không gọi FirebaseAuth trực tiếp
-class AuthService {
+class AuthService implements AuthServiceInterface, UserManagementServiceInterface {
   AuthService._();
   static final instance = AuthService._();
 
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
 
-  /// Stream trạng thái đăng nhập — tương tự SecurityContextHolder
-  /// Emit null khi chưa login, emit User khi đã login
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  /// Stream bool: true = đã đăng nhập, false = chưa
+  @override
+  Stream<bool> get isSignedIn => _auth.authStateChanges().map((u) => u != null);
 
   /// Đăng nhập bằng email + password
   /// Trả về AppUser (có role) hoặc ném exception nếu sai thông tin
@@ -86,6 +104,11 @@ class AuthService {
   /// Xóa document user khỏi Firestore (tài khoản Auth vẫn còn nhưng không dùng được app)
   Future<void> deleteUserDocument(String uid) =>
       _db.collection('users').doc(uid).delete();
+
+  /// Thay đổi role của user ('admin' hoặc 'user')
+  @override
+  Future<void> setUserRole(String uid, String role) =>
+      _db.collection('users').doc(uid).update({'role': role});
 
   /// Đọc role từ Firestore rồi ghép vào AppUser
   Future<AppUser> _toAppUser(User firebaseUser) async {

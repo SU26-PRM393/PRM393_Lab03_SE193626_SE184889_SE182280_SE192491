@@ -1,3 +1,5 @@
+import 'model_helpers.dart';
+
 class Committee {
   Committee({
     required this.dataId,
@@ -31,31 +33,31 @@ class Committee {
 
   factory Committee.fromMap(Map<String, dynamic> e) {
     return Committee(
-      dataId: _str(e['id']),
-      ma: _str(e['ma']),
-      ten: _str(e['ten']),
+      dataId: mapStr(e['id']),
+      ma: mapStr(e['ma']),
+      ten: mapStr(e['ten']),
       type: e['type'] as String?,
       tenShort: e['ten_short'] as String?,
-      areaKm2: _double(e['area_km2']),
-      population: _int(e['population']),
-      density: _double(e['density']),
+      areaKm2: mapDouble(e['area_km2']),
+      population: mapInt(e['population']),
+      density: mapDouble(e['density']),
       capital: e['capital'] as String?,
       address: e['address'] as String?,
       phone: e['phone'] as String?,
       decree: e['decree'] as String?,
       decreeUrl: e['decree_url'] as String?,
       predecessors: e['predecessors'] as String?,
-      nPredecessors: _int(e['n_predecessors']),
+      nPredecessors: mapInt(e['n_predecessors']),
       parentMa: e['parent_ma'] as String?,
       parentTen: e['parent_ten'] as String?,
-      centroidLon: _double(e['centroid_lon']),
-      centroidLat: _double(e['centroid_lat']),
+      centroidLon: mapDouble(e['centroid_lon']),
+      centroidLat: mapDouble(e['centroid_lat']),
       geomType: e['geom_type'] as String?,
-      nVertices: _int(e['n_vertices']),
+      nVertices: mapInt(e['n_vertices']),
       macroRegion: e['macro_region'] as String?,
-      predecessorsList: _strList(e['predecessors_list']),
-      bbox: _doubleList(e['bbox']),
-      keywords: _strList(e['keywords']),
+      predecessorsList: mapStrList(e['predecessors_list']),
+      bbox: mapDoubleList(e['bbox']),
+      keywords: mapStrList(e['keywords']),
       embedText: e['embed_text'] as String?,
       parentTenXa: e['parent_ten_xa'] as String?,
     );
@@ -89,11 +91,3 @@ class Committee {
   final String? embedText;
   final String? parentTenXa;
 }
-
-String _str(dynamic v) => v?.toString() ?? '';
-double? _double(dynamic v) => v is num ? v.toDouble() : null;
-int? _int(dynamic v) => v is num ? v.toInt() : null;
-List<String>? _strList(dynamic v) =>
-    v is List ? [for (final e in v) e.toString()] : null;
-List<double>? _doubleList(dynamic v) =>
-    v is List ? [for (final e in v) if (e is num) e.toDouble()] : null;

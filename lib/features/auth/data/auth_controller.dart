@@ -7,11 +7,12 @@ enum AuthStatus { loading, authenticated, unauthenticated }
 /// ViewModel quản lý trạng thái đăng nhập — tương tự VietnamMapController
 /// extends ChangeNotifier → khi state thay đổi, UI tự rebuild
 class AuthController extends ChangeNotifier {
-  AuthController() {
+  AuthController({AuthServiceInterface? service})
+      : _service = service ?? AuthService.instance {
     _init();
   }
 
-  final _service = AuthService.instance;
+  final AuthServiceInterface _service;
 
   AuthStatus _status = AuthStatus.loading;
   AppUser? _user;
@@ -22,18 +23,18 @@ class AuthController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLoading => _status == AuthStatus.loading;
 
-  /// Lắng nghe Firebase auth stream khi khởi tạo
+  /// Lắng nghe auth stream khi khởi tạo
   /// Tương tự @PostConstruct trong Spring — chạy tự động sau khi tạo object
   void _init() {
-    _service.authStateChanges.listen((firebaseUser) async {
-      if (firebaseUser == null) {
+    _service.isSignedIn.listen((signedIn) async {
+      if (!signedIn) {
         _user = null;
         _status = AuthStatus.unauthenticated;
         notifyListeners();
         return;
       }
 
-      // Đã có Firebase user → load thêm role từ Firestore
+      // Đã đăng nhập → load thêm role từ Firestore
       _status = AuthStatus.loading;
       notifyListeners();
 
@@ -79,7 +80,7 @@ class AuthController extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _service.signOut();
-    // authStateChanges stream sẽ tự emit null → _init() xử lý tiếp
+    // isSignedIn stream sẽ tự emit false → _init() xử lý tiếp
   }
 
   /// Chuyển Firebase error code sang thông báo tiếng Việt dễ đọc
