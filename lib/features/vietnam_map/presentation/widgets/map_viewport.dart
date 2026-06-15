@@ -197,15 +197,20 @@ class _MapViewportState extends State<MapViewport> {
                 ),
               ),
             ),
-          if (controller.locationState.status ==
-              CurrentLocationStatus.requesting)
+          if (controller.hasLocationMessage)
             Positioned(
               top: controller.viewport.isSourceUnavailable ? 72 : 16,
               left: 80,
-              child: const IgnorePointer(
+              child: IgnorePointer(
                 child: _StatusBanner(
-                  icon: Icons.my_location,
-                  message: 'Đang yêu cầu vị trí hiện tại...',
+                  icon: controller.locationState.status ==
+                          CurrentLocationStatus.available
+                      ? Icons.location_on
+                      : controller.locationState.status ==
+                              CurrentLocationStatus.requesting
+                          ? Icons.my_location
+                          : Icons.location_off,
+                  message: controller.locationState.message!,
                 ),
               ),
             ),

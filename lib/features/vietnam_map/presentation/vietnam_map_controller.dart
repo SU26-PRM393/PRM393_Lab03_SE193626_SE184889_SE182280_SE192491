@@ -673,10 +673,19 @@ class VietnamMapController extends ChangeNotifier {
     if (coordinate != null) {
       final viewport = _currentViewport();
       _moveTo(coordinate, viewport.zoom < 9 ? 9 : viewport.zoom);
-      return;
+    } else {
+      notifyListeners();
     }
 
-    notifyListeners();
+    // Auto-hide the message after 4 seconds
+    if (nextState.hasMessage) {
+      Future.delayed(const Duration(seconds: 4), () {
+        if (!_isDisposed && _locationState.message == nextState.message) {
+          _locationState = _locationState.copyWith(message: '');
+          notifyListeners();
+        }
+      });
+    }
   }
 
   void markMapSourceUnavailable(Object error) {
