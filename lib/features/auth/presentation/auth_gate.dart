@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../admin/presentation/admin_shell.dart';
-import '../../vietnam_map/presentation/vietnam_map_screen.dart';
+import '../../user/presentation/user_shell.dart';
 import '../data/auth_controller.dart';
+import '../data/auth_service.dart';
 import 'login_screen.dart';
 
 /// "Cổng bảo vệ" — quyết định user thấy màn hình nào dựa trên trạng thái auth
@@ -64,7 +65,10 @@ class _AuthGateState extends State<AuthGate> {
                 onLogout: _authController.signOut,
               );
             }
-            return VietnamMapScreen(appUser: user);
+            return UserShell(
+              user: user ?? const AppUser(uid: '', email: '', role: UserRole.user),
+              onLogout: _authController.signOut,
+            );
         }
       },
     );

@@ -6,6 +6,7 @@ import 'package:vietnam_map_flutter/features/admin/presentation/admin_shell.dart
 import 'package:vietnam_map_flutter/features/auth/data/auth_controller.dart';
 import 'package:vietnam_map_flutter/features/auth/data/auth_service.dart';
 import 'package:vietnam_map_flutter/features/auth/presentation/auth_gate.dart';
+import 'package:vietnam_map_flutter/features/user/presentation/user_shell.dart';
 import 'package:vietnam_map_flutter/features/vietnam_map/presentation/vietnam_map_screen.dart';
 
 // ---------------------------------------------------------------------------
@@ -107,7 +108,7 @@ void main() {
   });
 
   group('AuthGate — trạng thái authenticated', () {
-    testWidgets('hiển thị VietnamMapScreen khi stream emit true',
+    testWidgets('hiển thị UserShell khi user thường đăng nhập',
         (tester) async {
       svc.setCurrentUser(_fakeUser);
       await tester.pumpWidget(_buildGate(ctrl));
@@ -120,11 +121,11 @@ void main() {
       });
       await tester.pump();
 
-      expect(find.byType(VietnamMapScreen), findsOneWidget);
+      expect(find.byType(UserShell), findsOneWidget);
       expect(find.text('Đăng nhập để tiếp tục'), findsNothing);
     });
 
-    testWidgets('VietnamMapScreen nhận đúng AppUser khi là user thường',
+    testWidgets('UserShell nhận đúng AppUser khi là user thường',
         (tester) async {
       svc.setCurrentUser(_fakeUser);
       await tester.pumpWidget(_buildGate(ctrl));
@@ -136,11 +137,9 @@ void main() {
       });
       await tester.pump();
 
-      final screen = tester.widget<VietnamMapScreen>(
-        find.byType(VietnamMapScreen),
-      );
-      expect(screen.appUser?.uid, 'uid-1');
-      expect(screen.appUser?.isAdmin, isFalse);
+      final shell = tester.widget<UserShell>(find.byType(UserShell));
+      expect(shell.user.uid, 'uid-1');
+      expect(shell.user.isAdmin, isFalse);
     });
   });
 

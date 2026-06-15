@@ -1,93 +1,9 @@
-import 'model_helpers.dart';
+import 'administrative_unit.dart';
 
-class Committee {
-  Committee({
-    required this.dataId,
-    required this.ma,
-    required this.ten,
-    this.type,
-    this.tenShort,
-    this.areaKm2,
-    this.population,
-    this.density,
-    this.capital,
-    this.address,
-    this.phone,
-    this.decree,
-    this.decreeUrl,
-    this.predecessors,
-    this.nPredecessors,
-    this.parentMa,
-    this.parentTen,
-    this.centroidLon,
-    this.centroidLat,
-    this.geomType,
-    this.nVertices,
-    this.macroRegion,
-    this.predecessorsList,
-    this.bbox,
-    this.keywords,
-    this.embedText,
-    this.parentTenXa,
-  });
-
+class Committee extends AdministrativeUnit {
+  Committee({required super.dataId, required super.ma, required super.ten, super.type, super.tenShort, super.areaKm2, super.population, super.density, super.capital, super.address, super.phone, super.decree, super.decreeUrl, super.predecessors, super.nPredecessors, super.parentMa, super.parentTen, super.centroidLon, super.centroidLat, super.geomType, super.nVertices, super.macroRegion, super.predecessorsList, super.bbox, super.keywords, super.embedText, super.parentTenXa});
   factory Committee.fromMap(Map<String, dynamic> e) {
-    return Committee(
-      dataId: mapStr(e['id']),
-      ma: mapStr(e['ma']),
-      ten: mapStr(e['ten']),
-      type: e['type'] as String?,
-      tenShort: e['ten_short'] as String?,
-      areaKm2: mapDouble(e['area_km2']),
-      population: mapInt(e['population']),
-      density: mapDouble(e['density']),
-      capital: e['capital'] as String?,
-      address: e['address'] as String?,
-      phone: e['phone'] as String?,
-      decree: e['decree'] as String?,
-      decreeUrl: e['decree_url'] as String?,
-      predecessors: e['predecessors'] as String?,
-      nPredecessors: mapInt(e['n_predecessors']),
-      parentMa: e['parent_ma'] as String?,
-      parentTen: e['parent_ten'] as String?,
-      centroidLon: mapDouble(e['centroid_lon']),
-      centroidLat: mapDouble(e['centroid_lat']),
-      geomType: e['geom_type'] as String?,
-      nVertices: mapInt(e['n_vertices']),
-      macroRegion: e['macro_region'] as String?,
-      predecessorsList: mapStrList(e['predecessors_list']),
-      bbox: mapDoubleList(e['bbox']),
-      keywords: mapStrList(e['keywords']),
-      embedText: e['embed_text'] as String?,
-      parentTenXa: e['parent_ten_xa'] as String?,
-    );
+    final u = AdministrativeUnit.fromMap(e);
+    return Committee(dataId: u.dataId, ma: u.ma, ten: u.ten, type: u.type, tenShort: u.tenShort, areaKm2: u.areaKm2, population: u.population, density: u.density, capital: u.capital, address: u.address, phone: u.phone, decree: u.decree, decreeUrl: u.decreeUrl, predecessors: u.predecessors, nPredecessors: u.nPredecessors, parentMa: u.parentMa, parentTen: u.parentTen, centroidLon: u.centroidLon, centroidLat: u.centroidLat, geomType: u.geomType, nVertices: u.nVertices, macroRegion: u.macroRegion, predecessorsList: u.predecessorsList, bbox: u.bbox, keywords: u.keywords, embedText: u.embedText, parentTenXa: u.parentTenXa);
   }
-
-  final String dataId;
-  final String ma;
-  final String ten;
-  final String? type;
-  final String? tenShort;
-  final double? areaKm2;
-  final int? population;
-  final double? density;
-  final String? capital;
-  final String? address;
-  final String? phone;
-  final String? decree;
-  final String? decreeUrl;
-  final String? predecessors;
-  final int? nPredecessors;
-  final String? parentMa;
-  final String? parentTen;
-  final double? centroidLon;
-  final double? centroidLat;
-  final String? geomType;
-  final int? nVertices;
-  final String? macroRegion;
-  final List<String>? predecessorsList;
-  final List<double>? bbox;
-  final List<String>? keywords;
-  final String? embedText;
-  final String? parentTenXa;
 }
