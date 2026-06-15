@@ -211,18 +211,19 @@ class _UserTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDisabled = record.disabled;
 
+    final normalBg = record.isAdmin ? cs.primaryContainer : cs.secondaryContainer;
+    final avatarBg = isDisabled ? cs.surfaceContainerHighest : normalBg;
+    final normalIconColor = record.isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
+    final avatarIconColor = isDisabled ? cs.onSurfaceVariant : normalIconColor;
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: CircleAvatar(
-        backgroundColor: isDisabled
-            ? cs.surfaceContainerHighest
-            : (record.isAdmin ? cs.primaryContainer : cs.secondaryContainer),
+        backgroundColor: avatarBg,
         child: Icon(
           record.isAdmin ? Icons.admin_panel_settings : Icons.person,
           size: 20,
-          color: isDisabled
-              ? cs.onSurfaceVariant
-              : (record.isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer),
+          color: avatarIconColor,
         ),
       ),
       title: Text(
@@ -246,35 +247,39 @@ class _UserTile extends StatelessWidget {
           ],
         ],
       ),
-      trailing: isProcessing
-          ? SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary),
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Tooltip(
-                  message: isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa',
-                  child: IconButton(
-                    icon: Icon(
-                      isDisabled ? Icons.toggle_off : Icons.toggle_on,
-                      color: isDisabled ? cs.outline : cs.primary,
-                      size: 28,
-                    ),
-                    onPressed: onToggleDisable,
-                  ),
-                ),
-                Tooltip(
-                  message: 'Xóa người dùng',
-                  child: IconButton(
-                    icon: Icon(Icons.delete_outline, color: cs.error),
-                    onPressed: onDelete,
-                  ),
-                ),
-              ],
-            ),
+      trailing: _buildTrailing(cs, isDisabled),
+    );
+  }
+
+  Widget _buildTrailing(ColorScheme cs, bool isDisabled) {
+    if (isProcessing) {
+      return SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(strokeWidth: 2, color: cs.primary),
+      );
+    }
+    final toggleIcon = isDisabled ? Icons.toggle_off : Icons.toggle_on;
+    final toggleColor = isDisabled ? cs.outline : cs.primary;
+    final toggleMsg = isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: toggleMsg,
+          child: IconButton(
+            icon: Icon(toggleIcon, color: toggleColor, size: 28),
+            onPressed: onToggleDisable,
+          ),
+        ),
+        Tooltip(
+          message: 'Xóa người dùng',
+          child: IconButton(
+            icon: Icon(Icons.delete_outline, color: cs.error),
+            onPressed: onDelete,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -289,12 +294,10 @@ class _RoleChip extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isAdmin = role == 'admin';
 
-    final bg = disabled
-        ? cs.surfaceContainerHighest
-        : (isAdmin ? cs.primaryContainer : cs.secondaryContainer);
-    final fg = disabled
-        ? cs.onSurfaceVariant
-        : (isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer);
+    final adminBg = isAdmin ? cs.primaryContainer : cs.secondaryContainer;
+    final bg = disabled ? cs.surfaceContainerHighest : adminBg;
+    final adminFg = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
+    final fg = disabled ? cs.onSurfaceVariant : adminFg;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),

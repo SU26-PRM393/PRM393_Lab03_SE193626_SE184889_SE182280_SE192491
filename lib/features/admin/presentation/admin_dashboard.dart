@@ -193,10 +193,11 @@ class _SidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final defaultColor = selected ? cs.primary : cs.onSurfaceVariant;
+    final activeColor = iconColor ?? defaultColor;
     final effectiveColor = disabled
         ? cs.onSurface.withValues(alpha: 0.35)
-        : (iconColor ??
-            (selected ? cs.primary : cs.onSurfaceVariant));
+        : activeColor;
 
     final item = Tooltip(
       message: expanded ? '' : label,

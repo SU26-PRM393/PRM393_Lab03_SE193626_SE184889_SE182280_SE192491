@@ -4,6 +4,8 @@ import '../../auth/data/auth_service.dart';
 
 enum _SortField { email, role, status }
 
+const _kDisabled = 'Đã tắt';
+
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({
     super.key,
@@ -277,7 +279,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     options: const {
                       'all': 'Tất cả',
                       'active': 'Hoạt động',
-                      'disabled': 'Đã tắt'
+                      'disabled': _kDisabled,
                     },
                     current: _statusFilter,
                     onSelect: (v) => setState(() => _statusFilter = v),
@@ -447,103 +449,109 @@ class _UserTile extends StatelessWidget {
     final isDisabled = record.disabled;
     final isAdmin = record.isAdmin;
 
+    // Extract nested ternaries to independent statements
+    final normalBg = isAdmin ? cs.primaryContainer : cs.secondaryContainer;
+    final avatarBg = isDisabled ? cs.surfaceContainerHighest : normalBg;
+    final normalIconColor = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
+    final avatarIconColor = isDisabled ? cs.onSurfaceVariant : normalIconColor;
+    final chipBg = isDisabled ? cs.surfaceContainerHighest : normalBg;
+    final chipFg = isDisabled ? cs.onSurfaceVariant : normalIconColor;
+
     return ExpansionTile(
-      leading: CircleAvatar(
-        radius: 18,
-        backgroundColor: isDisabled
-            ? cs.surfaceContainerHighest
-            : (isAdmin ? cs.primaryContainer : cs.secondaryContainer),
-        child: Icon(
-          isAdmin ? Icons.admin_panel_settings : Icons.person,
-          size: 18,
-          color: isDisabled
-              ? cs.onSurfaceVariant
-              : (isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer),
-        ),
+      leading: _buildAvatar(avatarBg, avatarIconColor, isAdmin),
+      title: _buildTitle(cs, isDisabled),
+      subtitle: _buildSubtitle(cs, isAdmin, isDisabled, chipBg, chipFg),
+      trailing: _buildTrailing(cs, isDisabled),
+      children: [_buildDetail(cs, isAdmin, isDisabled)],
+    );
+  }
+
+  Widget _buildAvatar(Color bg, Color iconColor, bool isAdmin) {
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: bg,
+      child: Icon(
+        isAdmin ? Icons.admin_panel_settings : Icons.person,
+        size: 18,
+        color: iconColor,
       ),
-      title: Text(
-        record.email,
-        style: TextStyle(
-          fontSize: 13,
-          color: isDisabled
-              ? cs.onSurface.withValues(alpha: 0.45)
-              : cs.onSurface,
-          decoration: isDisabled ? TextDecoration.lineThrough : null,
-        ),
-      ),
-      subtitle: Row(
-        children: [
-          _Chip(
-            label: isAdmin ? 'Admin' : 'User',
-            bg: isDisabled
-                ? cs.surfaceContainerHighest
-                : (isAdmin ? cs.primaryContainer : cs.secondaryContainer),
-            fg: isDisabled
-                ? cs.onSurfaceVariant
-                : (isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer),
-          ),
-          if (isDisabled) ...[
-            const SizedBox(width: 6),
-            _Chip(label: 'Đã tắt', bg: cs.errorContainer, fg: cs.onErrorContainer),
-          ],
-        ],
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Tooltip(
-            message: 'Chỉnh sửa quyền',
-            child: IconButton(
-              icon: Icon(Icons.edit_outlined, size: 18, color: cs.primary),
-              onPressed: onEditRole,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            ),
-          ),
-          Tooltip(
-            message: isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa',
-            child: IconButton(
-              icon: Icon(
-                isDisabled ? Icons.toggle_off : Icons.toggle_on,
-                size: 22,
-                color: isDisabled ? cs.outline : cs.primary,
-              ),
-              onPressed: onToggleDisable,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            ),
-          ),
-          Tooltip(
-            message: 'Xóa người dùng',
-            child: IconButton(
-              icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
-              onPressed: onDelete,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            ),
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
-      // Detail khi expand
+    );
+  }
+
+  Widget _buildTitle(ColorScheme cs, bool isDisabled) {
+    final color = isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface;
+    final decoration = isDisabled ? TextDecoration.lineThrough : null;
+    return Text(
+      record.email,
+      style: TextStyle(fontSize: 13, color: color, decoration: decoration),
+    );
+  }
+
+  Widget _buildSubtitle(ColorScheme cs, bool isAdmin, bool isDisabled, Color chipBg, Color chipFg) {
+    return Row(
       children: [
-        Container(
-          color: cs.surfaceContainerLow,
-          padding: const EdgeInsets.fromLTRB(72, 8, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _DetailRow(label: 'UID', value: record.uid),
-              _DetailRow(label: 'Email', value: record.email),
-              _DetailRow(label: 'Quyền', value: isAdmin ? 'Admin' : 'User'),
-              _DetailRow(
-                label: 'Trạng thái',
-                value: isDisabled ? 'Đã tắt' : 'Hoạt động',
-              ),
-            ],
+        _Chip(label: isAdmin ? 'Admin' : 'User', bg: chipBg, fg: chipFg),
+        if (isDisabled) ...[
+          const SizedBox(width: 6),
+          _Chip(label: _kDisabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTrailing(ColorScheme cs, bool isDisabled) {
+    final toggleIcon = isDisabled ? Icons.toggle_off : Icons.toggle_on;
+    final toggleColor = isDisabled ? cs.outline : cs.primary;
+    final toggleMsg = isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa';
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: 'Chỉnh sửa quyền',
+          child: IconButton(
+            icon: Icon(Icons.edit_outlined, size: 18, color: cs.primary),
+            onPressed: onEditRole,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),
         ),
+        Tooltip(
+          message: toggleMsg,
+          child: IconButton(
+            icon: Icon(toggleIcon, size: 22, color: toggleColor),
+            onPressed: onToggleDisable,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ),
+        Tooltip(
+          message: 'Xóa người dùng',
+          child: IconButton(
+            icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
+            onPressed: onDelete,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ),
+        const SizedBox(width: 4),
       ],
+    );
+  }
+
+  Widget _buildDetail(ColorScheme cs, bool isAdmin, bool isDisabled) {
+    final statusValue = isDisabled ? _kDisabled : 'Hoạt động';
+    return Container(
+      color: cs.surfaceContainerLow,
+      padding: const EdgeInsets.fromLTRB(72, 8, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _DetailRow(label: 'UID', value: record.uid),
+          _DetailRow(label: 'Email', value: record.email),
+          _DetailRow(label: 'Quyền', value: isAdmin ? 'Admin' : 'User'),
+          _DetailRow(label: 'Trạng thái', value: statusValue),
+        ],
+      ),
     );
   }
 }
@@ -621,6 +629,34 @@ class _EditRoleDialogState extends State<_EditRoleDialog> {
     _role = widget.record.role;
   }
 
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    final navigator = Navigator.of(context);
+    try {
+      await widget.onSave(_role);
+      if (mounted) navigator.pop();
+    } catch (_) {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Widget _buildSaveButton(bool unchanged) {
+    if (_saving) {
+      return const FilledButton(
+        onPressed: null,
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    return FilledButton(
+      onPressed: unchanged ? null : _save,
+      child: const Text('Lưu'),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final unchanged = _role == widget.record.role;
@@ -635,22 +671,26 @@ class _EditRoleDialogState extends State<_EditRoleDialog> {
               style:
                   const TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
           const SizedBox(height: 12),
-          RadioListTile<String>(
-            dense: true,
-            title: const Text('User'),
-            subtitle: const Text('Chỉ xem bản đồ', style: TextStyle(fontSize: 11)),
-            value: 'user',
+          RadioGroup<String>(
             groupValue: _role,
-            onChanged: _saving ? null : (v) => setState(() => _role = v!),
-          ),
-          RadioListTile<String>(
-            dense: true,
-            title: const Text('Admin'),
-            subtitle: const Text('Quản lí toàn bộ hệ thống',
-                style: TextStyle(fontSize: 11)),
-            value: 'admin',
-            groupValue: _role,
-            onChanged: _saving ? null : (v) => setState(() => _role = v!),
+            onChanged: (v) { if (!_saving && v != null) setState(() => _role = v); },
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<String>(
+                  dense: true,
+                  title: Text('User'),
+                  subtitle: Text('Chỉ xem bản đồ', style: TextStyle(fontSize: 11)),
+                  value: 'user',
+                ),
+                RadioListTile<String>(
+                  dense: true,
+                  title: Text('Admin'),
+                  subtitle: Text('Quản lí toàn bộ hệ thống', style: TextStyle(fontSize: 11)),
+                  value: 'admin',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -659,25 +699,7 @@ class _EditRoleDialogState extends State<_EditRoleDialog> {
           onPressed: _saving ? null : () => Navigator.pop(context),
           child: const Text('Hủy'),
         ),
-        FilledButton(
-          onPressed: _saving || unchanged
-              ? null
-              : () async {
-                  setState(() => _saving = true);
-                  try {
-                    await widget.onSave(_role);
-                    if (mounted) Navigator.pop(context);
-                  } catch (_) {
-                    if (mounted) setState(() => _saving = false);
-                  }
-                },
-          child: _saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Lưu'),
-        ),
+        _buildSaveButton(unchanged),
       ],
     );
   }

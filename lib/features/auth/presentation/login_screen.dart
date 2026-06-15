@@ -34,6 +34,20 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  String? _validateEmail(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Nhập email';
+    if (!v.contains('@')) return 'Email không hợp lệ';
+    return null;
+  }
+
+  String? _validatePassword(String? v) {
+    if (v == null || v.isEmpty) return 'Nhập mật khẩu';
+    if (_isSignUp && v.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
+    return null;
+  }
+
+  String get _submitLabel => _isSignUp ? 'Đăng ký' : 'Đăng nhập';
+
   @override
   Widget build(BuildContext context) {
     final isLoading = widget.controller.isLoading;
@@ -80,11 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Nhập email';
-                      if (!v.contains('@')) return 'Email không hợp lệ';
-                      return null;
-                    },
+                    validator: _validateEmail,
                   ),
                   const SizedBox(height: 16),
 
@@ -107,13 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'Nhập mật khẩu';
-                      if (_isSignUp && v.length < 6) {
-                        return 'Mật khẩu tối thiểu 6 ký tự';
-                      }
-                      return null;
-                    },
+                    validator: _validatePassword,
                   ),
                   const SizedBox(height: 8),
 
@@ -140,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : Text(_isSignUp ? 'Đăng ký' : 'Đăng nhập'),
+                        : Text(_submitLabel),
                   ),
                   const SizedBox(height: 12),
 

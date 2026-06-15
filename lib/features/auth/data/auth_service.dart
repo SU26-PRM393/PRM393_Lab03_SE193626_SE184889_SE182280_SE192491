@@ -52,6 +52,7 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
 
   /// Đăng nhập bằng email + password
   /// Trả về AppUser (có role) hoặc ném exception nếu sai thông tin
+  @override
   Future<AppUser> signIn(String email, String password) async {
     final credential = await _auth.signInWithEmailAndPassword(
       email: email.trim(),
@@ -61,6 +62,7 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
   }
 
   /// Đăng ký tài khoản mới — mặc định role = 'user'
+  @override
   Future<AppUser> signUp(String email, String password) async {
     final credential = await _auth.createUserWithEmailAndPassword(
       email: email.trim(),
@@ -79,9 +81,11 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
   }
 
   /// Đăng xuất
+  @override
   Future<void> signOut() => _auth.signOut();
 
   /// Lấy AppUser hiện tại (null nếu chưa đăng nhập)
+  @override
   Future<AppUser?> getCurrentUser() async {
     final user = _auth.currentUser;
     if (user == null) return null;
@@ -89,6 +93,7 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
   }
 
   /// Lấy danh sách tất cả users trừ chính mình
+  @override
   Future<List<UserRecord>> getOtherUsers(String excludeUid) async {
     final snapshot = await _db.collection('users').get();
     return snapshot.docs
@@ -98,10 +103,12 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
   }
 
   /// Vô hiệu hóa / kích hoạt user (chỉ cập nhật Firestore)
+  @override
   Future<void> setUserDisabled(String uid, {required bool disabled}) =>
       _db.collection('users').doc(uid).update({'disabled': disabled});
 
   /// Xóa document user khỏi Firestore (tài khoản Auth vẫn còn nhưng không dùng được app)
+  @override
   Future<void> deleteUserDocument(String uid) =>
       _db.collection('users').doc(uid).delete();
 
