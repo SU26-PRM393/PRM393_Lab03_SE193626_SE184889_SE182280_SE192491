@@ -1,14 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:flutter/foundation.dart';
+
 import '../domain/campaign.dart';
 import '../domain/event.dart';
 import '../domain/school.dart';
 
 class CampaignRepository {
-  CampaignRepository._();
+  CampaignRepository._({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance;
   static final instance = CampaignRepository._();
 
-  final _db = FirebaseFirestore.instance;
+  @visibleForTesting
+  static CampaignRepository forTesting(FirebaseFirestore db) => CampaignRepository._(db: db);
+
+  final FirebaseFirestore _db;
 
   Future<List<Campaign>> getAllCampaigns() async {
     final snapshot = await _db.collection('campaigns').get();

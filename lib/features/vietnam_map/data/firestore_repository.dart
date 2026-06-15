@@ -14,7 +14,7 @@ import '../model/province.dart';
 /// Firestore offline persistence cũng cache ở tầng SDK nên khi
 /// mở app lần 2 không cần mạng.
 class FirestoreRepository {
-  FirestoreRepository._() {
+  FirestoreRepository._({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance {
     try {
       _db.settings = const Settings(
         persistenceEnabled: true,
@@ -27,7 +27,10 @@ class FirestoreRepository {
   
   static final instance = FirestoreRepository._();
 
-  final _db = FirebaseFirestore.instance;
+  @visibleForTesting
+  static FirestoreRepository forTesting(FirebaseFirestore db) => FirestoreRepository._(db: db);
+
+  final FirebaseFirestore _db;
 
   List<Province>? _provincesCache;
   List<Commune>? _communesCache;

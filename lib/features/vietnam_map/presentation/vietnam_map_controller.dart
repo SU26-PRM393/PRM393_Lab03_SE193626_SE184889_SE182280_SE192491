@@ -952,7 +952,11 @@ class VietnamMapController extends ChangeNotifier {
     final viewport = _currentViewport();
     final nextCenter = viewport.constrainCenter(center);
     final nextZoom = zoom.clamp(viewport.minZoom, viewport.maxZoom).toDouble();
-    mapController.move(nextCenter, nextZoom);
+    try {
+      mapController.move(nextCenter, nextZoom);
+    } catch (e) {
+      debugPrint('MapController not bound yet: $e');
+    }
     _viewport = viewport.copyWith(
       center: nextCenter,
       zoom: nextZoom,
@@ -1007,7 +1011,11 @@ class VietnamMapController extends ChangeNotifier {
         );
         final nextZoom = _lerp(startZoom, zoom, easedProgress);
 
-        mapController.move(nextCenter, nextZoom);
+        try {
+          mapController.move(nextCenter, nextZoom);
+        } catch (e) {
+          debugPrint('MapController not bound yet: $e');
+        }
 
         if (progress >= 1) {
           timer.cancel();
