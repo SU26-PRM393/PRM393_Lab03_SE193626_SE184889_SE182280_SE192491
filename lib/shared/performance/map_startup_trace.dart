@@ -32,7 +32,16 @@ class MapStartupTrace {
     } finally {
       stopwatch.stop();
       developer.Timeline.finishSync();
-      _log('$name ${stopwatch.elapsedMilliseconds}ms');
+      
+      final isHighFrequency = name.startsWith('hover.') ||
+          name.startsWith('overlay.') ||
+          name.startsWith('search.') ||
+          name.contains('.polygons') ||
+          name.startsWith('widget.');
+          
+      if (!isHighFrequency || stopwatch.elapsedMilliseconds > 8) {
+        _log('$name ${stopwatch.elapsedMilliseconds}ms');
+      }
     }
   }
 
