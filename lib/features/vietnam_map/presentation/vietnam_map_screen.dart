@@ -222,24 +222,12 @@ class _MapSurface extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (_showLocationMessage(controller.locationState))
-                  Positioned(
-                    left: 20,
-                    bottom: 20,
-                    child: _LocationMessage(state: controller.locationState),
-                  ),
               ],
             );
           });
         },
       ),
     );
-  }
-
-  bool _showLocationMessage(CurrentLocationState state) {
-    return state.hasMessage &&
-        state.status != CurrentLocationStatus.unknown &&
-        state.status != CurrentLocationStatus.requesting;
   }
 }
 
@@ -349,45 +337,3 @@ class _UserBadge extends StatelessWidget {
 }
 
 enum _UserMenuAction { manageUsers, logout }
-
-class _LocationMessage extends StatelessWidget {
-  const _LocationMessage({required this.state});
-
-  final CurrentLocationState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isError = state.status == CurrentLocationStatus.denied ||
-        state.status == CurrentLocationStatus.unavailable ||
-        state.status == CurrentLocationStatus.error;
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 360),
-      child: Material(
-        color: colorScheme.surface,
-        elevation: 3,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isError ? Icons.location_off : Icons.my_location,
-                color: isError ? colorScheme.error : colorScheme.primary,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  state.message ?? 'Trạng thái vị trí đã thay đổi.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
