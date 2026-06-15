@@ -13,6 +13,7 @@ class MockAuthService implements AuthServiceInterface {
   AppUser? _currentUser;
   Exception? _signInError;
   Exception? _signUpError;
+  Exception? _getCurrentUserError;
 
   /// Gửi event "đăng nhập / đăng xuất" vào stream
   void emitSignedIn(bool value) => _signedInController.add(value);
@@ -21,6 +22,7 @@ class MockAuthService implements AuthServiceInterface {
   void stubSignInSuccess(AppUser user) {
     _currentUser = user;
     _signInError = null;
+    _getCurrentUserError = null;
   }
 
   /// Cấu hình để signIn ném lỗi
@@ -33,11 +35,19 @@ class MockAuthService implements AuthServiceInterface {
     _signUpError = Exception(firebaseCode);
   }
 
+  /// Cấu hình để getCurrentUser ném lỗi
+  void stubGetCurrentUserError(String message) {
+    _getCurrentUserError = Exception(message);
+  }
+
   @override
   Stream<bool> get isSignedIn => _signedInController.stream;
 
   @override
-  Future<AppUser?> getCurrentUser() async => _currentUser;
+  Future<AppUser?> getCurrentUser() async {
+    if (_getCurrentUserError != null) throw _getCurrentUserError!;
+    return _currentUser;
+  }
 
   @override
   Future<AppUser> signIn(String email, String password) async {
@@ -46,7 +56,7 @@ class MockAuthService implements AuthServiceInterface {
   }
 
   @override
-  Future<AppUser> signUp(String email, String password) async {
+  Future<AppUser> signUp(String email, String password, String name) async {
     if (_signUpError != null) throw _signUpError!;
     return _currentUser!;
   }
@@ -63,8 +73,8 @@ class MockAuthService implements AuthServiceInterface {
 // ---------------------------------------------------------------------------
 // Helper
 // ---------------------------------------------------------------------------
-const _adminUser = AppUser(uid: 'uid-1', email: 'admin@test.com', role: UserRole.admin);
-const _normalUser = AppUser(uid: 'uid-2', email: 'user@test.com', role: UserRole.user);
+const _adminUser = AppUser(uid: 'uid-1', email: 'admin@test.com', role: UserRole.admin, name: 'Admin User');
+const _normalUser = AppUser(uid: 'uid-2', email: 'user@test.com', role: UserRole.user, name: 'Normal User');
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -109,6 +119,18 @@ void main() {
 
       expect(controller.status, AuthStatus.authenticated);
       expect(controller.user, _adminUser);
+    });
+
+    test('goes to unauthenticated with friendly error when getCurrentUser throws exception',
+        () async {
+      mockService.stubGetCurrentUserError('Tài khoản của bạn đã bị vô hiệu hóa.');
+      mockService.emitSignedIn(true);
+      await Future.microtask(() {});
+      await Future.microtask(() {}); // chờ getCurrentUser() hoàn thành
+
+      expect(controller.status, AuthStatus.unauthenticated);
+      expect(controller.user, isNull);
+      expect(controller.errorMessage, 'Tài khoản của bạn đã bị vô hiệu hóa.');
     });
   });
 
@@ -155,13 +177,29 @@ void main() {
 
       expect(controller.errorMessage, 'Đã xảy ra lỗi. Vui lòng thử lại.');
     });
+
+    test('maps custom disabled error message correctly', () async {
+      mockService.stubSignInError('Tài khoản của bạn đã bị vô hiệu hóa.');
+
+      await controller.signIn('disabled@test.com', 'pass');
+
+      expect(controller.errorMessage, 'Tài khoản của bạn đã bị vô hiệu hóa.');
+    });
+
+    test('maps custom deleted error message correctly', () async {
+      mockService.stubSignInError('Tài khoản của bạn đã bị xóa hoặc không tồn tại.');
+
+      await controller.signIn('deleted@test.com', 'pass');
+
+      expect(controller.errorMessage, 'Tài khoản của bạn đã bị xóa hoặc không tồn tại.');
+    });
   });
 
   group('AuthController — signUp', () {
     test('sets authenticated on success', () async {
       mockService.stubSignInSuccess(_normalUser);
 
-      await controller.signUp('new@test.com', 'password123');
+      await controller.signUp('new@test.com', 'password123', 'Test Name');
 
       expect(controller.status, AuthStatus.authenticated);
       expect(controller.user, _normalUser);
@@ -170,16 +208,16 @@ void main() {
     test('maps email-already-in-use to friendly message', () async {
       mockService.stubSignUpError('email-already-in-use');
 
-      await controller.signUp('dup@test.com', 'pass');
+      await controller.signUp('dup@test.com', 'pass', 'Test Name');
 
       expect(controller.status, AuthStatus.unauthenticated);
-      expect(controller.errorMessage, 'Email này đã được đăng ký.');
+      expect(controller.errorMessage, 'Email này đã tồn tại.');
     });
 
     test('maps weak-password to friendly message', () async {
       mockService.stubSignUpError('weak-password');
 
-      await controller.signUp('new@test.com', '123');
+      await controller.signUp('new@test.com', '123', 'Test Name');
 
       expect(controller.errorMessage, 'Mật khẩu phải có ít nhất 6 ký tự.');
     });
@@ -187,7 +225,7 @@ void main() {
     test('maps invalid-email to friendly message', () async {
       mockService.stubSignUpError('invalid-email');
 
-      await controller.signUp('not-an-email', 'pass');
+      await controller.signUp('not-an-email', 'pass', 'Test Name');
 
       expect(controller.errorMessage, 'Địa chỉ email không hợp lệ.');
     });

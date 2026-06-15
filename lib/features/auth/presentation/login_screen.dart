@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
   bool _isSignUp = false;
   bool _obscurePassword = true;
 
@@ -22,13 +23,14 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
+    _nameCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_isSignUp) {
-      await widget.controller.signUp(_emailCtrl.text, _passwordCtrl.text);
+      await widget.controller.signUp(_emailCtrl.text, _passwordCtrl.text, _nameCtrl.text);
     } else {
       await widget.controller.signIn(_emailCtrl.text, _passwordCtrl.text);
     }
@@ -43,6 +45,11 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _validatePassword(String? v) {
     if (v == null || v.isEmpty) return 'Nhập mật khẩu';
     if (_isSignUp && v.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
+    return null;
+  }
+
+  String? _validateName(String? v) {
+    if (_isSignUp && (v == null || v.trim().isEmpty)) return 'Nhập họ và tên';
     return null;
   }
 
@@ -85,16 +92,34 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
+                  if (_isSignUp) ...[
+                    TextFormField(
+                      controller: _nameCtrl,
+                      keyboardType: TextInputType.name,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'Họ và tên',
+                        prefixIcon: Icon(Icons.person_outline),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: _validateName,
+                      onFieldSubmitted: (_) => _submit(),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // Email field
                   TextFormField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(),
                     ),
                     validator: _validateEmail,
+                    onFieldSubmitted: (_) => _submit(),
                   ),
                   const SizedBox(height: 16),
 
@@ -102,6 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextFormField(
                     controller: _passwordCtrl,
                     obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
                       labelText: 'Mật khẩu',
                       prefixIcon: const Icon(Icons.lock_outline),
@@ -118,6 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: _validatePassword,
+                    onFieldSubmitted: (_) => _submit(),
                   ),
                   const SizedBox(height: 8),
 

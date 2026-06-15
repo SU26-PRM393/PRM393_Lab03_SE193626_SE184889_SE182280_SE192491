@@ -136,7 +136,7 @@ class _MapViewportState extends State<MapViewport> {
           if (controller.viewport.isSourceUnavailable)
             Positioned(
               top: 16,
-              left: 16,
+              left: 80,
               child: IgnorePointer(
                 child: _StatusBanner(
                   icon: Icons.cloud_off,
@@ -149,7 +149,7 @@ class _MapViewportState extends State<MapViewport> {
               CurrentLocationStatus.requesting)
             Positioned(
               top: controller.viewport.isSourceUnavailable ? 72 : 16,
-              left: 16,
+              left: 80,
               child: const IgnorePointer(
                 child: _StatusBanner(
                   icon: Icons.my_location,
@@ -161,7 +161,7 @@ class _MapViewportState extends State<MapViewport> {
               controller.boundaryDataMessage != null)
             Positioned(
               top: controller.viewport.isSourceUnavailable ? 72 : 16,
-              left: 16,
+              left: 80,
               child: IgnorePointer(
                 child: _StatusBanner(
                   icon: Icons.map_outlined,

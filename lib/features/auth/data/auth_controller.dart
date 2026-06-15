@@ -38,8 +38,19 @@ class AuthController extends ChangeNotifier {
       _status = AuthStatus.loading;
       notifyListeners();
 
-      _user = await _service.getCurrentUser();
-      _status = AuthStatus.authenticated;
+      try {
+        _user = await _service.getCurrentUser();
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+      } on Exception catch (e) {
+        _user = null;
+        _status = AuthStatus.unauthenticated;
+        _errorMessage = _friendlyError(e.toString());
+      } catch (e) {
+        _user = null;
+        _status = AuthStatus.unauthenticated;
+        _errorMessage = 'Đã xảy ra lỗi khi tải thông tin tài khoản.';
+      }
       notifyListeners();
     });
   }
@@ -61,13 +72,13 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> signUp(String email, String password) async {
+  Future<void> signUp(String email, String password, String name) async {
     _errorMessage = null;
     _status = AuthStatus.loading;
     notifyListeners();
 
     try {
-      _user = await _service.signUp(email, password);
+      _user = await _service.signUp(email, password, name);
       _status = AuthStatus.authenticated;
       _errorMessage = null;
     } on Exception catch (e) {
@@ -85,12 +96,19 @@ class AuthController extends ChangeNotifier {
 
   /// Chuyển Firebase error code sang thông báo tiếng Việt dễ đọc
   String _friendlyError(String raw) {
+    String clean = raw;
+    if (clean.startsWith('Exception: ')) {
+      clean = clean.substring('Exception: '.length);
+    }
+    if (clean.contains('Tài khoản của bạn') || clean.contains('Email này đã bị xóa')) {
+      return clean;
+    }
     if (raw.contains('user-not-found') || raw.contains('wrong-password') ||
         raw.contains('invalid-credential')) {
       return 'Email hoặc mật khẩu không đúng.';
     }
     if (raw.contains('email-already-in-use')) {
-      return 'Email này đã được đăng ký.';
+      return 'Email này đã tồn tại.';
     }
     if (raw.contains('weak-password')) {
       return 'Mật khẩu phải có ít nhất 6 ký tự.';

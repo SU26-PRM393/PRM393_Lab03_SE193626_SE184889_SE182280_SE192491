@@ -35,7 +35,7 @@ class _MockAuthService implements AuthServiceInterface {
   }
 
   @override
-  Future<AppUser> signUp(String email, String password) async {
+  Future<AppUser> signUp(String email, String password, String name) async {
     if (_nextError != null) throw _nextError!;
     return _nextUser!;
   }
@@ -152,6 +152,8 @@ void main() {
       await tester.enterText(
           find.widgetWithText(TextFormField, 'Email'), 'a@b.com');
       await tester.enterText(
+          find.widgetWithText(TextFormField, 'Họ và tên'), 'Test Name');
+      await tester.enterText(
           find.widgetWithText(TextFormField, 'Mật khẩu'), '123');
       await tester.tap(find.text('Đăng ký'));
       await tester.pumpAndSettle();
@@ -207,11 +209,13 @@ void main() {
       await tester.enterText(
           find.widgetWithText(TextFormField, 'Email'), 'dup@test.com');
       await tester.enterText(
+          find.widgetWithText(TextFormField, 'Họ và tên'), 'Test Name');
+      await tester.enterText(
           find.widgetWithText(TextFormField, 'Mật khẩu'), 'password123');
       await tester.tap(find.text('Đăng ký'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Email này đã được đăng ký.'), findsOneWidget);
+      expect(find.text('Email này đã tồn tại.'), findsOneWidget);
     });
   });
 }

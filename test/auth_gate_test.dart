@@ -30,7 +30,7 @@ class _MockAuthService implements AuthServiceInterface {
   Future<AppUser> signIn(String e, String p) async => _user!;
 
   @override
-  Future<AppUser> signUp(String e, String p) async => _user!;
+  Future<AppUser> signUp(String e, String p, String name) async => _user!;
 
   @override
   Future<void> signOut() async => _stream.add(false);
@@ -49,6 +49,7 @@ const _fakeUser = AppUser(
   uid: 'uid-1',
   email: 'user@test.com',
   role: UserRole.user,
+  name: 'Fake User',
 );
 
 // ---------------------------------------------------------------------------
@@ -149,6 +150,7 @@ void main() {
         uid: 'admin-uid',
         email: 'admin@test.com',
         role: UserRole.admin,
+        name: 'Admin User',
       );
       svc.setCurrentUser(adminUser);
       await tester.pumpWidget(_buildGate(ctrl));

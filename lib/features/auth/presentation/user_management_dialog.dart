@@ -131,11 +131,13 @@ class _UserManagementDialogState extends State<UserManagementDialog> {
                     ),
                     IconButton(
                       icon: Icon(Icons.refresh, color: cs.onPrimary),
+                      hoverColor: cs.onPrimary.withValues(alpha: 0.1),
                       tooltip: 'Tải lại',
                       onPressed: _load,
                     ),
                     IconButton(
                       icon: Icon(Icons.close, color: cs.onPrimary),
+                      hoverColor: cs.onPrimary.withValues(alpha: 0.1),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -229,9 +231,8 @@ class _UserTile extends StatelessWidget {
       title: Text(
         record.email,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 14,
           color: isDisabled ? cs.onSurfaceVariant : cs.onSurface,
-          decoration: isDisabled ? TextDecoration.lineThrough : null,
         ),
       ),
       subtitle: Row(
@@ -269,6 +270,7 @@ class _UserTile extends StatelessWidget {
           message: toggleMsg,
           child: IconButton(
             icon: Icon(toggleIcon, color: toggleColor, size: 28),
+            hoverColor: toggleColor.withValues(alpha: 0.1),
             onPressed: onToggleDisable,
           ),
         ),
@@ -276,6 +278,7 @@ class _UserTile extends StatelessWidget {
           message: 'Xóa người dùng',
           child: IconButton(
             icon: Icon(Icons.delete_outline, color: cs.error),
+            hoverColor: cs.error.withValues(alpha: 0.1),
             onPressed: onDelete,
           ),
         ),
@@ -307,7 +310,7 @@ class _RoleChip extends StatelessWidget {
       ),
       child: Text(
         isAdmin ? 'Admin' : 'User',
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: fg),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
       ),
     );
   }
@@ -327,7 +330,7 @@ class _StatusChip extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(label, style: TextStyle(fontSize: 10, color: fg)),
+      child: Text(label, style: TextStyle(fontSize: 12, color: fg)),
     );
   }
 }

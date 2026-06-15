@@ -10,7 +10,7 @@ abstract class AuthServiceInterface {
   Stream<bool> get isSignedIn;
   Future<AppUser?> getCurrentUser();
   Future<AppUser> signIn(String email, String password);
-  Future<AppUser> signUp(String email, String password);
+  Future<AppUser> signUp(String email, String password, String name);
   Future<void> signOut();
 }
 
@@ -28,11 +28,13 @@ class AppUser {
     required this.uid,
     required this.email,
     required this.role,
+    required this.name,
   });
 
   final String uid;
   final String email;
   final UserRole role;
+  final String name;
 
   bool get isAdmin => role == UserRole.admin;
 }
@@ -63,21 +65,73 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
 
   /// Đăng ký tài khoản mới — mặc định role = 'user'
   @override
-  Future<AppUser> signUp(String email, String password) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    final uid = credential.user!.uid;
+  Future<AppUser> signUp(String email, String password, String name) async {
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final uid = credential.user!.uid;
 
-    // Tạo document trong collection 'users' với role mặc định
-    await _db.collection('users').doc(uid).set({
-      'email': email.trim(),
-      'role': 'user',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+      // Tạo document trong collection 'users' với role mặc định và name
+      await _db.collection('users').doc(uid).set({
+        'email': email.trim(),
+        'name': name.trim(),
+        'role': 'user',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
-    return _toAppUser(credential.user!);
+      return _toAppUser(credential.user!);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        // Thay vì query Firestore trực tiếp (gây permission-denied khi chưa login),
+        // Ta thử đăng nhập bằng email + password vừa điền.
+        try {
+          final signInCred = await _auth.signInWithEmailAndPassword(
+            email: email.trim(),
+            password: password,
+          );
+          
+          final user = signInCred.user!;
+          final doc = await _db.collection('users').doc(user.uid).get();
+          
+          if (!doc.exists) {
+            // Nếu không tồn tại Firestore doc (tài khoản đã bị xóa), xóa Auth user hiện tại.
+            await user.delete();
+            
+            // Tiến hành đăng ký lại từ đầu!
+            final newCred = await _auth.createUserWithEmailAndPassword(
+              email: email.trim(),
+              password: password,
+            );
+            final newUid = newCred.user!.uid;
+            await _db.collection('users').doc(newUid).set({
+              'email': email.trim(),
+              'name': name.trim(),
+              'role': 'user',
+              'createdAt': FieldValue.serverTimestamp(),
+            });
+            return _toAppUser(newCred.user!);
+          } else {
+            // Firestore doc có tồn tại (tài khoản bình thường đang hoạt động).
+            // Đăng xuất và quăng lỗi email-already-in-use thông thường.
+            await _auth.signOut();
+            throw FirebaseAuthException(
+              code: 'email-already-in-use',
+              message: 'Email này đã tồn tại.',
+            );
+          }
+        } catch (_) {
+          // Nếu đăng nhập thất bại (hoặc bất kỳ lỗi nào như sai mật khẩu),
+          // thì quăng lỗi email-already-in-use thông thường.
+          throw FirebaseAuthException(
+            code: 'email-already-in-use',
+            message: 'Email này đã tồn tại.',
+          );
+        }
+      }
+      rethrow;
+    }
   }
 
   /// Đăng xuất
@@ -120,6 +174,14 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
   /// Đọc role từ Firestore rồi ghép vào AppUser
   Future<AppUser> _toAppUser(User firebaseUser) async {
     final doc = await _db.collection('users').doc(firebaseUser.uid).get();
+    if (!doc.exists) {
+      try {
+        await firebaseUser.delete();
+      } catch (_) {
+        await _auth.signOut();
+      }
+      throw Exception('Tài khoản của bạn đã bị xóa hoặc không tồn tại.');
+    }
     final data = doc.data();
 
     // Tài khoản bị admin vô hiệu hóa → đăng xuất ngay
@@ -130,11 +192,13 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
 
     final roleStr = data?['role'] as String? ?? 'user';
     final role = roleStr == 'admin' ? UserRole.admin : UserRole.user;
+    final name = data?['name'] as String? ?? '';
 
     return AppUser(
       uid: firebaseUser.uid,
       email: firebaseUser.email ?? '',
       role: role,
+      name: name,
     );
   }
 }
@@ -146,6 +210,7 @@ class UserRecord {
     required this.email,
     required this.role,
     required this.disabled,
+    required this.name,
   });
 
   factory UserRecord.fromDoc(String uid, Map<String, dynamic> data) {
@@ -154,6 +219,7 @@ class UserRecord {
       email: data['email'] as String? ?? '',
       role: data['role'] as String? ?? 'user',
       disabled: data['disabled'] as bool? ?? false,
+      name: data['name'] as String? ?? '',
     );
   }
 
@@ -161,6 +227,7 @@ class UserRecord {
   final String email;
   final String role;
   final bool disabled;
+  final String name;
 
   bool get isAdmin => role == 'admin';
 }

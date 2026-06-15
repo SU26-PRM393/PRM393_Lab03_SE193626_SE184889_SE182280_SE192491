@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
 
-enum _SortField { email, role, status }
+enum _SortField { name, email, role, status }
 
 const _kDisabled = 'Đã tắt';
 
@@ -74,7 +74,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     if (_searchText.isNotEmpty) {
       final q = _searchText.toLowerCase();
-      list = list.where((u) => u.email.toLowerCase().contains(q)).toList();
+      list = list.where((u) =>
+          u.email.toLowerCase().contains(q) ||
+          u.name.toLowerCase().contains(q)).toList();
     }
     if (_roleFilter != 'all') {
       list = list.where((u) => u.role == _roleFilter).toList();
@@ -88,6 +90,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     list.sort((a, b) {
       int cmp;
       switch (_sortField) {
+        case _SortField.name:
+          cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+          break;
         case _SortField.role:
           cmp = a.role.compareTo(b.role);
           break;
@@ -203,7 +208,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   child: Text(
                     '${filtered.length}/${_allUsers!.length}',
                     style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 13,
                         color: cs.onPrimaryContainer,
                         fontWeight: FontWeight.w600),
                   ),
@@ -212,6 +217,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.refresh),
+                hoverColor: cs.primary.withValues(alpha: 0.1),
                 tooltip: 'Tải lại',
                 onPressed: _loading ? null : _load,
               ),
@@ -231,11 +237,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               TextField(
                 controller: _searchCtrl,
                 decoration: InputDecoration(
-                  hintText: 'Tìm kiếm theo email...',
+                  hintText: 'Tìm kiếm theo email hoặc tên...',
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchText.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear, size: 18),
+                          hoverColor: cs.primary.withValues(alpha: 0.1),
                           onPressed: () {
                             _searchCtrl.clear();
                             setState(() => _searchText = '');
@@ -261,7 +268,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 children: [
                   Text('Role:',
                       style: TextStyle(
-                          fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6))),
+                          fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                   ..._buildFilterChips(
                     options: const {
                       'all': 'Tất cả',
@@ -274,7 +281,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   const SizedBox(width: 8),
                   Text('Trạng thái:',
                       style: TextStyle(
-                          fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6))),
+                          fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                   ..._buildFilterChips(
                     options: const {
                       'all': 'Tất cả',
@@ -293,30 +300,36 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 children: [
                   Text('Sắp xếp:',
                       style: TextStyle(
-                          fontSize: 12, color: cs.onSurface.withValues(alpha: 0.6))),
+                          fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                   const SizedBox(width: 8),
-                  DropdownButton<_SortField>(
-                    value: _sortField,
-                    isDense: true,
-                    underline: const SizedBox(),
-                    style:
-                        TextStyle(fontSize: 12, color: cs.onSurface),
-                    items: const [
-                      DropdownMenuItem(
-                          value: _SortField.email, child: Text('Email')),
-                      DropdownMenuItem(
-                          value: _SortField.role, child: Text('Role')),
-                      DropdownMenuItem(
-                          value: _SortField.status, child: Text('Trạng thái')),
-                    ],
-                    onChanged: (v) =>
-                        setState(() => _sortField = v ?? _SortField.email),
+                  _HoverDropdown(
+                    child: DropdownButton<_SortField>(
+                      value: _sortField,
+                      isDense: true,
+                      underline: const SizedBox(),
+                      style:
+                          TextStyle(fontSize: 14, color: cs.onSurface),
+                      items: const [
+                        DropdownMenuItem(
+                            value: _SortField.name, child: Text('Họ và tên')),
+                        DropdownMenuItem(
+                            value: _SortField.email, child: Text('Email')),
+                        DropdownMenuItem(
+                            value: _SortField.role, child: Text('Role')),
+                        DropdownMenuItem(
+                            value: _SortField.status, child: Text('Trạng thái')),
+                      ],
+                      onChanged: (v) =>
+                          setState(() => _sortField = v ?? _SortField.email),
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   IconButton(
                     icon: Icon(
                       _sortAsc ? Icons.arrow_upward : Icons.arrow_downward,
                       size: 16,
                     ),
+                    hoverColor: cs.primary.withValues(alpha: 0.1),
                     tooltip: _sortAsc ? 'Tăng dần' : 'Giảm dần',
                     onPressed: () => setState(() => _sortAsc = !_sortAsc),
                     padding: EdgeInsets.zero,
@@ -340,27 +353,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     required String current,
     required ValueChanged<String> onSelect,
   }) {
-    final cs = Theme.of(context).colorScheme;
     return options.entries.map((e) {
-      final selected = current == e.key;
-      return GestureDetector(
+      return _FilterChipButton(
+        label: e.value,
+        selected: current == e.key,
         onTap: () => onSelect(e.key),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: selected ? cs.primary : cs.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            e.value,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: selected ? cs.onPrimary : cs.onSurface,
-            ),
-          ),
-        ),
       );
     }).toList();
   }
@@ -415,175 +412,123 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       );
     }
 
-    return ListView.separated(
-      itemCount: filtered.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (ctx, i) => _UserTile(
-        record: filtered[i],
-        onToggleDisable: () => _toggleDisable(filtered[i]),
-        onDelete: () => _delete(filtered[i]),
-        onEditRole: () => _editRole(filtered[i]),
-      ),
-    );
-  }
-}
-
-// ── User tile với ExpansionTile để xem chi tiết ───────────────────────────────
-
-class _UserTile extends StatelessWidget {
-  const _UserTile({
-    required this.record,
-    required this.onToggleDisable,
-    required this.onDelete,
-    required this.onEditRole,
-  });
-
-  final UserRecord record;
-  final VoidCallback onToggleDisable;
-  final VoidCallback onDelete;
-  final VoidCallback onEditRole;
-
-  @override
-  Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDisabled = record.disabled;
-    final isAdmin = record.isAdmin;
 
-    // Extract nested ternaries to independent statements
-    final normalBg = isAdmin ? cs.primaryContainer : cs.secondaryContainer;
-    final avatarBg = isDisabled ? cs.surfaceContainerHighest : normalBg;
-    final normalIconColor = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
-    final avatarIconColor = isDisabled ? cs.onSurfaceVariant : normalIconColor;
-    final chipBg = isDisabled ? cs.surfaceContainerHighest : normalBg;
-    final chipFg = isDisabled ? cs.onSurfaceVariant : normalIconColor;
+    return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: MediaQuery.of(context).size.width - 210,
+          ),
+          child: DataTable(
+            columns: const [
+              DataColumn(label: Text('Họ và tên', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('Email', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('Quyền', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
+              DataColumn(label: Text('Hành động', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
+            ],
+            rows: filtered.map((record) {
+              final isDisabled = record.disabled;
+              final isAdmin = record.isAdmin;
+              final normalBg = isAdmin ? cs.primaryContainer : cs.secondaryContainer;
+              final chipBg = isDisabled ? cs.surfaceContainerHighest : normalBg;
+              final normalIconColor = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
+              final chipFg = isDisabled ? cs.onSurfaceVariant : normalIconColor;
 
-    return ExpansionTile(
-      leading: _buildAvatar(avatarBg, avatarIconColor, isAdmin),
-      title: _buildTitle(cs, isDisabled),
-      subtitle: _buildSubtitle(cs, isAdmin, isDisabled, chipBg, chipFg),
-      trailing: _buildTrailing(cs, isDisabled),
-      children: [_buildDetail(cs, isAdmin, isDisabled)],
-    );
-  }
-
-  Widget _buildAvatar(Color bg, Color iconColor, bool isAdmin) {
-    return CircleAvatar(
-      radius: 18,
-      backgroundColor: bg,
-      child: Icon(
-        isAdmin ? Icons.admin_panel_settings : Icons.person,
-        size: 18,
-        color: iconColor,
-      ),
-    );
-  }
-
-  Widget _buildTitle(ColorScheme cs, bool isDisabled) {
-    final color = isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface;
-    final decoration = isDisabled ? TextDecoration.lineThrough : null;
-    return Text(
-      record.email,
-      style: TextStyle(fontSize: 13, color: color, decoration: decoration),
-    );
-  }
-
-  Widget _buildSubtitle(ColorScheme cs, bool isAdmin, bool isDisabled, Color chipBg, Color chipFg) {
-    return Row(
-      children: [
-        _Chip(label: isAdmin ? 'Admin' : 'User', bg: chipBg, fg: chipFg),
-        if (isDisabled) ...[
-          const SizedBox(width: 6),
-          _Chip(label: _kDisabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildTrailing(ColorScheme cs, bool isDisabled) {
-    final toggleIcon = isDisabled ? Icons.toggle_off : Icons.toggle_on;
-    final toggleColor = isDisabled ? cs.outline : cs.primary;
-    final toggleMsg = isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa';
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Tooltip(
-          message: 'Chỉnh sửa quyền',
-          child: IconButton(
-            icon: Icon(Icons.edit_outlined, size: 18, color: cs.primary),
-            onPressed: onEditRole,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              return DataRow(
+                cells: [
+                  // Họ và tên
+                  DataCell(
+                    Text(
+                      record.name.isNotEmpty ? record.name : 'Chưa có',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontStyle: record.name.isEmpty ? FontStyle.italic : FontStyle.normal,
+                        color: isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  // Email (+ UID subtitle)
+                  DataCell(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          record.email,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface,
+                          ),
+                        ),
+                        Text(
+                          record.uid,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurface.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Quyền
+                  DataCell(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _Chip(label: isAdmin ? 'Admin' : 'User', bg: chipBg, fg: chipFg),
+                        if (isDisabled) ...[
+                          const SizedBox(width: 6),
+                          _Chip(label: _kDisabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Hành động
+                  DataCell(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Tooltip(
+                          message: 'Chỉnh sửa quyền',
+                          child: IconButton(
+                            icon: Icon(Icons.edit_outlined, size: 18, color: cs.primary),
+                            hoverColor: cs.primary.withValues(alpha: 0.1),
+                            onPressed: () => _editRole(record),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                        ),
+                        Tooltip(
+                          message: isDisabled ? 'Kích hoạt' : 'Vô hiệu hóa',
+                          child: IconButton(
+                            icon: Icon(isDisabled ? Icons.toggle_off : Icons.toggle_on, size: 22, color: isDisabled ? cs.outline : cs.primary),
+                            hoverColor: (isDisabled ? cs.outline : cs.primary).withValues(alpha: 0.1),
+                            onPressed: () => _toggleDisable(record),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                        ),
+                        Tooltip(
+                          message: 'Xóa người dùng',
+                          child: IconButton(
+                            icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
+                            hoverColor: cs.error.withValues(alpha: 0.1),
+                            onPressed: () => _delete(record),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
         ),
-        Tooltip(
-          message: toggleMsg,
-          child: IconButton(
-            icon: Icon(toggleIcon, size: 22, color: toggleColor),
-            onPressed: onToggleDisable,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          ),
-        ),
-        Tooltip(
-          message: 'Xóa người dùng',
-          child: IconButton(
-            icon: Icon(Icons.delete_outline, size: 18, color: cs.error),
-            onPressed: onDelete,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          ),
-        ),
-        const SizedBox(width: 4),
-      ],
-    );
-  }
-
-  Widget _buildDetail(ColorScheme cs, bool isAdmin, bool isDisabled) {
-    final statusValue = isDisabled ? _kDisabled : 'Hoạt động';
-    return Container(
-      color: cs.surfaceContainerLow,
-      padding: const EdgeInsets.fromLTRB(72, 8, 16, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _DetailRow(label: 'UID', value: record.uid),
-          _DetailRow(label: 'Email', value: record.email),
-          _DetailRow(label: 'Quyền', value: isAdmin ? 'Admin' : 'User'),
-          _DetailRow(label: 'Trạng thái', value: statusValue),
-        ],
-      ),
-    );
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(
-                  fontSize: 11,
-                  color: cs.onSurface.withValues(alpha: 0.5),
-                  fontWeight: FontWeight.w500),
-            ),
-          ),
-          Expanded(
-            child: Text(value,
-                style: const TextStyle(fontSize: 12),
-                overflow: TextOverflow.ellipsis),
-          ),
-        ],
       ),
     );
   }
@@ -598,11 +543,11 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
       child: Text(label,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: fg)),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg)),
     );
   }
 }
@@ -662,14 +607,14 @@ class _EditRoleDialogState extends State<_EditRoleDialog> {
     final unchanged = _role == widget.record.role;
 
     return AlertDialog(
-      title: const Text('Chỉnh sửa quyền'),
+      title: const Text('Chỉnh sửa quyền', style: TextStyle(fontSize: 16)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(widget.record.email,
               style:
-                  const TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
+                  const TextStyle(fontSize: 13, fontStyle: FontStyle.italic)),
           const SizedBox(height: 12),
           RadioGroup<String>(
             groupValue: _role,
@@ -679,7 +624,6 @@ class _EditRoleDialogState extends State<_EditRoleDialog> {
               children: [
                 RadioListTile<String>(
                   dense: true,
-                  title: Text('User'),
                   subtitle: Text('Chỉ xem bản đồ', style: TextStyle(fontSize: 11)),
                   value: 'user',
                 ),
@@ -701,6 +645,94 @@ class _EditRoleDialogState extends State<_EditRoleDialog> {
         ),
         _buildSaveButton(unchanged),
       ],
+    );
+  }
+}
+
+class _FilterChipButton extends StatefulWidget {
+  const _FilterChipButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<_FilterChipButton> createState() => _FilterChipButtonState();
+}
+
+class _FilterChipButtonState extends State<_FilterChipButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final normalBg = widget.selected ? cs.primary : cs.surfaceContainerHighest;
+    final hoverBg = widget.selected
+        ? cs.primary.withValues(alpha: 0.85)
+        : cs.surfaceContainerHighest.withValues(alpha: 0.75);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: _hovered ? hoverBg : normalBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: widget.selected ? cs.onPrimary : cs.onSurface,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HoverDropdown extends StatefulWidget {
+  const _HoverDropdown({required this.child});
+  final Widget child;
+
+  @override
+  State<_HoverDropdown> createState() => _HoverDropdownState();
+}
+
+class _HoverDropdownState extends State<_HoverDropdown> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      cursor: SystemMouseCursors.click,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: _hovered ? cs.surfaceContainerHighest : cs.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _hovered ? cs.primary : cs.outlineVariant,
+            width: 1,
+          ),
+        ),
+        child: widget.child,
+      ),
     );
   }
 }

@@ -16,10 +16,12 @@ const _missingValueLabel = 'Chưa có';
 class MapControlPanel extends StatelessWidget {
   const MapControlPanel({
     required this.controller,
+    this.onClose,
     super.key,
   });
 
   final VietnamMapController controller;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +43,25 @@ class MapControlPanel extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             if (hasSelection)
-              _LocationDetailsView(controller: controller)
+              _LocationDetailsView(controller: controller, onClose: onClose)
             else ...[
-              Text(
-                'Khám phá Việt Nam',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Khám phá Việt Nam',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (onClose != null)
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: onClose,
+                      tooltip: 'Đóng bảng điều khiển',
+                    ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -379,9 +393,10 @@ String _administrativeTypeLabel(String value) {
 }
 
 class _LocationDetailsView extends StatelessWidget {
-  const _LocationDetailsView({required this.controller});
+  const _LocationDetailsView({required this.controller, this.onClose});
 
   final VietnamMapController controller;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -396,6 +411,7 @@ class _LocationDetailsView extends StatelessWidget {
         _LocationHeader(
           controller: controller,
           details: details,
+          onClose: onClose,
         ),
         const SizedBox(height: 12),
         Padding(
@@ -545,10 +561,12 @@ class _LocationHeader extends StatelessWidget {
   const _LocationHeader({
     required this.controller,
     required this.details,
+    this.onClose,
   });
 
   final VietnamMapController controller;
   final _LocationDetailsData details;
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
@@ -583,6 +601,12 @@ class _LocationHeader extends StatelessWidget {
             ],
           ),
         ),
+        if (onClose != null)
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: onClose,
+            tooltip: 'Đóng bảng điều khiển',
+          ),
       ],
     );
   }

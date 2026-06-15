@@ -21,6 +21,7 @@ class VietnamMapScreen extends StatefulWidget {
 
 class _VietnamMapScreenState extends State<VietnamMapScreen> {
   late final VietnamMapController _controller;
+  bool _isSearchExpanded = false;
 
   // ValueNotifier thay vì Offset? thông thường.
   // Khi cập nhật _avatarOffset.value, chỉ ValueListenableBuilder rebuild,
@@ -31,6 +32,7 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   void initState() {
     super.initState();
     _controller = VietnamMapController();
+    _controller.addListener(_onMapControllerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _controller.bootstrapAfterFirstFrame();
@@ -38,9 +40,18 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     });
   }
 
+  void _onMapControllerChanged() {
+    if (_controller.selectedProvince != null || _controller.selectedLowerLevelPlace != null) {
+      if (!_isSearchExpanded) {
+        setState(() => _isSearchExpanded = true);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _avatarOffset.dispose();
+    _controller.removeListener(_onMapControllerChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -64,20 +75,23 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
           final panel = AnimatedBuilder(
             animation: _controller,
             builder: (context, _) {
-              return MapControlPanel(controller: _controller);
+              return MapControlPanel(
+                controller: _controller,
+                onClose: () => setState(() => _isSearchExpanded = false),
+              );
             },
           );
 
           final body = compact
               ? Column(
                   children: [
-                    SizedBox(height: 250, child: panel),
+                    if (_isSearchExpanded) SizedBox(height: 250, child: panel),
                     Expanded(child: map),
                   ],
                 )
               : Row(
                   children: [
-                    SizedBox(width: 360, child: panel),
+                    if (_isSearchExpanded) SizedBox(width: 360, child: panel),
                     Expanded(child: map),
                   ],
                 );
@@ -85,6 +99,19 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
           return Stack(
             children: [
               body,
+              if (!_isSearchExpanded)
+                Positioned(
+                  left: 16,
+                  top: 12,
+                  child: FloatingActionButton(
+                    heroTag: 'expand_search_btn',
+                    elevation: 4,
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    onPressed: () => setState(() => _isSearchExpanded = true),
+                    child: const Icon(Icons.search),
+                  ),
+                ),
               if (widget.appUser != null)
                 // ValueListenableBuilder chỉ rebuild Positioned + avatar
                 // Map và panel KHÔNG bị rebuild khi kéo → mượt hơn

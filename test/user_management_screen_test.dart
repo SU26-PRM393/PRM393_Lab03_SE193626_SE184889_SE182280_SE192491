@@ -29,7 +29,7 @@ class _MockService implements UserManagementServiceInterface {
     disabledCalls.add('$uid:$disabled');
     final idx = _users.indexWhere((u) => u.uid == uid);
     if (idx != -1) {
-      _users[idx] = UserRecord(uid: uid, email: _users[idx].email, role: _users[idx].role, disabled: disabled);
+      _users[idx] = UserRecord(uid: uid, email: _users[idx].email, role: _users[idx].role, disabled: disabled, name: _users[idx].name);
     }
   }
 
@@ -44,7 +44,7 @@ class _MockService implements UserManagementServiceInterface {
     roleCalls.add('$uid:$role');
     final idx = _users.indexWhere((u) => u.uid == uid);
     if (idx != -1) {
-      _users[idx] = UserRecord(uid: uid, email: _users[idx].email, role: role, disabled: _users[idx].disabled);
+      _users[idx] = UserRecord(uid: uid, email: _users[idx].email, role: role, disabled: _users[idx].disabled, name: _users[idx].name);
     }
   }
 }
@@ -67,8 +67,8 @@ Widget _buildScreen(UserManagementServiceInterface svc) => MaterialApp(
       home: Scaffold(body: UserManagementScreen(currentUserId: _currentUid, service: svc)),
     );
 
-UserRecord _user({String uid = 'uid-1', String email = 'user@test.com', String role = 'user', bool disabled = false}) =>
-    UserRecord(uid: uid, email: email, role: role, disabled: disabled);
+UserRecord _user({String uid = 'uid-1', String email = 'user@test.com', String role = 'user', bool disabled = false, String name = ''}) =>
+    UserRecord(uid: uid, email: email, role: role, disabled: disabled, name: name);
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -178,12 +178,9 @@ void main() {
 
   // ── Expand detail ─────────────────────────────────────────────────────────
   group('UserManagementScreen — xem chi tiết', () {
-    testWidgets('bấm vào row mở rộng hiển thị UID', (tester) async {
+    testWidgets('hiển thị UID dưới dạng subtitle', (tester) async {
       final svc = _MockService([_user(uid: 'uid-abc', email: 'detail@test.com')]);
       await tester.pumpWidget(_buildScreen(svc));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('detail@test.com'));
       await tester.pumpAndSettle();
 
       expect(find.text('uid-abc'), findsOneWidget);
@@ -224,6 +221,21 @@ void main() {
 
       expect(find.text('alice@test.com'), findsOneWidget);
       expect(find.text('bob@test.com'), findsOneWidget);
+    });
+
+    testWidgets('tìm kiếm theo tên lọc danh sách', (tester) async {
+      final svc = _MockService([
+        _user(uid: 'uid-1', email: 'alice@test.com', name: 'Alice Smith'),
+        _user(uid: 'uid-2', email: 'bob@test.com', name: 'Bob Johnson'),
+      ]);
+      await tester.pumpWidget(_buildScreen(svc));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField).first, 'smith');
+      await tester.pumpAndSettle();
+
+      expect(find.text('alice@test.com'), findsOneWidget);
+      expect(find.text('bob@test.com'), findsNothing);
     });
 
     testWidgets('không tìm thấy kết quả hiển thị thông báo phù hợp', (tester) async {
@@ -419,7 +431,7 @@ void main() {
 
       // Ban đầu asc → alpha trước
       final items = tester.widgetList<Text>(
-        find.descendant(of: find.byType(ExpansionTile), matching: find.byType(Text)),
+        find.descendant(of: find.byType(DataTable), matching: find.byType(Text)),
       ).map((t) => t.data ?? '').where((s) => s.contains('@')).toList();
       expect(items.first, 'alpha@test.com');
 
@@ -428,9 +440,35 @@ void main() {
       await tester.pumpAndSettle();
 
       final itemsDesc = tester.widgetList<Text>(
-        find.descendant(of: find.byType(ExpansionTile), matching: find.byType(Text)),
+        find.descendant(of: find.byType(DataTable), matching: find.byType(Text)),
       ).map((t) => t.data ?? '').where((s) => s.contains('@')).toList();
       expect(itemsDesc.first, 'beta@test.com');
+    });
+    testWidgets('sắp xếp theo tên', (tester) async {
+      final svc = _MockService([
+        _user(uid: 'uid-1', email: 'a@test.com', name: 'Zeta'),
+        _user(uid: 'uid-2', email: 'b@test.com', name: 'Alpha'),
+      ]);
+      await tester.pumpWidget(_buildScreen(svc));
+      await tester.pumpAndSettle();
+
+      // Mặc định sắp xếp theo email -> a@test.com trước
+      var items = tester.widgetList<Text>(
+        find.descendant(of: find.byType(DataTable), matching: find.byType(Text)),
+      ).map((t) => t.data ?? '').where((s) => s.contains('@')).toList();
+      expect(items.first, 'a@test.com');
+
+      // Chọn sắp xếp theo Họ và tên
+      await tester.tap(find.byWidgetPredicate((w) => w.runtimeType.toString().startsWith('DropdownButton')).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Họ và tên').last);
+      await tester.pumpAndSettle();
+
+      // Sắp xếp asc theo tên -> Alpha (b@test.com) trước Zeta (a@test.com)
+      items = tester.widgetList<Text>(
+        find.descendant(of: find.byType(DataTable), matching: find.byType(Text)),
+      ).map((t) => t.data ?? '').where((s) => s.contains('@')).toList();
+      expect(items.first, 'b@test.com');
     });
   });
 
