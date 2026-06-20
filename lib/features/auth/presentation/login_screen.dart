@@ -16,21 +16,36 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
+  late final FocusNode _nameFocus;
+  late final FocusNode _emailFocus;
+  late final FocusNode _passwordFocus;
   bool _isSignUp = false;
   bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameFocus = FocusNode();
+    _emailFocus = FocusNode();
+    _passwordFocus = FocusNode();
+  }
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     _nameCtrl.dispose();
+    _nameFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_isSignUp) {
-      await widget.controller.signUp(_emailCtrl.text, _passwordCtrl.text, _nameCtrl.text);
+      await widget.controller
+          .signUp(_emailCtrl.text, _passwordCtrl.text, _nameCtrl.text);
     } else {
       await widget.controller.signIn(_emailCtrl.text, _passwordCtrl.text);
     }
@@ -95,6 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (_isSignUp) ...[
                     TextFormField(
                       controller: _nameCtrl,
+                      focusNode: _nameFocus,
                       keyboardType: TextInputType.name,
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
@@ -103,7 +119,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         border: OutlineInputBorder(),
                       ),
                       validator: _validateName,
-                      onFieldSubmitted: (_) => _submit(),
+                      onFieldSubmitted: (_) {
+                        _emailFocus.requestFocus();
+                      },
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -111,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Email field
                   TextFormField(
                     controller: _emailCtrl,
+                    focusNode: _emailFocus,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
@@ -119,13 +138,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(),
                     ),
                     validator: _validateEmail,
-                    onFieldSubmitted: (_) => _submit(),
+                    onFieldSubmitted: (_) {
+                      _passwordFocus.requestFocus();
+                    },
                   ),
                   const SizedBox(height: 16),
 
                   // Password field
                   TextFormField(
                     controller: _passwordCtrl,
+                    focusNode: _passwordFocus,
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
                     decoration: InputDecoration(
