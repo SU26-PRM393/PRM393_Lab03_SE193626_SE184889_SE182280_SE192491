@@ -4,6 +4,7 @@ import '../../../admin/domain/campaign.dart';
 import '../../../admin/domain/event.dart';
 import '../../../admin/domain/interaction.dart';
 import '../vietnam_map_controller.dart';
+import 'map_segmented_control.dart';
 
 // ── Brand palette ──────────────────────────────────────────────────────
 const _kTeal = Color(0xFF0D9488);
@@ -92,6 +93,7 @@ class CampaignControlPanel extends StatelessWidget {
         campaign: controller.selectedCampaign!,
         events: controller.selectedCampaignEvents,
         onEventSelected: controller.selectEvent,
+        controller: controller,
       );
     }
     return _CampaignListView(campaigns: controller.campaigns, onCampaignSelected: controller.selectCampaign);
@@ -506,11 +508,13 @@ class _EventListView extends StatefulWidget {
     required this.campaign,
     required this.events,
     required this.onEventSelected,
+    required this.controller,
   });
 
   final Campaign campaign;
   final List<Event> events;
   final ValueChanged<Event> onEventSelected;
+  final VietnamMapController controller;
 
   @override
   State<_EventListView> createState() => _EventListViewState();
@@ -627,6 +631,36 @@ class _EventListViewState extends State<_EventListView> {
               _SearchField(hint: 'Tìm kiếm sự kiện...', value: _search, onChanged: (v) => setState(() => _search = v)),
               const SizedBox(height: 12),
               _StatusChips(options: _kEventFilters, selected: _filter, onChanged: (v) => setState(() => _filter = v)),
+              const SizedBox(height: 12),
+              AnimatedBuilder(
+                animation: widget.controller,
+                builder: (context, _) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: MapSegmentedControl<MapEventVisibility>(
+                      value: widget.controller.eventVisibility,
+                      onChanged: widget.controller.updateEventVisibility,
+                      segments: const [
+                        MapSegmentedOption(
+                          value: MapEventVisibility.detail,
+                          icon: Icons.done_rounded,
+                          label: 'Hiện chi tiết',
+                        ),
+                        MapSegmentedOption(
+                          value: MapEventVisibility.dot,
+                          icon: Icons.apps_rounded,
+                          label: 'Hiện chấm',
+                        ),
+                        MapSegmentedOption(
+                          value: MapEventVisibility.hide,
+                          icon: Icons.visibility_off_outlined,
+                          label: 'Ẩn tất cả',
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ]),
           ),
         ),

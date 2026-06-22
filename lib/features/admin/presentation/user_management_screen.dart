@@ -276,38 +276,76 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               const SizedBox(height: 10),
 
               // Filter row
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text('Role:',
-                      style: TextStyle(
-                          fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
-                  ..._buildFilterChips(
-                    options: const {
-                      'all': 'Tất cả',
-                      'admin': 'Admin',
-                      'user': 'User'
-                    },
-                    current: _roleFilter,
-                    onSelect: (v) => setState(() => _roleFilter = v),
-                  ),
-                  const SizedBox(width: 8),
-                  Text('Trạng thái:',
-                      style: TextStyle(
-                          fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
-                  ..._buildFilterChips(
-                    options: const {
-                      'all': 'Tất cả',
-                      'active': 'Hoạt động',
-                      'disabled': _kDisabled,
-                    },
-                    current: _statusFilter,
-                    onSelect: (v) => setState(() => _statusFilter = v),
-                  ),
-                ],
-              ),
+              if (MediaQuery.of(context).size.width < 700) ...[
+                Row(
+                  children: [
+                    Text('Role:',
+                        style: TextStyle(
+                            fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6))),
+                    const SizedBox(width: 12),
+                    ..._buildFilterChips(
+                      options: const {
+                        'all': 'Tất cả',
+                        'admin': 'Admin',
+                        'user': 'User'
+                      },
+                      current: _roleFilter,
+                      onSelect: (v) => setState(() => _roleFilter = v),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text('Trạng thái:',
+                        style: TextStyle(
+                            fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6))),
+                    const SizedBox(width: 12),
+                    ..._buildFilterChips(
+                      options: const {
+                        'all': 'Tất cả',
+                        'active': 'Hoạt động',
+                        'disabled': _kDisabled,
+                      },
+                      current: _statusFilter,
+                      onSelect: (v) => setState(() => _statusFilter = v),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text('Role:',
+                        style: TextStyle(
+                            fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
+                    ..._buildFilterChips(
+                      options: const {
+                        'all': 'Tất cả',
+                        'admin': 'Admin',
+                        'user': 'User'
+                      },
+                      current: _roleFilter,
+                      onSelect: (v) => setState(() => _roleFilter = v),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('Trạng thái:',
+                        style: TextStyle(
+                            fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
+                    ..._buildFilterChips(
+                      options: const {
+                        'all': 'Tất cả',
+                        'active': 'Hoạt động',
+                        'disabled': _kDisabled,
+                      },
+                      current: _statusFilter,
+                      onSelect: (v) => setState(() => _statusFilter = v),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 8),
 
               // Sort row
@@ -429,6 +467,150 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     final cs = Theme.of(context).colorScheme;
 
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    if (isMobile) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: filtered.length,
+        itemBuilder: (context, index) {
+          final record = filtered[index];
+          final isDisabled = record.disabled;
+          final isAdmin = record.isAdmin;
+          final normalBg = isAdmin ? cs.primaryContainer : cs.secondaryContainer;
+          final chipBg = isDisabled ? cs.surfaceContainerHighest : normalBg;
+          final normalIconColor = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
+          final chipFg = isDisabled ? cs.onSurfaceVariant : normalIconColor;
+
+          final hasPhoto = record.photoUrl != null && record.photoUrl!.trim().isNotEmpty;
+          final displayName = record.name.isNotEmpty ? record.name : record.email;
+          final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
+            color: cs.surfaceContainerLow,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.outlineVariant),
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: chipBg,
+                              backgroundImage: hasPhoto ? NetworkImage(record.photoUrl!) : null,
+                              onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                              child: hasPhoto
+                                  ? null
+                                  : Text(
+                                      firstLetter,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: chipFg,
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                record.name.isNotEmpty ? record.name : 'Chưa có tên',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  fontStyle: record.name.isEmpty ? FontStyle.italic : FontStyle.normal,
+                                  color: isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _Chip(label: isAdmin ? 'Admin' : 'User', bg: chipBg, fg: chipFg),
+                          if (isDisabled) ...[
+                            const SizedBox(width: 6),
+                            _Chip(label: _kDisabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    record.email,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'UID: ${record.uid}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const Divider(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        icon: Icon(Icons.edit_outlined, size: 16, color: cs.primary),
+                        label: Text('Sửa quyền', style: TextStyle(fontSize: 12, color: cs.primary)),
+                        onPressed: () => _editRole(record),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        icon: Icon(isDisabled ? Icons.toggle_off : Icons.toggle_on, size: 18, color: isDisabled ? cs.outline : cs.primary),
+                        label: Text(isDisabled ? 'Kích hoạt' : 'Tắt', style: TextStyle(fontSize: 12, color: isDisabled ? cs.outline : cs.primary)),
+                        onPressed: () => _toggleDisable(record),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        icon: Icon(Icons.delete_outline, size: 16, color: cs.error),
+                        label: Text('Xóa', style: TextStyle(fontSize: 12, color: cs.error)),
+                        onPressed: () => _delete(record),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
@@ -439,6 +621,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
           child: DataTable(
             columns: const [
+              DataColumn(label: Text('')),
               DataColumn(label: Text('Họ và tên', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
               DataColumn(label: Text('Email', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
               DataColumn(label: Text('Quyền', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
@@ -452,8 +635,31 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               final normalIconColor = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
               final chipFg = isDisabled ? cs.onSurfaceVariant : normalIconColor;
 
+              final hasPhoto = record.photoUrl != null && record.photoUrl!.trim().isNotEmpty;
+              final displayName = record.name.isNotEmpty ? record.name : record.email;
+              final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
               return DataRow(
                 cells: [
+                  // Avatar column (no header)
+                  DataCell(
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: chipBg,
+                      backgroundImage: hasPhoto ? NetworkImage(record.photoUrl!) : null,
+                      onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                      child: hasPhoto
+                          ? null
+                          : Text(
+                              firstLetter,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: chipFg,
+                              ),
+                            ),
+                    ),
+                  ),
                   // Họ và tên
                   DataCell(
                     Text(

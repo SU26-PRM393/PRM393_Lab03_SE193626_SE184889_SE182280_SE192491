@@ -39,13 +39,9 @@ class LowerLevelPlaceLayer extends StatelessWidget {
 
     final bool showLabel;
     if (visibilityMode == CommuneVisibilityMode.dots) {
-      if (selectedPlace != null) {
-        showLabel = isChosen && (zoom >= MapConstants.lowerLevelLabelMinZoom);
-      } else {
-        showLabel = false;
-      }
+      showLabel = isChosen;
     } else {
-      showLabel = zoom >= MapConstants.lowerLevelLabelMinZoom;
+      showLabel = true;
     }
 
     // Use a larger hit target (24px) for the dots so they are easy to click
