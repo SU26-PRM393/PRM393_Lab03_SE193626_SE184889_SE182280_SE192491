@@ -482,6 +482,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           final normalIconColor = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
           final chipFg = isDisabled ? cs.onSurfaceVariant : normalIconColor;
 
+          final hasPhoto = record.photoUrl != null && record.photoUrl!.trim().isNotEmpty;
+          final displayName = record.name.isNotEmpty ? record.name : record.email;
+          final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -500,14 +504,37 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(
-                          record.name.isNotEmpty ? record.name : 'Chưa có tên',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            fontStyle: record.name.isEmpty ? FontStyle.italic : FontStyle.normal,
-                            color: isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface,
-                          ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: chipBg,
+                              backgroundImage: hasPhoto ? NetworkImage(record.photoUrl!) : null,
+                              onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                              child: hasPhoto
+                                  ? null
+                                  : Text(
+                                      firstLetter,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: chipFg,
+                                      ),
+                                    ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                record.name.isNotEmpty ? record.name : 'Chưa có tên',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  fontStyle: record.name.isEmpty ? FontStyle.italic : FontStyle.normal,
+                                  color: isDisabled ? cs.onSurface.withValues(alpha: 0.45) : cs.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       Row(
@@ -594,6 +621,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
           child: DataTable(
             columns: const [
+              DataColumn(label: Text('')),
               DataColumn(label: Text('Họ và tên', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
               DataColumn(label: Text('Email', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
               DataColumn(label: Text('Quyền', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold))),
@@ -607,8 +635,31 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               final normalIconColor = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
               final chipFg = isDisabled ? cs.onSurfaceVariant : normalIconColor;
 
+              final hasPhoto = record.photoUrl != null && record.photoUrl!.trim().isNotEmpty;
+              final displayName = record.name.isNotEmpty ? record.name : record.email;
+              final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
               return DataRow(
                 cells: [
+                  // Avatar column (no header)
+                  DataCell(
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: chipBg,
+                      backgroundImage: hasPhoto ? NetworkImage(record.photoUrl!) : null,
+                      onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                      child: hasPhoto
+                          ? null
+                          : Text(
+                              firstLetter,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: chipFg,
+                              ),
+                            ),
+                    ),
+                  ),
                   // Họ và tên
                   DataCell(
                     Text(

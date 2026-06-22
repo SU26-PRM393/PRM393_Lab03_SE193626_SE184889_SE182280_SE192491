@@ -117,7 +117,7 @@ class _MapViewportState extends State<MapViewport> {
                       return ProvinceHoverOutline(state: state);
                     },
                   ),
-                  if (controller.eventCoordinates.isNotEmpty)
+                  if (controller.eventCoordinates.isNotEmpty && controller.eventVisibility != MapEventVisibility.hide)
                     MarkerLayer(
                       markers: controller.selectedCampaignEvents.map((event) {
                         final coord = controller.eventCoordinates[event.id];
@@ -139,11 +139,12 @@ class _MapViewportState extends State<MapViewport> {
                         }
                         
                         final isSelected = controller.selectedEvent?.id == event.id;
+                        final showLabel = controller.eventVisibility == MapEventVisibility.detail;
                         
                         return Marker(
                           point: coord,
-                          width: 120,
-                          height: 50,
+                          width: showLabel ? 180 : 32,
+                          height: showLabel ? 60 : 32,
                           alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () => controller.selectEvent(event),
@@ -152,42 +153,48 @@ class _MapViewportState extends State<MapViewport> {
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withAlpha(240),
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: color, width: isSelected ? 1.5 : 1),
-                                      boxShadow: const [
-                                        BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      event.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                        color: Colors.black87,
+                                  if (showLabel) ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: color, width: isSelected ? 2.5 : 1.5),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.15),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        event.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
+                                    const SizedBox(height: 3),
+                                  ],
                                   AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
-                                    width: isSelected ? 16 : 10,
-                                    height: isSelected ? 16 : 10,
+                                    width: isSelected ? 18 : 12,
+                                    height: isSelected ? 18 : 12,
                                     decoration: BoxDecoration(
                                       color: color,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: isSelected ? 1.8 : 1.2),
+                                      border: Border.all(color: Colors.white, width: isSelected ? 2.0 : 1.5),
                                       boxShadow: const [
-                                        BoxShadow(blurRadius: 3, color: Colors.black38),
+                                        BoxShadow(blurRadius: 4, color: Colors.black38, offset: Offset(0, 1)),
                                       ],
                                     ),
                                     child: isSelected
-                                        ? const Icon(Icons.location_on, size: 8, color: Colors.white)
+                                        ? const Icon(Icons.location_on, size: 10, color: Colors.white)
                                         : null,
                                   ),
                                 ],

@@ -32,7 +32,13 @@ import '../../admin/data/campaign_repository.dart';
 enum CommuneVisibilityMode {
   details,
   dots,
-  hide,
+  hide;
+}
+
+enum MapEventVisibility {
+  detail,
+  dot,
+  hide;
 }
 
 enum MapLoadStatus {
@@ -116,6 +122,7 @@ class VietnamMapController extends ChangeNotifier {
   Map<String, String> _employeeNames = {};
   Map<String, String> _employeeEmails = {};
   bool _showProvinceLabels = true;
+  MapEventVisibility _eventVisibility = MapEventVisibility.detail;
   List<Interaction> _eventInteractions = [];
   Map<String, String> _interactionTargetNames = {};
   bool _isLoadingInteractions = false;
@@ -146,6 +153,7 @@ class VietnamMapController extends ChangeNotifier {
   MapLoadStatus get lowerLevelPlacesStatus => _lowerLevelPlacesStatus;
   AdministrativeImportStatus get importStatus => _importStatus;
   bool get showProvinceLabels => _showProvinceLabels;
+  MapEventVisibility get eventVisibility => _eventVisibility;
 
   // --- Campaign Getters ---
   bool get isCampaignPanelExpanded => _isCampaignPanelExpanded;
@@ -1007,6 +1015,12 @@ class VietnamMapController extends ChangeNotifier {
   void toggleProvinceLabels(bool show) {
     if (_showProvinceLabels == show) return;
     _showProvinceLabels = show;
+    notifyListeners();
+  }
+
+  void updateEventVisibility(MapEventVisibility val) {
+    if (_eventVisibility == val) return;
+    _eventVisibility = val;
     notifyListeners();
   }
 

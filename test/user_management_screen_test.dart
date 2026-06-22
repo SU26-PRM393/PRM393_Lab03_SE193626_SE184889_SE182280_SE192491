@@ -74,6 +74,12 @@ UserRecord _user({String uid = 'uid-1', String email = 'user@test.com', String r
 // Tests
 // ---------------------------------------------------------------------------
 void main() {
+  setUp(() {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.views.first.physicalSize = const Size(1200, 800);
+    binding.platformDispatcher.views.first.devicePixelRatio = 1.0;
+  });
+
   // ── Loading ────────────────────────────────────────────────────────────────
   group('UserManagementScreen — loading', () {
     testWidgets('hiển thị spinner khi đang tải', (tester) async {

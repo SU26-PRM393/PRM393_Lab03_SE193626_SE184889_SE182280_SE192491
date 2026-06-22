@@ -38,6 +38,22 @@ class _MockAuthService implements AuthServiceInterface {
   @override
   Future<void> signOut() async => _stream.add(false);
 
+  @override
+  Future<void> updateProfile({required String name, String? photoUrl}) async {
+    if (_user != null) {
+      _user = AppUser(
+        uid: _user!.uid,
+        email: _user!.email,
+        role: _user!.role,
+        name: name,
+        photoUrl: photoUrl,
+      );
+    }
+  }
+
+  @override
+  Future<void> changePassword(String oldPassword, String newPassword) async {}
+
   void dispose() => _stream.close();
 }
 

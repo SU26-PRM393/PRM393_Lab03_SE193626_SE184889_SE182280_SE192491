@@ -21,6 +21,8 @@ abstract class AuthServiceInterface {
   Future<AppUser> signUp(String email, String password, String name);
   Future<AppUser> signInWithGoogle();
   Future<void> signOut();
+  Future<void> updateProfile({required String name, String? photoUrl});
+  Future<void> changePassword(String oldPassword, String newPassword);
 }
 
 /// Interface để UserManagementDialog có thể test được
@@ -38,12 +40,14 @@ class AppUser {
     required this.email,
     required this.role,
     required this.name,
+    this.photoUrl,
   });
 
   final String uid;
   final String email;
   final UserRole role;
   final String name;
+  final String? photoUrl;
 
   bool get isAdmin => role == UserRole.admin;
 }
@@ -88,8 +92,16 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
           'email': user.email ?? '',
           'name': user.displayName ?? user.email?.split('@').first ?? 'User',
           'role': 'user',
+          'photoUrl': user.photoURL ?? '',
           'createdAt': FieldValue.serverTimestamp(),
         });
+      } else {
+        final data = userDoc.data();
+        if (data != null && (data['photoUrl'] == null || data['photoUrl'] == '')) {
+          await _db.collection('users').doc(user.uid).update({
+            'photoUrl': user.photoURL ?? '',
+          });
+        }
       }
       return _toAppUser(user);
     }
@@ -247,8 +259,16 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
         'email': user.email ?? '',
         'name': user.displayName ?? user.email?.split('@').first ?? 'User',
         'role': 'user',
+        'photoUrl': user.photoURL ?? '',
         'createdAt': FieldValue.serverTimestamp(),
       });
+    } else {
+      final data = userDoc.data();
+      if (data != null && (data['photoUrl'] == null || data['photoUrl'] == '')) {
+        await _db.collection('users').doc(user.uid).update({
+          'photoUrl': user.photoURL ?? '',
+        });
+      }
     }
 
     return _toAppUser(user);
@@ -404,13 +424,61 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
     final roleStr = data?['role'] as String? ?? 'user';
     final role = roleStr == 'admin' ? UserRole.admin : UserRole.user;
     final name = data?['name'] as String? ?? '';
+    final photoUrl = data?['photoUrl'] as String?;
 
     return AppUser(
       uid: firebaseUser.uid,
       email: firebaseUser.email ?? '',
       role: role,
       name: name,
+      photoUrl: photoUrl,
     );
+  }
+
+  /// Cập nhật thông tin profile của user hiện tại
+  @override
+  Future<void> updateProfile({required String name, String? photoUrl}) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Chưa đăng nhập.');
+
+    // Cập nhật Firestore
+    await _db.collection('users').doc(user.uid).update({
+      'name': name.trim(),
+      'photoUrl': photoUrl?.trim() ?? '',
+    });
+
+    // Cập nhật Firebase Auth local state
+    await user.updateDisplayName(name.trim());
+    if (photoUrl != null) {
+      await user.updatePhotoURL(photoUrl.trim());
+    }
+  }
+
+  /// Thay đổi mật khẩu của user hiện tại với Reauthentication
+  @override
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('Chưa đăng nhập.');
+    if (user.email == null) throw Exception('Email không hợp lệ.');
+
+    final cred = EmailAuthProvider.credential(
+      email: user.email!,
+      password: oldPassword,
+    );
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(newPassword);
+  }
+
+  /// Kiểm tra xem user hiện tại có phải là đăng nhập bằng email/password hay không
+  bool get isEmailPasswordUser {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    for (final info in user.providerData) {
+      if (info.providerId == 'password') {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -422,6 +490,7 @@ class UserRecord {
     required this.role,
     required this.disabled,
     required this.name,
+    this.photoUrl,
   });
 
   factory UserRecord.fromDoc(String uid, Map<String, dynamic> data) {
@@ -431,6 +500,7 @@ class UserRecord {
       role: data['role'] as String? ?? 'user',
       disabled: data['disabled'] as bool? ?? false,
       name: data['name'] as String? ?? '',
+      photoUrl: data['photoUrl'] as String?,
     );
   }
 
@@ -439,6 +509,7 @@ class UserRecord {
   final String role;
   final bool disabled;
   final String name;
+  final String? photoUrl;
 
   bool get isAdmin => role == 'admin';
 }

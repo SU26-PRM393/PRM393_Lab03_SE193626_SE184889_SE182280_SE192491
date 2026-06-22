@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
+import '../../auth/presentation/profile_screen.dart';
 import '../../vietnam_map/presentation/vietnam_map_screen.dart';
 import 'user_dashboard.dart';
 
@@ -19,6 +20,13 @@ class UserShell extends StatefulWidget {
 
 class _UserShellState extends State<UserShell> {
   _UserTab _tab = _UserTab.dashboard;
+  late AppUser _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = widget.user;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,9 +84,32 @@ class _UserShellState extends State<UserShell> {
                   onSelected: (val) {
                     if (val == 'logout') {
                       widget.onLogout();
+                    } else if (val == 'profile') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileScreen(
+                            user: _user,
+                            onProfileUpdated: (updated) {
+                              setState(() => _user = updated);
+                            },
+                          ),
+                        ),
+                      );
                     }
                   },
                   itemBuilder: (context) => [
+                    const PopupMenuItem<String>(
+                      value: 'profile',
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                          SizedBox(width: 8),
+                          Text('Hồ sơ cá nhân'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(),
                     const PopupMenuItem<String>(
                       value: 'logout',
                       child: Row(
@@ -90,24 +121,47 @@ class _UserShellState extends State<UserShell> {
                       ),
                     ),
                   ],
-                  child: _ProfileHoverWrapper(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.person_outline, size: 14, color: cs.onPrimary),
-                          const SizedBox(width: 6),
-                          Text(
-                            widget.user.name.isNotEmpty ? widget.user.name : widget.user.email,
-                            style: TextStyle(color: cs.onPrimary, fontSize: 12),
+                  child: Builder(
+                    builder: (context) {
+                      final hasPhoto = _user.photoUrl != null && _user.photoUrl!.trim().isNotEmpty;
+                      final displayName = _user.name.isNotEmpty ? _user.name : _user.email;
+                      final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+                      return _ProfileHoverWrapper(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+                                backgroundImage: hasPhoto ? NetworkImage(_user.photoUrl!) : null,
+                                onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                                child: hasPhoto
+                                    ? null
+                                    : Text(
+                                        firstLetter,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: cs.onPrimary,
+                                        ),
+                                      ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                displayName,
+                                style: TextStyle(color: cs.onPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -139,7 +193,13 @@ class _UserShellState extends State<UserShell> {
             )
           : null,
       body: _tab == _UserTab.dashboard
-          ? UserDashboard(user: widget.user, onLogout: widget.onLogout)
+          ? UserDashboard(
+              user: _user,
+              onLogout: widget.onLogout,
+              onProfileUpdated: (updated) {
+                setState(() => _user = updated);
+              },
+            )
           : const VietnamMapScreen(),
     );
   }

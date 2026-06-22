@@ -468,8 +468,6 @@ class _MapSurface extends StatelessWidget {
                       onZoomOut: controller.zoomOut,
                       onCurrentLocation: controller.requestCurrentLocation,
                       onRecenter: controller.recenterOnVietnam,
-                      showProvinceLabels: controller.showProvinceLabels,
-                      onToggleProvinceLabels: controller.toggleProvinceLabels,
                     ),
                   ),
                 ),

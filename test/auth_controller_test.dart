@@ -73,6 +73,22 @@ class MockAuthService implements AuthServiceInterface {
     emitSignedIn(false);
   }
 
+  @override
+  Future<void> updateProfile({required String name, String? photoUrl}) async {
+    if (_currentUser != null) {
+      _currentUser = AppUser(
+        uid: _currentUser!.uid,
+        email: _currentUser!.email,
+        role: _currentUser!.role,
+        name: name,
+        photoUrl: photoUrl,
+      );
+    }
+  }
+
+  @override
+  Future<void> changePassword(String oldPassword, String newPassword) async {}
+
   void dispose() => _signedInController.close();
 }
 

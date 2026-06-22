@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
+import '../../auth/presentation/profile_screen.dart';
 import '../../vietnam_map/presentation/vietnam_map_screen.dart';
 import 'admin_dashboard.dart';
 
@@ -31,6 +32,13 @@ class AdminShell extends StatefulWidget {
 
 class AdminShellState extends State<AdminShell> {
   AdminTab _tab = AdminTab.dashboard;
+  late AppUser _admin;
+
+  @override
+  void initState() {
+    super.initState();
+    _admin = widget.admin;
+  }
 
   void setTab(AdminTab tab) {
     setState(() => _tab = tab);
@@ -95,9 +103,32 @@ class AdminShellState extends State<AdminShell> {
                   onSelected: (val) {
                     if (val == 'logout') {
                       widget.onLogout();
+                    } else if (val == 'profile') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileScreen(
+                            user: _admin,
+                            onProfileUpdated: (updated) {
+                              setState(() => _admin = updated);
+                            },
+                          ),
+                        ),
+                      );
                     }
                   },
                   itemBuilder: (context) => [
+                    const PopupMenuItem<String>(
+                      value: 'profile',
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                          SizedBox(width: 8),
+                          Text('Hồ sơ cá nhân'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(),
                     const PopupMenuItem<String>(
                       value: 'logout',
                       child: Row(
@@ -109,24 +140,47 @@ class AdminShellState extends State<AdminShell> {
                       ),
                     ),
                   ],
-                  child: _ProfileHoverWrapper(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.admin_panel_settings, size: 14, color: cs.onPrimary),
-                          const SizedBox(width: 6),
-                          Text(
-                            widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email,
-                            style: TextStyle(color: cs.onPrimary, fontSize: 12),
+                  child: Builder(
+                    builder: (context) {
+                      final hasPhoto = _admin.photoUrl != null && _admin.photoUrl!.trim().isNotEmpty;
+                      final displayName = _admin.name.isNotEmpty ? _admin.name : _admin.email;
+                      final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+                      return _ProfileHoverWrapper(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+                                backgroundImage: hasPhoto ? NetworkImage(_admin.photoUrl!) : null,
+                                onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                                child: hasPhoto
+                                    ? null
+                                    : Text(
+                                        firstLetter,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: cs.onPrimary,
+                                        ),
+                                      ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                displayName,
+                                style: TextStyle(color: cs.onPrimary, fontSize: 12, fontWeight: FontWeight.w500),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+                            ],
                           ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -158,8 +212,13 @@ class AdminShellState extends State<AdminShell> {
             )
           : null,
       body: _tab == AdminTab.dashboard
-          ? AdminDashboard(admin: widget.admin, onLogout: widget.onLogout)
-          // VietMap tab: appUser = null → không hiện avatar badge
+          ? AdminDashboard(
+              admin: _admin,
+              onLogout: widget.onLogout,
+              onProfileUpdated: (updated) {
+                setState(() => _admin = updated);
+              },
+            )
           : const VietnamMapScreen(),
     );
   }

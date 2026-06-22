@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
+import '../../auth/presentation/profile_screen.dart';
 
 enum _UserSection { overview }
 
@@ -10,10 +11,12 @@ class UserDashboard extends StatefulWidget {
     super.key,
     required this.user,
     required this.onLogout,
+    required this.onProfileUpdated,
   });
 
   final AppUser user;
   final VoidCallback onLogout;
+  final ValueChanged<AppUser> onProfileUpdated;
 
   @override
   State<UserDashboard> createState() => _UserDashboardState();
@@ -28,6 +31,10 @@ class _UserDashboardState extends State<UserDashboard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isMobile = MediaQuery.of(context).size.width < 700;
+
+    final hasPhoto = widget.user.photoUrl != null && widget.user.photoUrl!.trim().isNotEmpty;
+    final displayName = widget.user.name.isNotEmpty ? widget.user.name : widget.user.email;
+    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
 
     if (isMobile) {
       return Scaffold(
@@ -54,9 +61,30 @@ class _UserDashboardState extends State<UserDashboard> {
               onSelected: (val) {
                 if (val == 'logout') {
                   widget.onLogout();
+                } else if (val == 'profile') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(
+                        user: widget.user,
+                        onProfileUpdated: widget.onProfileUpdated,
+                      ),
+                    ),
+                  );
                 }
               },
               itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                      SizedBox(width: 8),
+                      Text('Hồ sơ cá nhân'),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
                 const PopupMenuItem<String>(
                   value: 'logout',
                   child: Row(
@@ -78,10 +106,25 @@ class _UserDashboardState extends State<UserDashboard> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.person_outline, size: 14, color: cs.onPrimary),
+                    CircleAvatar(
+                      radius: 10,
+                      backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+                      backgroundImage: hasPhoto ? NetworkImage(widget.user.photoUrl!) : null,
+                      onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                      child: hasPhoto
+                          ? null
+                          : Text(
+                              firstLetter,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: cs.onPrimary,
+                              ),
+                            ),
+                    ),
                     const SizedBox(width: 6),
                     Text(
-                      widget.user.name.isNotEmpty ? widget.user.name : widget.user.email,
+                      displayName,
                       style: TextStyle(color: cs.onPrimary, fontSize: 12),
                     ),
                     const SizedBox(width: 4),

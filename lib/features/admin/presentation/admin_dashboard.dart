@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
+import '../../auth/presentation/profile_screen.dart';
 import 'user_management_screen.dart';
 
 import 'admin_shell.dart';
@@ -13,11 +14,13 @@ class AdminDashboard extends StatefulWidget {
     super.key,
     required this.admin,
     required this.onLogout,
+    required this.onProfileUpdated,
     UserManagementServiceInterface? service,
   }) : _service = service;
 
   final AppUser admin;
   final VoidCallback onLogout;
+  final ValueChanged<AppUser> onProfileUpdated;
   final UserManagementServiceInterface? _service;
 
   @override
@@ -64,6 +67,10 @@ class AdminDashboardState extends State<AdminDashboard> {
     final cs = Theme.of(context).colorScheme;
     final isMobile = MediaQuery.of(context).size.width < 700;
 
+    final hasPhoto = widget.admin.photoUrl != null && widget.admin.photoUrl!.trim().isNotEmpty;
+    final displayName = widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email;
+    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
     if (isMobile) {
       return Scaffold(
         drawer: Drawer(
@@ -94,9 +101,30 @@ class AdminDashboardState extends State<AdminDashboard> {
               onSelected: (val) {
                 if (val == 'logout') {
                   widget.onLogout();
+                } else if (val == 'profile') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(
+                        user: widget.admin,
+                        onProfileUpdated: widget.onProfileUpdated,
+                      ),
+                    ),
+                  );
                 }
               },
               itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                      SizedBox(width: 8),
+                      Text('Hồ sơ cá nhân'),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
                 const PopupMenuItem<String>(
                   value: 'logout',
                   child: Row(
@@ -118,10 +146,25 @@ class AdminDashboardState extends State<AdminDashboard> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.admin_panel_settings, size: 14, color: cs.onPrimary),
+                    CircleAvatar(
+                      radius: 10,
+                      backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+                      backgroundImage: hasPhoto ? NetworkImage(widget.admin.photoUrl!) : null,
+                      onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                      child: hasPhoto
+                          ? null
+                          : Text(
+                              firstLetter,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: cs.onPrimary,
+                              ),
+                            ),
+                    ),
                     const SizedBox(width: 6),
                     Text(
-                      widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email,
+                      displayName,
                       style: TextStyle(color: cs.onPrimary, fontSize: 12),
                     ),
                     const SizedBox(width: 4),
