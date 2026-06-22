@@ -62,6 +62,12 @@ class MockAuthService implements AuthServiceInterface {
   }
 
   @override
+  Future<AppUser> signInWithGoogle() async {
+    if (_signInError != null) throw _signInError!;
+    return _currentUser!;
+  }
+
+  @override
   Future<void> signOut() async {
     _currentUser = null;
     emitSignedIn(false);

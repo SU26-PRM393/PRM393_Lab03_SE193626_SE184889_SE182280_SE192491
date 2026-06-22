@@ -23,87 +23,121 @@ class _UserShellState extends State<UserShell> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    final showOuterAppBar = !isMobile || _tab == _UserTab.vietmap;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
-        titleSpacing: 16,
-        title: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              Icon(Icons.map, color: cs.onPrimary, size: 22),
-              const SizedBox(width: 8),
-              Text(
-                'VietNam Map',
-                style: TextStyle(
-                  color: cs.onPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(width: 24),
-              _TabButton(
-                label: 'Dashboard',
-                icon: Icons.dashboard_outlined,
-                selected: _tab == _UserTab.dashboard,
-                onTap: () => setState(() => _tab = _UserTab.dashboard),
-              ),
-              const SizedBox(width: 4),
-              _TabButton(
-                label: 'VietMap',
-                icon: Icons.map_outlined,
-                selected: _tab == _UserTab.vietmap,
-                onTap: () => setState(() => _tab = _UserTab.vietmap),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            offset: const Offset(0, 48),
-            tooltip: 'Tài khoản',
-            onSelected: (val) {
-              if (val == 'logout') {
-                widget.onLogout();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem<String>(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: Colors.red, size: 18),
-                    SizedBox(width: 8),
-                    Text('Đăng xuất', style: TextStyle(color: Colors.red)),
-                  ],
-                ),
-              ),
-            ],
-            child: _ProfileHoverWrapper(
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.person_outline, size: 14, color: cs.onPrimary),
-                    const SizedBox(width: 6),
-                    Text(
-                      widget.user.email,
-                      style: TextStyle(color: cs.onPrimary, fontSize: 12),
+      appBar: showOuterAppBar
+          ? AppBar(
+              backgroundColor: cs.primary,
+              foregroundColor: cs.onPrimary,
+              titleSpacing: 16,
+              title: isMobile
+                  ? const Text(
+                      'VietMap',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    )
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          Icon(Icons.map, color: cs.onPrimary, size: 22),
+                          const SizedBox(width: 8),
+                          Text(
+                            'VietNam Map',
+                            style: TextStyle(
+                              color: cs.onPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          _TabButton(
+                            label: 'Dashboard',
+                            icon: Icons.dashboard_outlined,
+                            selected: _tab == _UserTab.dashboard,
+                            onTap: () => setState(() => _tab = _UserTab.dashboard),
+                          ),
+                          const SizedBox(width: 4),
+                          _TabButton(
+                            label: 'VietMap',
+                            icon: Icons.map_outlined,
+                            selected: _tab == _UserTab.vietmap,
+                            onTap: () => setState(() => _tab = _UserTab.vietmap),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+              actions: [
+                PopupMenuButton<String>(
+                  offset: const Offset(0, 48),
+                  tooltip: 'Tài khoản',
+                  onSelected: (val) {
+                    if (val == 'logout') {
+                      widget.onLogout();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem<String>(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(Icons.logout, color: Colors.red, size: 18),
+                          SizedBox(width: 8),
+                          Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
                   ],
+                  child: _ProfileHoverWrapper(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.person_outline, size: 14, color: cs.onPrimary),
+                          const SizedBox(width: 6),
+                          Text(
+                            widget.user.name.isNotEmpty ? widget.user.name : widget.user.email,
+                            style: TextStyle(color: cs.onPrimary, fontSize: 12),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+                const SizedBox(width: 8),
+              ],
+            )
+          : null,
+      bottomNavigationBar: isMobile
+          ? BottomNavigationBar(
+              currentIndex: _tab == _UserTab.dashboard ? 0 : 1,
+              selectedItemColor: cs.primary,
+              unselectedItemColor: cs.onSurface.withValues(alpha: 0.6),
+              onTap: (index) {
+                setState(() {
+                  _tab = index == 0 ? _UserTab.dashboard : _UserTab.vietmap;
+                });
+              },
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.dashboard_outlined),
+                  activeIcon: Icon(Icons.dashboard),
+                  label: 'Dashboard',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.map_outlined),
+                  activeIcon: Icon(Icons.map),
+                  label: 'VietMap',
+                ),
+              ],
+            )
+          : null,
       body: _tab == _UserTab.dashboard
           ? UserDashboard(user: widget.user, onLogout: widget.onLogout)
           : const VietnamMapScreen(),

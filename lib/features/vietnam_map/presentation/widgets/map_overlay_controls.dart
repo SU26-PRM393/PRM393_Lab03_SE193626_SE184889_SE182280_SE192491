@@ -25,6 +25,8 @@ class MapOverlayControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Semantics(
       container: true,
       label: 'Điều khiển bản đồ',
@@ -39,24 +41,35 @@ class MapOverlayControls extends StatelessWidget {
           CurrentLocationButton(
             isLoading: isLocationLoading,
             onPressed: onCurrentLocation,
+            isMobile: isMobile,
           ),
           const SizedBox(height: 12),
           Tooltip(
             message: 'Căn giữa về Việt Nam',
-            child: FilledButton.tonalIcon(
-              onPressed: onRecenter,
-              icon: const Icon(Icons.center_focus_strong),
-              label: const Text('Việt Nam'),
-            ),
+            child: isMobile
+                ? IconButton.filledTonal(
+                    onPressed: onRecenter,
+                    icon: const Icon(Icons.center_focus_strong),
+                  )
+                : FilledButton.tonalIcon(
+                    onPressed: onRecenter,
+                    icon: const Icon(Icons.center_focus_strong),
+                    label: const Text('Việt Nam'),
+                  ),
           ),
           const SizedBox(height: 12),
           Tooltip(
             message: showProvinceLabels ? 'Ẩn tên tất cả các tỉnh' : 'Hiện tên tất cả các tỉnh',
-            child: FilledButton.tonalIcon(
-              onPressed: () => onToggleProvinceLabels(!showProvinceLabels),
-              icon: Icon(showProvinceLabels ? Icons.label_off_outlined : Icons.label_outlined),
-              label: Text(showProvinceLabels ? 'Ẩn tên tỉnh' : 'Hiện tên tỉnh'),
-            ),
+            child: isMobile
+                ? IconButton.filledTonal(
+                    onPressed: () => onToggleProvinceLabels(!showProvinceLabels),
+                    icon: Icon(showProvinceLabels ? Icons.label_off_outlined : Icons.label_outlined),
+                  )
+                : FilledButton.tonalIcon(
+                    onPressed: () => onToggleProvinceLabels(!showProvinceLabels),
+                    icon: Icon(showProvinceLabels ? Icons.label_off_outlined : Icons.label_outlined),
+                    label: Text(showProvinceLabels ? 'Ẩn tên tỉnh' : 'Hiện tên tỉnh'),
+                  ),
           ),
         ],
       ),

@@ -72,6 +72,24 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> signInWithGoogle() async {
+    _errorMessage = null;
+    _status = AuthStatus.loading;
+    notifyListeners();
+
+    try {
+      _user = await _service.signInWithGoogle();
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+    } on Exception catch (e) {
+      print('Google Sign-In Error details: $e');
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = _friendlyError(e.toString());
+    }
+
+    notifyListeners();
+  }
+
   Future<void> signUp(String email, String password, String name) async {
     _errorMessage = null;
     _status = AuthStatus.loading;
@@ -118,6 +136,11 @@ class AuthController extends ChangeNotifier {
     }
     if (raw.contains('network-request-failed')) {
       return 'Không có kết nối mạng.';
+    }
+    if (clean.contains('Không thể trao đổi') ||
+        clean.contains('cấu hình') ||
+        clean.contains('Google')) {
+      return clean;
     }
     return 'Đã xảy ra lỗi. Vui lòng thử lại.';
   }

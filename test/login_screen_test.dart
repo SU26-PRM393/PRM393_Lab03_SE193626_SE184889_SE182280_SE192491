@@ -14,6 +14,7 @@ class _MockAuthService implements AuthServiceInterface {
 
   AppUser? _nextUser;
   Exception? _nextError;
+  Completer<AppUser>? googleSignInCompleter;
 
   void stubSuccess(AppUser user) {
     _nextUser = user;
@@ -36,6 +37,15 @@ class _MockAuthService implements AuthServiceInterface {
 
   @override
   Future<AppUser> signUp(String email, String password, String name) async {
+    if (_nextError != null) throw _nextError!;
+    return _nextUser!;
+  }
+
+  @override
+  Future<AppUser> signInWithGoogle() async {
+    if (googleSignInCompleter != null) {
+      return googleSignInCompleter!.future;
+    }
     if (_nextError != null) throw _nextError!;
     return _nextUser!;
   }
@@ -86,7 +96,9 @@ void main() {
       await tester.pumpWidget(_pump(svc));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Chưa có tài khoản? Đăng ký'));
+      final toggleBtn = find.text('Chưa có tài khoản? Đăng ký');
+      await tester.ensureVisible(toggleBtn);
+      await tester.tap(toggleBtn);
       await tester.pumpAndSettle();
 
       expect(find.text('Tạo tài khoản mới'), findsOneWidget);
@@ -98,9 +110,14 @@ void main() {
       await tester.pumpWidget(_pump(svc));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Chưa có tài khoản? Đăng ký'));
+      final signUpToggle = find.text('Chưa có tài khoản? Đăng ký');
+      await tester.ensureVisible(signUpToggle);
+      await tester.tap(signUpToggle);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Đã có tài khoản? Đăng nhập'));
+      
+      final signInToggle = find.text('Đã có tài khoản? Đăng nhập');
+      await tester.ensureVisible(signInToggle);
+      await tester.tap(signInToggle);
       await tester.pumpAndSettle();
 
       expect(find.text('Đăng nhập để tiếp tục'), findsOneWidget);
@@ -146,7 +163,9 @@ void main() {
       await tester.pumpWidget(_pump(svc));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Chưa có tài khoản? Đăng ký'));
+      final toggleBtn = find.text('Chưa có tài khoản? Đăng ký');
+      await tester.ensureVisible(toggleBtn);
+      await tester.tap(toggleBtn);
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -203,7 +222,9 @@ void main() {
       await tester.pumpWidget(_pump(svc));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Chưa có tài khoản? Đăng ký'));
+      final toggleBtn = find.text('Chưa có tài khoản? Đăng ký');
+      await tester.ensureVisible(toggleBtn);
+      await tester.tap(toggleBtn);
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -216,6 +237,40 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Email này đã tồn tại.'), findsOneWidget);
+    });
+  });
+
+  group('LoginScreen — Google sign-in', () {
+    testWidgets('hiển thị nút đăng nhập bằng Google và gọi signInWithGoogle khi bấm', (tester) async {
+      await tester.pumpWidget(_pump(svc));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Đăng nhập bằng Google'), findsOneWidget);
+
+      final googleBtn = find.text('Đăng nhập bằng Google');
+      await tester.ensureVisible(googleBtn);
+      
+      const testUser = AppUser(
+        uid: 'google-uid',
+        email: 'google@test.com',
+        role: UserRole.user,
+        name: 'Google User',
+      );
+      
+      svc.googleSignInCompleter = Completer<AppUser>();
+
+      await tester.tap(googleBtn);
+      await tester.pump();
+
+      // Controller status thay đổi sang loading và hiển thị CircularProgressIndicator
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      // Giải quyết completer để hoàn thành đăng nhập
+      svc.googleSignInCompleter!.complete(testUser);
+      await tester.pumpAndSettle();
+
+      // Sau khi hoàn thành, indicator biến mất
+      expect(find.byType(CircularProgressIndicator), findsNothing);
     });
   });
 }

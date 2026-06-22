@@ -1,5 +1,13 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../firebase_options.dart';
 
 /// Role của user trong hệ thống
 enum UserRole { user, admin }
@@ -11,6 +19,7 @@ abstract class AuthServiceInterface {
   Future<AppUser?> getCurrentUser();
   Future<AppUser> signIn(String email, String password);
   Future<AppUser> signUp(String email, String password, String name);
+  Future<AppUser> signInWithGoogle();
   Future<void> signOut();
 }
 
@@ -51,6 +60,199 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
   /// Stream bool: true = đã đăng nhập, false = chưa
   @override
   Stream<bool> get isSignedIn => _auth.authStateChanges().map((u) => u != null);
+
+  /// Đăng nhập bằng Google sử dụng phương pháp Loopback (mở trình duyệt mặc định bảo mật)
+  @override
+  Future<AppUser> signInWithGoogle() async {
+    // 0. Nếu chạy trên Android hoặc iOS, sử dụng SDK native của google_sign_in
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile', 'openid'],
+      );
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Đăng nhập bằng Google bị hủy.');
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user!;
+
+      // Đảm bảo document user tồn tại trong Firestore (giống desktop)
+      final userDoc = await _db.collection('users').doc(user.uid).get();
+      if (!userDoc.exists) {
+        await _db.collection('users').doc(user.uid).set({
+          'email': user.email ?? '',
+          'name': user.displayName ?? user.email?.split('@').first ?? 'User',
+          'role': 'user',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      return _toAppUser(user);
+    }
+
+    const clientId = DefaultFirebaseOptions.googleClientId;
+    if (clientId.isEmpty || 
+        clientId.contains('YOUR_CLIENT_ID_SUFFIX') || 
+        clientId == 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com') {
+      throw Exception('Vui lòng cấu hình googleClientId trong lib/firebase_options.dart');
+    }
+
+    // 1. Tạo local HTTP Server để hứng callback
+
+    final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final port = server.port;
+    final redirectUri = 'http://localhost:$port';
+
+    // 2. Tạo PKCE verifier và challenge
+    final random = Random.secure();
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~';
+    final codeVerifier = List.generate(80, (index) => chars[random.nextInt(chars.length)]).join();
+    
+    final verifierBytes = utf8.encode(codeVerifier);
+    final verifierDigest = sha256.convert(verifierBytes);
+    final codeChallenge = base64Url.encode(verifierDigest.bytes).replaceAll('=', '');
+
+    // 3. Tạo Google OAuth URL
+    final scopes = ['openid', 'email', 'profile'];
+    final authUri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
+      'client_id': clientId,
+      'redirect_uri': redirectUri,
+      'response_type': 'code',
+      'scope': scopes.join(' '),
+      'code_challenge': codeChallenge,
+      'code_challenge_method': 'S256',
+    });
+
+    // 4. Mở trình duyệt mặc định của hệ thống
+    if (!await launchUrl(authUri, mode: LaunchMode.externalApplication)) {
+      await server.close();
+      throw Exception('Không thể mở trình duyệt.');
+    }
+
+    // 5. Lắng nghe Authorization Code từ trình duyệt
+    String? authCode;
+    try {
+      await for (final request in server) {
+        final code = request.uri.queryParameters['code'];
+        if (code != null) {
+          authCode = code;
+          
+          // Trả về trang HTML thông báo đăng nhập thành công
+          request.response.statusCode = 200;
+          request.response.headers.contentType = ContentType.html;
+          request.response.write('''
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Đăng nhập thành công</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100vh;
+                  margin: 0;
+                  background-color: #f5f5f7;
+                }
+                .card {
+                  background: white;
+                  padding: 40px;
+                  border-radius: 12px;
+                  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                  text-align: center;
+                }
+                h1 { color: #34c759; margin-top: 0; }
+                p { color: #8e8e93; }
+              </style>
+            </head>
+            <body>
+              <div class="card">
+                <h1>Đăng nhập thành công!</h1>
+                <p>Bạn có thể đóng trình duyệt này và quay lại ứng dụng Bản đồ Việt Nam.</p>
+              </div>
+            </body>
+            </html>
+          ''');
+          await request.response.close();
+          break;
+        } else {
+          request.response.statusCode = 400;
+          request.response.headers.contentType = ContentType.html;
+          request.response.write('<h1>Lỗi đăng nhập</h1><p>Không nhận được mã xác thực.</p>');
+          await request.response.close();
+        }
+      }
+    } finally {
+      await server.close();
+    }
+
+    if (authCode == null) {
+      throw Exception('Đăng nhập bằng Google bị hủy.');
+    }
+
+    // 6. Trao đổi authCode lấy tokens
+    final httpClient = HttpClient();
+    final tokenRequest = await httpClient.postUrl(Uri.parse('https://oauth2.googleapis.com/token'));
+    tokenRequest.headers.contentType = ContentType.json;
+    final body = {
+      'client_id': clientId,
+      'code': authCode,
+      'code_verifier': codeVerifier,
+      'redirect_uri': redirectUri,
+      'grant_type': 'authorization_code',
+    };
+
+    if (DefaultFirebaseOptions.googleClientSecret.isNotEmpty) {
+      body['client_secret'] = DefaultFirebaseOptions.googleClientSecret;
+    }
+
+    tokenRequest.write(jsonEncode(body));
+
+    final tokenResponse = await tokenRequest.close();
+    final responseBody = await tokenResponse.transform(utf8.decoder).join();
+    httpClient.close();
+
+    if (tokenResponse.statusCode != 200) {
+      throw Exception('Không thể trao đổi mã xác thực với Google: $responseBody');
+    }
+
+    final tokenData = jsonDecode(responseBody) as Map<String, dynamic>;
+    final accessToken = tokenData['access_token'] as String?;
+    final idToken = tokenData['id_token'] as String?;
+
+    if (accessToken == null || idToken == null) {
+      throw Exception('Không nhận được tokens từ Google.');
+    }
+
+    // 7. Đăng nhập vào Firebase Auth bằng credential
+    final credential = GoogleAuthProvider.credential(
+      accessToken: accessToken,
+      idToken: idToken,
+    );
+    
+    final userCredential = await _auth.signInWithCredential(credential);
+    final user = userCredential.user!;
+
+    // 8. Đảm bảo document user tồn tại trong Firestore
+    final userDoc = await _db.collection('users').doc(user.uid).get();
+    if (!userDoc.exists) {
+      await _db.collection('users').doc(user.uid).set({
+        'email': user.email ?? '',
+        'name': user.displayName ?? user.email?.split('@').first ?? 'User',
+        'role': 'user',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    return _toAppUser(user);
+  }
 
   /// Đăng nhập bằng email + password
   /// Trả về AppUser (có role) hoặc ném exception nếu sai thông tin
@@ -173,7 +375,16 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
 
   /// Đọc role từ Firestore rồi ghép vào AppUser
   Future<AppUser> _toAppUser(User firebaseUser) async {
-    final doc = await _db.collection('users').doc(firebaseUser.uid).get();
+    var doc = await _db.collection('users').doc(firebaseUser.uid).get();
+    
+    // Nếu chưa có doc, thử đợi tối đa 3 giây (retry mỗi 300ms) đề phòng trường hợp đang tạo tài khoản mới/Google login
+    int retries = 0;
+    while (!doc.exists && retries < 10) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      doc = await _db.collection('users').doc(firebaseUser.uid).get();
+      retries++;
+    }
+
     if (!doc.exists) {
       try {
         await firebaseUser.delete();

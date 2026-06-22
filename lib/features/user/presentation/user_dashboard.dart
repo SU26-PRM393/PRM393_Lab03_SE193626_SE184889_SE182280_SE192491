@@ -26,6 +26,77 @@ class _UserDashboardState extends State<UserDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    if (isMobile) {
+      return Scaffold(
+        drawer: Drawer(
+          child: _Sidebar(
+            section: _section,
+            onSelect: (s) {
+              setState(() => _section = s);
+              Navigator.pop(context); // Đóng drawer
+            },
+          ),
+        ),
+        appBar: AppBar(
+          backgroundColor: cs.primary,
+          foregroundColor: cs.onPrimary,
+          title: Text(
+            _section == _UserSection.overview ? 'Dashboard' : 'Lịch sử',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            PopupMenuButton<String>(
+              offset: const Offset(0, 48),
+              tooltip: 'Tài khoản',
+              onSelected: (val) {
+                if (val == 'logout') {
+                  widget.onLogout();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, color: Colors.red, size: 18),
+                      SizedBox(width: 8),
+                      Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cs.onPrimary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.person_outline, size: 14, color: cs.onPrimary),
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.user.name.isNotEmpty ? widget.user.name : widget.user.email,
+                      style: TextStyle(color: cs.onPrimary, fontSize: 12),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: _buildBody(),
+      );
+    }
+
     return Row(
       children: [
         SizedBox(
@@ -210,13 +281,13 @@ class _DashboardOverview extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Xin chào, ${user.email}',
+            'Xin chào, ${user.name.isNotEmpty ? user.name : user.email}',
             style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),

@@ -33,6 +33,9 @@ class _MockAuthService implements AuthServiceInterface {
   Future<AppUser> signUp(String e, String p, String name) async => _user!;
 
   @override
+  Future<AppUser> signInWithGoogle() async => _user!;
+
+  @override
   Future<void> signOut() async => _stream.add(false);
 
   void dispose() => _stream.close();

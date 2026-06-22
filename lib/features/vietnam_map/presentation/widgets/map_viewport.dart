@@ -139,29 +139,58 @@ class _MapViewportState extends State<MapViewport> {
                         }
                         
                         final isSelected = controller.selectedEvent?.id == event.id;
-                        final size = isSelected ? 22.0 : 14.0;
                         
                         return Marker(
                           point: coord,
-                          width: size,
-                          height: size,
+                          width: 120,
+                          height: 50,
+                          alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () => controller.selectEvent(event),
                             child: Tooltip(
                               message: event.name,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: isSelected ? 2 : 1.5),
-                                  boxShadow: const [
-                                    BoxShadow(blurRadius: 4, color: Colors.black45),
-                                  ],
-                                ),
-                                child: isSelected
-                                    ? const Icon(Icons.location_on, size: 12, color: Colors.white)
-                                    : null,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withAlpha(240),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: color, width: isSelected ? 1.5 : 1),
+                                      boxShadow: const [
+                                        BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1)),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      event.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: isSelected ? 16 : 10,
+                                    height: isSelected ? 16 : 10,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: isSelected ? 1.8 : 1.2),
+                                      boxShadow: const [
+                                        BoxShadow(blurRadius: 3, color: Colors.black38),
+                                      ],
+                                    ),
+                                    child: isSelected
+                                        ? const Icon(Icons.location_on, size: 8, color: Colors.white)
+                                        : null,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
