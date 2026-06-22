@@ -21,15 +21,9 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
@@ -55,6 +49,14 @@ class DefaultFirebaseOptions {
     storageBucket: 'vietmap-flutter.firebasestorage.app',
   );
 
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBXgAql-KzSmptcOcQQDKLtCGeVlU_vAzY',
+    appId: '1:327780601219:android:7e9dec0299381a472e3ab6',
+    messagingSenderId: '327780601219',
+    projectId: 'vietmap-flutter',
+    storageBucket: 'vietmap-flutter.firebasestorage.app',
+  );
+
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyDt4cAQU_s38Y_HOteG8tpsikpG0lnpGk0',
     appId: '1:327780601219:ios:a9e75f2c8bea477a2e3ab6',
@@ -72,4 +74,9 @@ class DefaultFirebaseOptions {
     authDomain: 'vietmap-flutter.firebaseapp.com',
     storageBucket: 'vietmap-flutter.firebasestorage.app',
   );
+
+  // TODO: Thay thế bằng Web Client ID từ Firebase Console:
+  // Firebase Console -> Authentication -> Sign-in method -> Google -> Web SDK configuration -> Web client ID
+  static const String googleClientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
+  static const String googleClientSecret = String.fromEnvironment('GOOGLE_CLIENT_SECRET');
 }

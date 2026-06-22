@@ -195,7 +195,68 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : Text(_submitLabel),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
+
+                  // Divider
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Hoặc',
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.grey.shade300)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Google sign-in button
+                  OutlinedButton(
+                    onPressed: isLoading
+                        ? null
+                        : () => widget.controller.signInWithGoogle(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'G',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Đăng nhập bằng Google',
+                          style: TextStyle(
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Toggle login/signup
                   TextButton(

@@ -5,6 +5,7 @@ import '../../domain/administrative_area.dart';
 import '../../domain/lower_level_place.dart';
 import '../../domain/map_boundary.dart';
 import '../vietnam_map_controller.dart';
+import 'map_segmented_control.dart';
 
 const _provinceCityLabel = 'Tỉnh/TP';
 const _districtLabel = 'Quận/Huyện';
@@ -224,6 +225,30 @@ class _ExploreViewState extends State<_ExploreView> {
         Text(
           'Không gian bản đồ với công cụ tra cứu tỉnh, thành phố và quận huyện.',
           style: TextStyle(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
+        ),
+        const SizedBox(height: 16),
+
+        // Hiển thị section
+        const _SectionLabel(label: 'Hiển thị tỉnh'),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: MapSegmentedControl<bool>(
+            value: controller.showProvinceLabels,
+            onChanged: controller.toggleProvinceLabels,
+            segments: const [
+              MapSegmentedOption(
+                value: true,
+                icon: Icons.done_rounded,
+                label: 'Hiện chi tiết',
+              ),
+              MapSegmentedOption(
+                value: false,
+                icon: Icons.visibility_off_outlined,
+                label: 'Ẩn tất cả',
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         

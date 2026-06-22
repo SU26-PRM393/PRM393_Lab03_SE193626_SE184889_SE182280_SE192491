@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "327780601219",
+    "project_id": "vietmap-flutter",
+    "storage_bucket": "vietmap-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:327780601219:android:7e9dec0299381a472e3ab6",
+        "android_client_info": {
+          "package_name": "com.example.vietnam_map_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "327780601219-2d4b9j7dqks5n3kk6npu3ubs30o5s2j0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vietnam_map_flutter",
+            "certificate_hash": "e65aadafd0d890f7043daa26c9dd0ba8da62fac3"
+          }
+        },
+        {
+          "client_id": "327780601219-5isnjnlnl25gvtcuqubhpmhks9s9r1pm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXgAql-KzSmptcOcQQDKLtCGeVlU_vAzY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "327780601219-5isnjnlnl25gvtcuqubhpmhks9s9r1pm.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "327780601219-7n0iidskrkmaenikp4mkhjplruu3l1sn.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vietnamMapFlutter"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

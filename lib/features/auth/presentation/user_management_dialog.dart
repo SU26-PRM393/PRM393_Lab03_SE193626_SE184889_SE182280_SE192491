@@ -218,15 +218,30 @@ class _UserTile extends StatelessWidget {
     final normalIconColor = record.isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
     final avatarIconColor = isDisabled ? cs.onSurfaceVariant : normalIconColor;
 
+    final hasPhoto = record.photoUrl != null && record.photoUrl!.trim().isNotEmpty;
+    final displayName = record.name.isNotEmpty ? record.name : record.email;
+    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       leading: CircleAvatar(
         backgroundColor: avatarBg,
-        child: Icon(
-          record.isAdmin ? Icons.admin_panel_settings : Icons.person,
-          size: 20,
-          color: avatarIconColor,
-        ),
+        backgroundImage: hasPhoto ? NetworkImage(record.photoUrl!) : null,
+        onBackgroundImageError: hasPhoto
+            ? (exception, stackTrace) {
+                // Gracefully catch image loading errors
+              }
+            : null,
+        child: hasPhoto
+            ? null
+            : Text(
+                firstLetter,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: avatarIconColor,
+                ),
+              ),
       ),
       title: Text(
         record.email,
