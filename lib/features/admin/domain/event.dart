@@ -36,4 +36,40 @@ class Event {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'campaignId': campaignId,
+      'name': name.trim(),
+      'date': date == null ? null : Timestamp.fromDate(date!),
+      'schoolIds': schoolIds,
+      'assignedEmployeeIds': assignedEmployeeIds,
+      'totalInteractions': totalInteractions,
+      'status': status,
+    };
+  }
+
+  Event copyWith({
+    String? id,
+    String? campaignId,
+    String? name,
+    DateTime? date,
+    List<String>? schoolIds,
+    List<String>? assignedEmployeeIds,
+    int? totalInteractions,
+    String? status,
+    DateTime? createdAt,
+  }) {
+    return Event(
+      id: id ?? this.id,
+      campaignId: campaignId ?? this.campaignId,
+      name: name ?? this.name,
+      date: date ?? this.date,
+      schoolIds: schoolIds ?? this.schoolIds,
+      assignedEmployeeIds: assignedEmployeeIds ?? this.assignedEmployeeIds,
+      totalInteractions: totalInteractions ?? this.totalInteractions,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }

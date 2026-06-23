@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+  import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
 import '../../auth/presentation/profile_screen.dart';
@@ -285,7 +285,9 @@ class _TabButtonState extends State<_TabButton> {
                 style: TextStyle(
                   color: color,
                   fontSize: 13,
-                  fontWeight: widget.selected || _hovered ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: widget.selected || _hovered
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                 ),
               ),
             ],
