@@ -107,7 +107,7 @@ class AuthService
       return _toAppUser(user);
     }
 
-    const clientId = DefaultFirebaseOptions.googleClientId;
+    final clientId = DefaultFirebaseOptions.googleClientId;
     if (clientId.isEmpty || 
         clientId.contains('YOUR_CLIENT_ID_SUFFIX') || 
         clientId == 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com') {

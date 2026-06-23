@@ -96,7 +96,7 @@ class CampaignControlPanel extends StatelessWidget {
         events: controller.selectedCampaignEvents,
         controller: controller,
         onEventSelected: controller.selectEvent,
-        controller: controller,
+
       );
     }
     return _CampaignListView(
@@ -616,18 +616,17 @@ class _EventListView extends StatefulWidget {
     required this.events,
     required this.controller,
     required this.onEventSelected,
-    required this.controller,
   });
 
   final Campaign campaign;
   final List<Event> events;
   final VietnamMapController controller;
   final ValueChanged<Event> onEventSelected;
-  final VietnamMapController controller;
 
   @override
   State<_EventListView> createState() => _EventListViewState();
 }
+
 
 class _EventListViewState extends State<_EventListView> {
   String _search = '';

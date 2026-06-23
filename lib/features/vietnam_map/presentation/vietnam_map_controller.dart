@@ -178,7 +178,10 @@ class VietnamMapController extends ChangeNotifier {
   List<Interaction> get eventInteractions => _eventInteractions;
   Map<String, String> get interactionTargetNames => _interactionTargetNames;
   bool get isLoadingInteractions => _isLoadingInteractions;
+  bool get isSavingInteraction => _isSavingInteraction;
   String? get selectedEmployeeFilterId => _selectedEmployeeFilterId;
+  String? get campaignActionMessage => _campaignActionMessage;
+  AppUser? get appUser => _appUser;
 
   void toggleCampaignPanel(bool expanded) {
     if (_isCampaignPanelExpanded == expanded) return;

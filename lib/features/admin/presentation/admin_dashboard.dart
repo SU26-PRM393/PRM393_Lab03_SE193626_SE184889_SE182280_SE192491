@@ -92,7 +92,11 @@ class AdminDashboardState extends State<AdminDashboard> {
           backgroundColor: cs.primary,
           foregroundColor: cs.onPrimary,
           title: Text(
-            _section == AdminSection.overview ? 'Dashboard' : 'Người dùng',
+            switch (_section) {
+              AdminSection.overview => 'Dashboard',
+              AdminSection.campaigns => 'Chiến dịch',
+              AdminSection.userManagement => 'Người dùng',
+            },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           actions: [

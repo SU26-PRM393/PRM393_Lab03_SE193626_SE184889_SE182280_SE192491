@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'env_loader.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -75,8 +76,15 @@ class DefaultFirebaseOptions {
     storageBucket: 'vietmap-flutter.firebasestorage.app',
   );
 
-  // TODO: Thay thế bằng Web Client ID từ Firebase Console:
-  // Firebase Console -> Authentication -> Sign-in method -> Google -> Web SDK configuration -> Web client ID
-  static const String googleClientId = String.fromEnvironment('GOOGLE_CLIENT_ID');
-  static const String googleClientSecret = String.fromEnvironment('GOOGLE_CLIENT_SECRET');
+  static String get googleClientId {
+    const fromEnv = String.fromEnvironment('GOOGLE_CLIENT_ID');
+    if (fromEnv.isNotEmpty) return fromEnv;
+    return getEnvValue('GOOGLE_CLIENT_ID') ?? '';
+  }
+
+  static String get googleClientSecret {
+    const fromEnv = String.fromEnvironment('GOOGLE_CLIENT_SECRET');
+    if (fromEnv.isNotEmpty) return fromEnv;
+    return getEnvValue('GOOGLE_CLIENT_SECRET') ?? '';
+  }
 }
