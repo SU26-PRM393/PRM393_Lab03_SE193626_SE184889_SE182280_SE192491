@@ -14,20 +14,20 @@ const _kRadius = 12.0;
 const _kChipRadius = 20.0;
 
 Color _statusColor(String s) => switch (s) {
-  'active' || 'in-progress' => const Color(0xFF16A34A),
-  'completed' => const Color(0xFF2563EB),
-  'canceled' => const Color(0xFF6B7280),
-  'draft' => const Color(0xFFF97316),
-  _ => const Color(0xFF6B7280),
-};
+      'active' || 'in-progress' => const Color(0xFF16A34A),
+      'completed' => const Color(0xFF2563EB),
+      'canceled' => const Color(0xFF6B7280),
+      'draft' => const Color(0xFFF97316),
+      _ => const Color(0xFF6B7280),
+    };
 
 String _statusLabel(String s) => switch (s) {
-  'active' => 'Hoạt động',
-  'in-progress' => 'Đang diễn ra',
-  'completed' => 'Hoàn thành',
-  'canceled' => 'Đã hủy',
-  _ => s,
-};
+      'active' => 'Hoạt động',
+      'in-progress' => 'Đang diễn ra',
+      'completed' => 'Hoàn thành',
+      'canceled' => 'Đã hủy',
+      _ => s,
+    };
 
 // ══════════════════════════════════════════════════════════════════════
 // Root panel
@@ -58,7 +58,8 @@ class CampaignControlPanel extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: _kBg,
-        border: Border(right: BorderSide(color: Colors.grey.shade200, width: 1.5)),
+        border:
+            Border(right: BorderSide(color: Colors.grey.shade200, width: 1.5)),
       ),
       child: Column(children: [
         _StickyHeader(
@@ -85,29 +86,43 @@ class CampaignControlPanel extends StatelessWidget {
 
   Widget _buildBody() {
     if (controller.selectedEvent != null) {
-      return _EventDetailView(event: controller.selectedEvent!, controller: controller);
+      return _EventDetailView(
+          event: controller.selectedEvent!, controller: controller);
     }
     if (controller.selectedCampaign != null) {
       return _EventListView(
         campaign: controller.selectedCampaign!,
         events: controller.selectedCampaignEvents,
+        controller: controller,
         onEventSelected: controller.selectEvent,
       );
     }
-    return _CampaignListView(campaigns: controller.campaigns, onCampaignSelected: controller.selectCampaign);
+    return _CampaignListView(
+        campaigns: controller.campaigns,
+        onCampaignSelected: controller.selectCampaign);
   }
 
   Widget _buildSkeleton() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(children: List.generate(4, (_) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Container(
-          height: 88, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(_kRadius),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(8), blurRadius: 8)]),
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-        ),
-      ))),
+      child: Column(
+          children: List.generate(
+              4,
+              (_) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      height: 88,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(_kRadius),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black.withAlpha(8), blurRadius: 8)
+                          ]),
+                      child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                  ))),
     );
   }
 }
@@ -117,7 +132,12 @@ class CampaignControlPanel extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════
 
 class _StickyHeader extends StatelessWidget {
-  const _StickyHeader({required this.title, this.count, required this.showBack, required this.onBack, required this.onClose});
+  const _StickyHeader(
+      {required this.title,
+      this.count,
+      required this.showBack,
+      required this.onBack,
+      required this.onClose});
   final String title;
   final int? count;
   final bool showBack;
@@ -128,21 +148,36 @@ class _StickyHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(color: _kCardBg, border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+      decoration: BoxDecoration(
+          color: _kCardBg,
+          border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
       child: Row(children: [
         if (showBack) ...[
-          _CircleBtn(icon: Icons.arrow_back_rounded, tooltip: 'Quay lại', onTap: onBack),
+          _CircleBtn(
+              icon: Icons.arrow_back_rounded,
+              tooltip: 'Quay lại',
+              onTap: onBack),
           const SizedBox(width: 8),
         ],
         Expanded(
           child: Row(children: [
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: -0.3)),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3)),
             if (count != null) ...[
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(color: _kTealLight, borderRadius: BorderRadius.circular(10)),
-                child: Text('$count', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _kTeal)),
+                decoration: BoxDecoration(
+                    color: _kTealLight,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Text('$count',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _kTeal)),
               ),
             ],
           ]),
@@ -154,8 +189,11 @@ class _StickyHeader extends StatelessWidget {
 }
 
 class _CircleBtn extends StatefulWidget {
-  const _CircleBtn({required this.icon, required this.tooltip, required this.onTap});
-  final IconData icon; final String tooltip; final VoidCallback onTap;
+  const _CircleBtn(
+      {required this.icon, required this.tooltip, required this.onTap});
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
 
   @override
   State<_CircleBtn> createState() => _CircleBtnState();
@@ -176,12 +214,14 @@ class _CircleBtnState extends State<_CircleBtn> {
           onTap: widget.onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: 32, height: 32,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: _hovered ? _kTealLight : Colors.grey.shade100,
             ),
-            child: Icon(widget.icon, size: 18, color: _hovered ? _kTeal : Colors.grey.shade700),
+            child: Icon(widget.icon,
+                size: 18, color: _hovered ? _kTeal : Colors.grey.shade700),
           ),
         ),
       ),
@@ -194,8 +234,11 @@ class _CircleBtnState extends State<_CircleBtn> {
 // ══════════════════════════════════════════════════════════════════════
 
 class _SearchField extends StatelessWidget {
-  const _SearchField({required this.hint, required this.value, required this.onChanged});
-  final String hint; final String value; final ValueChanged<String> onChanged;
+  const _SearchField(
+      {required this.hint, required this.value, required this.onChanged});
+  final String hint;
+  final String value;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -207,16 +250,27 @@ class _SearchField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-          prefixIcon: Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
-          suffixIcon: value.isEmpty ? null : IconButton(
-            icon: Icon(Icons.close_rounded, size: 18, color: Colors.grey.shade400),
-            onPressed: () => onChanged(''),
-          ),
-          filled: true, fillColor: _kCardBg,
+          prefixIcon:
+              Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
+          suffixIcon: value.isEmpty
+              ? null
+              : IconButton(
+                  icon: Icon(Icons.close_rounded,
+                      size: 18, color: Colors.grey.shade400),
+                  onPressed: () => onChanged(''),
+                ),
+          filled: true,
+          fillColor: _kCardBg,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(_kChipRadius), borderSide: BorderSide(color: Colors.grey.shade200)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_kChipRadius), borderSide: BorderSide(color: Colors.grey.shade200)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(_kChipRadius), borderSide: const BorderSide(color: _kTeal, width: 1.5)),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_kChipRadius),
+              borderSide: BorderSide(color: Colors.grey.shade200)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_kChipRadius),
+              borderSide: BorderSide(color: Colors.grey.shade200)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(_kChipRadius),
+              borderSide: const BorderSide(color: _kTeal, width: 1.5)),
         ),
       ),
     );
@@ -228,7 +282,8 @@ class _SearchField extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════
 
 class _StatusChips extends StatelessWidget {
-  const _StatusChips({required this.options, required this.selected, required this.onChanged});
+  const _StatusChips(
+      {required this.options, required this.selected, required this.onChanged});
   final Map<String, String> options;
   final String selected;
   final ValueChanged<String> onChanged;
@@ -299,7 +354,10 @@ class _StatusChipButtonState extends State<_StatusChipButton> {
             border: Border.all(color: borderCol),
             boxShadow: [
               if (_hovered && !active)
-                BoxShadow(color: _kTeal.withAlpha(10), blurRadius: 4, offset: const Offset(0, 1))
+                BoxShadow(
+                    color: _kTeal.withAlpha(10),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1))
             ],
           ),
           child: Text(
@@ -329,8 +387,11 @@ class _StatusBadge extends StatelessWidget {
     final c = _statusColor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: c.withAlpha(20), borderRadius: BorderRadius.circular(6)),
-      child: Text(_statusLabel(status), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
+      decoration: BoxDecoration(
+          color: c.withAlpha(20), borderRadius: BorderRadius.circular(6)),
+      child: Text(_statusLabel(status),
+          style:
+              TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: c)),
     );
   }
 }
@@ -340,11 +401,15 @@ class _StatusBadge extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════
 
 class _ResultCard extends StatefulWidget {
-  const _ResultCard({required this.title, required this.status, required this.line2, this.line3, required this.onTap, this.selected = false});
+  const _ResultCard(
+      {required this.title,
+      required this.status,
+      required this.line2,
+      this.line3,
+      required this.onTap});
   final String title, status, line2;
   final String? line3;
   final VoidCallback onTap;
-  final bool selected;
 
   @override
   State<_ResultCard> createState() => _ResultCardState();
@@ -365,36 +430,47 @@ class _ResultCardState extends State<_ResultCard> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: widget.selected
-                ? (_hovered ? _kTealLight.withAlpha(160) : _kTealLight.withAlpha(120))
-                : (_hovered ? Colors.grey.shade100 : _kCardBg),
+            color: _hovered ? Colors.grey.shade100 : _kCardBg,
             borderRadius: BorderRadius.circular(_kRadius),
             border: Border.all(
-              color: widget.selected
-                  ? _kTeal.withAlpha(80)
-                  : (_hovered ? _kTeal.withAlpha(100) : Colors.grey.shade200),
-              width: widget.selected ? 1.5 : 1,
+              color: _hovered ? _kTeal.withAlpha(100) : Colors.grey.shade200,
             ),
             boxShadow: [
-              if (widget.selected)
-                BoxShadow(color: _kTeal.withAlpha(20), blurRadius: 12, offset: const Offset(0, 2))
-              else if (_hovered)
-                BoxShadow(color: Colors.black.withAlpha(12), blurRadius: 12, offset: const Offset(0, 4))
+              if (_hovered)
+                BoxShadow(
+                    color: Colors.black.withAlpha(12),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4))
               else
-                BoxShadow(color: Colors.black.withAlpha(6), blurRadius: 6, offset: const Offset(0, 2)),
+                BoxShadow(
+                    color: Colors.black.withAlpha(6),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2)),
             ],
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Flexible(child: Text(widget.title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+              Flexible(
+                  child: Text(widget.title,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis)),
               const SizedBox(width: 8),
               _StatusBadge(status: widget.status),
             ]),
             const SizedBox(height: 6),
-            Text(widget.line2, style: TextStyle(fontSize: 13, color: Colors.grey.shade600), maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(widget.line2,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
             if (widget.line3 != null) ...[
               const SizedBox(height: 4),
-              Text(widget.line3!, style: TextStyle(fontSize: 12, color: Colors.grey.shade400), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(widget.line3!,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis),
             ],
           ]),
         ),
@@ -417,14 +493,20 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Container(
-          width: 64, height: 64,
-          decoration: BoxDecoration(color: Colors.grey.shade100, shape: BoxShape.circle),
-          child: Icon(Icons.search_off_rounded, size: 32, color: Colors.grey.shade400),
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+              color: Colors.grey.shade100, shape: BoxShape.circle),
+          child: Icon(Icons.search_off_rounded,
+              size: 32, color: Colors.grey.shade400),
         ),
         const SizedBox(height: 16),
-        Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+        Text(title,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
         const SizedBox(height: 6),
-        Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
+        Text(subtitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade500)),
       ]),
     );
   }
@@ -434,10 +516,16 @@ class _EmptyState extends StatelessWidget {
 // Campaign List
 // ══════════════════════════════════════════════════════════════════════
 
-const _kCampaignFilters = {'all': 'Tất cả', 'active': 'Hoạt động', 'completed': 'Hoàn thành', 'canceled': 'Đã hủy'};
+const _kCampaignFilters = {
+  'all': 'Tất cả',
+  'active': 'Hoạt động',
+  'completed': 'Hoàn thành',
+  'canceled': 'Đã hủy'
+};
 
 class _CampaignListView extends StatefulWidget {
-  const _CampaignListView({required this.campaigns, required this.onCampaignSelected});
+  const _CampaignListView(
+      {required this.campaigns, required this.onCampaignSelected});
   final List<Campaign> campaigns;
   final ValueChanged<Campaign> onCampaignSelected;
 
@@ -453,7 +541,11 @@ class _CampaignListViewState extends State<_CampaignListView> {
   Widget build(BuildContext context) {
     final filtered = widget.campaigns.where((c) {
       if (_filter != 'all' && c.status != _filter) return false;
-      if (_search.isNotEmpty && !c.name.toLowerCase().contains(_search.toLowerCase()) && !c.description.toLowerCase().contains(_search.toLowerCase())) return false;
+      if (_search.isNotEmpty &&
+          !c.name.toLowerCase().contains(_search.toLowerCase()) &&
+          !c.description.toLowerCase().contains(_search.toLowerCase())) {
+        return false;
+      }
       return true;
     }).toList();
 
@@ -461,17 +553,27 @@ class _CampaignListViewState extends State<_CampaignListView> {
       // Sticky search + filters
       Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(color: _kBg, border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
+        decoration: BoxDecoration(
+            color: _kBg,
+            border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _SearchField(hint: 'Tìm kiếm chiến dịch...', value: _search, onChanged: (v) => setState(() => _search = v)),
+          _SearchField(
+              hint: 'Tìm kiếm chiến dịch...',
+              value: _search,
+              onChanged: (v) => setState(() => _search = v)),
           const SizedBox(height: 12),
-          _StatusChips(options: _kCampaignFilters, selected: _filter, onChanged: (v) => setState(() => _filter = v)),
+          _StatusChips(
+              options: _kCampaignFilters,
+              selected: _filter,
+              onChanged: (v) => setState(() => _filter = v)),
         ]),
       ),
       // Results
       Expanded(
         child: filtered.isEmpty
-            ? const _EmptyState(title: 'Không tìm thấy chiến dịch', subtitle: 'Thử thay đổi từ khóa hoặc bộ lọc trạng thái.')
+            ? const _EmptyState(
+                title: 'Không tìm thấy chiến dịch',
+                subtitle: 'Thử thay đổi từ khóa hoặc bộ lọc trạng thái.')
             : ListView.separated(
                 padding: const EdgeInsets.all(16),
                 itemCount: filtered.length,
@@ -499,17 +601,24 @@ class _CampaignListViewState extends State<_CampaignListView> {
 // Event List
 // ══════════════════════════════════════════════════════════════════════
 
-const _kEventFilters = {'all': 'Tất cả', 'in-progress': 'Đang diễn ra', 'completed': 'Hoàn thành', 'canceled': 'Đã hủy'};
+const _kEventFilters = {
+  'all': 'Tất cả',
+  'in-progress': 'Đang diễn ra',
+  'completed': 'Hoàn thành',
+  'canceled': 'Đã hủy'
+};
 
 class _EventListView extends StatefulWidget {
   const _EventListView({
     required this.campaign,
     required this.events,
+    required this.controller,
     required this.onEventSelected,
   });
 
   final Campaign campaign;
   final List<Event> events;
+  final VietnamMapController controller;
   final ValueChanged<Event> onEventSelected;
 
   @override
@@ -529,7 +638,10 @@ class _EventListViewState extends State<_EventListView> {
 
     final filtered = widget.events.where((e) {
       if (_filter != 'all' && e.status != _filter) return false;
-      if (_search.isNotEmpty && !e.name.toLowerCase().contains(_search.toLowerCase())) return false;
+      if (_search.isNotEmpty &&
+          !e.name.toLowerCase().contains(_search.toLowerCase())) {
+        return false;
+      }
       return true;
     }).toList();
 
@@ -541,7 +653,8 @@ class _EventListViewState extends State<_EventListView> {
             margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF0F766E)]),
+              gradient: const LinearGradient(
+                  colors: [Color(0xFF0D9488), Color(0xFF0F766E)]),
               borderRadius: BorderRadius.circular(_kRadius),
               boxShadow: [
                 BoxShadow(
@@ -575,17 +688,22 @@ class _EventListViewState extends State<_EventListView> {
                   const SizedBox(height: 8),
                   Text(
                     c.description,
-                    style: const TextStyle(fontSize: 13, color: Colors.white70, height: 1.4),
+                    style: const TextStyle(
+                        fontSize: 13, color: Colors.white70, height: 1.4),
                   ),
                 ],
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_month_outlined, size: 14, color: Colors.white70),
+                    const Icon(Icons.calendar_month_outlined,
+                        size: 14, color: Colors.white70),
                     const SizedBox(width: 6),
                     Text(
                       dateRange,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white70),
+                      style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white70),
                     ),
                   ],
                 ),
@@ -602,15 +720,24 @@ class _EventListViewState extends State<_EventListView> {
               children: [
                 const Text(
                   'Sự kiện trong chiến dịch',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.2),
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.2),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                  decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                  decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(8)),
                   child: Text(
                     '${widget.events.length}',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600),
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600),
                   ),
                 ),
               ],
@@ -622,11 +749,21 @@ class _EventListViewState extends State<_EventListView> {
         SliverToBoxAdapter(
           child: Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            decoration: BoxDecoration(color: _kBg, border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _SearchField(hint: 'Tìm kiếm sự kiện...', value: _search, onChanged: (v) => setState(() => _search = v)),
+            decoration: BoxDecoration(
+                color: _kBg,
+                border:
+                    Border(bottom: BorderSide(color: Colors.grey.shade100))),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _SearchField(
+                  hint: 'Tìm kiếm sự kiện...',
+                  value: _search,
+                  onChanged: (v) => setState(() => _search = v)),
               const SizedBox(height: 12),
-              _StatusChips(options: _kEventFilters, selected: _filter, onChanged: (v) => setState(() => _filter = v)),
+              _StatusChips(
+                  options: _kEventFilters,
+                  selected: _filter,
+                  onChanged: (v) => setState(() => _filter = v)),
             ]),
           ),
         ),
@@ -649,14 +786,23 @@ class _EventListViewState extends State<_EventListView> {
               delegate: SliverChildBuilderDelegate(
                 (context, i) {
                   final e = filtered[i];
-                  final dateStr = e.date != null ? '${e.date!.day}/${e.date!.month}/${e.date!.year}' : '';
+                  final dateStr = e.date != null
+                      ? '${e.date!.day}/${e.date!.month}/${e.date!.year}'
+                      : '';
+                  final school = e.schoolIds.isEmpty
+                      ? null
+                      : widget.controller.eventSchools[e.schoolIds.first];
+                  final location = school == null
+                      ? 'Địa điểm: Chưa xác định'
+                      : 'Địa điểm: ${school.schoolName} - ${school.communeName}, ${school.provinceName}';
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _ResultCard(
                       title: e.name,
                       status: e.status,
-                      line2: dateStr.isNotEmpty ? dateStr : 'Chưa xác định ngày',
-                      line3: 'Tương tác: ${e.totalInteractions}',
+                      line2:
+                          dateStr.isNotEmpty ? dateStr : 'Chưa xác định ngày',
+                      line3: '$location | Tương tác: ${e.totalInteractions}',
                       onTap: () => widget.onEventSelected(e),
                     ),
                   );
@@ -674,14 +820,64 @@ class _EventListViewState extends State<_EventListView> {
 // Event Detail
 // ══════════════════════════════════════════════════════════════════════
 
-class _EventDetailView extends StatelessWidget {
+class _EventDetailView extends StatefulWidget {
   const _EventDetailView({required this.event, required this.controller});
   final Event event;
   final VietnamMapController controller;
 
   @override
+  State<_EventDetailView> createState() => _EventDetailViewState();
+}
+
+class _EventDetailViewState extends State<_EventDetailView> {
+  final _targetNameController = TextEditingController();
+  final _notesController = TextEditingController();
+  String _targetType = 'student';
+
+  @override
+  void dispose() {
+    _targetNameController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitInteraction() async {
+    final targetName = _targetNameController.text.trim();
+    final notes = _notesController.text.trim();
+    if (targetName.isEmpty || notes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nhập người tương tác và nội dung.')),
+      );
+      return;
+    }
+
+    await widget.controller.createInteractionForSelectedEvent(
+      targetType: _targetType,
+      targetName: targetName,
+      notes: notes,
+    );
+    if (!mounted) return;
+    if (widget.controller.campaignActionMessage == 'Đã ghi nhận tương tác.') {
+      _targetNameController.clear();
+      _notesController.clear();
+    }
+    final message = widget.controller.campaignActionMessage;
+    if (message != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+      widget.controller.clearCampaignActionMessage();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    String schoolName = 'N/A', provinceName = 'N/A', communeName = 'N/A', address = 'N/A';
+    final event = widget.event;
+    final controller = widget.controller;
+    String schoolName = 'N/A',
+        provinceName = 'N/A',
+        communeName = 'N/A',
+        address = 'N/A';
     if (event.schoolIds.isNotEmpty) {
       final school = controller.eventSchools[event.schoolIds.first];
       if (school != null) {
@@ -691,29 +887,41 @@ class _EventDetailView extends StatelessWidget {
         address = school.address;
       }
     }
-    final dateStr = event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : 'N/A';
+    final dateStr = event.date != null
+        ? '${event.date!.day}/${event.date!.month}/${event.date!.year}'
+        : 'N/A';
 
     return ListView(padding: const EdgeInsets.all(16), children: [
       // Hero card
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFF0D9488), Color(0xFF0F766E)]),
+          gradient: const LinearGradient(
+              colors: [Color(0xFF0D9488), Color(0xFF0F766E)]),
           borderRadius: BorderRadius.circular(_kRadius),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(event.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+          Text(event.name,
+              style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white)),
           const SizedBox(height: 8),
           Row(children: [
             _StatusBadgeLight(status: event.status),
             const SizedBox(width: 10),
-            Text(dateStr, style: const TextStyle(fontSize: 13, color: Colors.white70)),
+            Text(dateStr,
+                style: const TextStyle(fontSize: 13, color: Colors.white70)),
           ]),
           const SizedBox(height: 8),
           Row(children: [
-            const Icon(Icons.location_on_outlined, size: 14, color: Colors.white60),
+            const Icon(Icons.location_on_outlined,
+                size: 14, color: Colors.white60),
             const SizedBox(width: 4),
-            Expanded(child: Text('$provinceName, $communeName', style: const TextStyle(fontSize: 13, color: Colors.white70), overflow: TextOverflow.ellipsis)),
+            Expanded(
+                child: Text('$provinceName, $communeName',
+                    style: const TextStyle(fontSize: 13, color: Colors.white70),
+                    overflow: TextOverflow.ellipsis)),
           ]),
         ]),
       ),
@@ -721,17 +929,51 @@ class _EventDetailView extends StatelessWidget {
 
       // Info card
       _InfoCard(children: [
-        _InfoItem(icon: Icons.school_outlined, label: 'Trường', value: schoolName),
+        _InfoItem(
+            icon: Icons.school_outlined, label: 'Trường', value: schoolName),
         _InfoItem(icon: Icons.home_outlined, label: 'Địa chỉ', value: address),
-        _InfoItem(icon: Icons.touch_app_outlined, label: 'Tổng tương tác', value: '${event.totalInteractions}'),
+        _InfoItem(
+            icon: Icons.touch_app_outlined,
+            label: 'Tổng tương tác',
+            value: '${event.totalInteractions}'),
       ]),
       const SizedBox(height: 16),
 
+      const _SectionTitle(label: 'Tạo tương tác'),
+      const SizedBox(height: 8),
+      if (controller.appUser == null)
+        const _EmptyState(
+          title: 'Chưa đăng nhập',
+          subtitle: 'Cần tài khoản nhân viên để tạo tương tác cho sự kiện.',
+        )
+      else if (!event.assignedEmployeeIds.contains(controller.appUser!.uid))
+        const _InfoCard(children: [
+          _InfoItem(
+            icon: Icons.lock_outline,
+            label: 'Quyền',
+            value: 'Bạn chưa được gán vào sự kiện này.',
+          ),
+        ])
+      else
+        _InteractionForm(
+          targetNameController: _targetNameController,
+          notesController: _notesController,
+          targetType: _targetType,
+          isSaving: controller.isSavingInteraction,
+          onTargetTypeChanged: (value) => setState(() => _targetType = value),
+          onSubmit: _submitInteraction,
+        ),
+      const SizedBox(height: 16),
+
       // Employee section
-      _SectionTitle(label: 'Nhân viên phụ trách', count: event.assignedEmployeeIds.length),
+      _SectionTitle(
+          label: 'Nhân viên phụ trách',
+          count: event.assignedEmployeeIds.length),
       const SizedBox(height: 8),
       if (event.assignedEmployeeIds.isEmpty)
-        const _EmptyState(title: 'Chưa phân công', subtitle: 'Không có nhân viên nào được phân công cho sự kiện này.')
+        const _EmptyState(
+            title: 'Chưa phân công',
+            subtitle: 'Không có nhân viên nào được phân công cho sự kiện này.')
       else
         ...event.assignedEmployeeIds.map((id) {
           final name = controller.employeeNames[id] ?? 'Không rõ';
@@ -747,6 +989,99 @@ class _EventDetailView extends StatelessWidget {
 
 // ── Detail sub-widgets ─────────────────────────────────────────────
 
+class _InteractionForm extends StatelessWidget {
+  const _InteractionForm({
+    required this.targetNameController,
+    required this.notesController,
+    required this.targetType,
+    required this.isSaving,
+    required this.onTargetTypeChanged,
+    required this.onSubmit,
+  });
+
+  final TextEditingController targetNameController;
+  final TextEditingController notesController;
+  final String targetType;
+  final bool isSaving;
+  final ValueChanged<String> onTargetTypeChanged;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        borderRadius: BorderRadius.circular(_kRadius),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DropdownButtonFormField<String>(
+            initialValue: targetType,
+            decoration: InputDecoration(
+              labelText: 'Đối tượng',
+              border: inputBorder,
+              enabledBorder: inputBorder,
+            ),
+            items: const [
+              DropdownMenuItem(value: 'student', child: Text('Học sinh')),
+              DropdownMenuItem(value: 'person', child: Text('Nhân sự trường')),
+              DropdownMenuItem(value: 'relative', child: Text('Phụ huynh')),
+              DropdownMenuItem(value: 'other', child: Text('Khác')),
+            ],
+            onChanged: isSaving
+                ? null
+                : (value) {
+                    if (value != null) onTargetTypeChanged(value);
+                  },
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: targetNameController,
+            enabled: !isSaving,
+            decoration: InputDecoration(
+              labelText: 'Người tương tác',
+              border: inputBorder,
+              enabledBorder: inputBorder,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: notesController,
+            enabled: !isSaving,
+            minLines: 3,
+            maxLines: 5,
+            decoration: InputDecoration(
+              labelText: 'Nội dung tương tác',
+              border: inputBorder,
+              enabledBorder: inputBorder,
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: isSaving ? null : onSubmit,
+            icon: isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.add_comment_outlined, size: 18),
+            label: Text(isSaving ? 'Đang lưu...' : 'Ghi nhận tương tác'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatusBadgeLight extends StatelessWidget {
   const _StatusBadgeLight({required this.status});
   final String status;
@@ -755,26 +1090,39 @@ class _StatusBadgeLight extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: Colors.white.withAlpha(25), borderRadius: BorderRadius.circular(6)),
-      child: Text(_statusLabel(status), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+      decoration: BoxDecoration(
+          color: Colors.white.withAlpha(25),
+          borderRadius: BorderRadius.circular(6)),
+      child: Text(_statusLabel(status),
+          style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
     );
   }
 }
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.label, this.count});
-  final String label; final int? count;
+  final String label;
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.2)),
+      Text(label,
+          style: const TextStyle(
+              fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: -0.2)),
       if (count != null) ...[
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-          decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
-          child: Text('$count', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(8)),
+          child: Text('$count',
+              style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade600)),
         ),
       ],
     ]);
@@ -789,7 +1137,10 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: _kCardBg, borderRadius: BorderRadius.circular(_kRadius), border: Border.all(color: Colors.grey.shade200)),
+      decoration: BoxDecoration(
+          color: _kCardBg,
+          borderRadius: BorderRadius.circular(_kRadius),
+          border: Border.all(color: Colors.grey.shade200)),
       child: Column(children: [
         for (int i = 0; i < children.length; i++) ...[
           if (i > 0) Divider(height: 20, color: Colors.grey.shade100),
@@ -801,22 +1152,31 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _InfoItem extends StatelessWidget {
-  const _InfoItem({required this.icon, required this.label, required this.value});
-  final IconData icon; final String label, value;
+  const _InfoItem(
+      {required this.icon, required this.label, required this.value});
+  final IconData icon;
+  final String label, value;
 
   @override
   Widget build(BuildContext context) {
     return Row(children: [
       Icon(icon, size: 16, color: _kTeal),
       const SizedBox(width: 10),
-      SizedBox(width: 90, child: Text(label, style: TextStyle(fontSize: 13, color: Colors.grey.shade500))),
-      Expanded(child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
+      SizedBox(
+          width: 90,
+          child: Text(label,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500))),
+      Expanded(
+          child: Text(value,
+              style:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w500))),
     ]);
   }
 }
 
 class _EmployeeCard extends StatefulWidget {
-  const _EmployeeCard({required this.name, required this.id, required this.email});
+  const _EmployeeCard(
+      {required this.name, required this.id, required this.email});
   final String name, id, email;
 
   @override
@@ -850,28 +1210,44 @@ class _EmployeeCardState extends State<_EmployeeCard> {
             ),
             boxShadow: [
               if (_hovered)
-                BoxShadow(color: _kTeal.withAlpha(15), blurRadius: 10, offset: const Offset(0, 2))
+                BoxShadow(
+                    color: _kTeal.withAlpha(15),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2))
               else
-                BoxShadow(color: Colors.black.withAlpha(4), blurRadius: 4, offset: const Offset(0, 1)),
+                BoxShadow(
+                    color: Colors.black.withAlpha(4),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1)),
             ],
           ),
           child: Row(children: [
             CircleAvatar(
-              radius: 16, backgroundColor: _kTealLight,
+              radius: 16,
+              backgroundColor: _kTealLight,
               child: Text(
                 widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: _kTeal),
+                style: const TextStyle(
+                    fontSize: 14, fontWeight: FontWeight.w700, color: _kTeal),
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(widget.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              Text(
-                widget.email.isNotEmpty ? widget.email : 'ID: ${widget.id.length > 8 ? widget.id.substring(0, 8) : widget.id}...',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-              ),
-            ])),
-            Icon(Icons.chevron_right, size: 18, color: _hovered ? _kTeal : Colors.grey.shade400),
+            Expanded(
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                  Text(widget.name,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500)),
+                  Text(
+                    widget.email.isNotEmpty
+                        ? widget.email
+                        : 'ID: ${widget.id.length > 8 ? widget.id.substring(0, 8) : widget.id}...',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  ),
+                ])),
+            Icon(Icons.chevron_right,
+                size: 18, color: _hovered ? _kTeal : Colors.grey.shade400),
           ]),
         ),
       ),

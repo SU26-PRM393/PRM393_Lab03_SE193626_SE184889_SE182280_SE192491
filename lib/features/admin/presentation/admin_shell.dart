@@ -101,11 +101,13 @@ class AdminShellState extends State<AdminShell> {
             child: _ProfileHoverWrapper(
               child: Container(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.admin_panel_settings, size: 14, color: cs.onPrimary),
+                    Icon(Icons.admin_panel_settings,
+                        size: 14, color: cs.onPrimary),
                     const SizedBox(width: 6),
                     Text(
                       widget.admin.email,
@@ -123,8 +125,7 @@ class AdminShellState extends State<AdminShell> {
       ),
       body: _tab == AdminTab.dashboard
           ? AdminDashboard(admin: widget.admin, onLogout: widget.onLogout)
-          // VietMap tab: appUser = null → không hiện avatar badge
-          : const VietnamMapScreen(),
+          : VietnamMapScreen(appUser: widget.admin),
     );
   }
 }
@@ -190,7 +191,9 @@ class _TabButtonState extends State<_TabButton> {
                 style: TextStyle(
                   color: color,
                   fontSize: 13,
-                  fontWeight: widget.selected || _hovered ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: widget.selected || _hovered
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                 ),
               ),
             ],

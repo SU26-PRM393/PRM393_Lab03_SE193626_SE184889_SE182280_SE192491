@@ -41,7 +41,8 @@ class AppUser {
 
 /// Tương tự @Service trong Spring Boot — xử lý toàn bộ logic Auth
 /// UI chỉ gọi qua class này, không gọi FirebaseAuth trực tiếp
-class AuthService implements AuthServiceInterface, UserManagementServiceInterface {
+class AuthService
+    implements AuthServiceInterface, UserManagementServiceInterface {
   AuthService._();
   static final instance = AuthService._();
 
@@ -91,14 +92,14 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
             email: email.trim(),
             password: password,
           );
-          
+
           final user = signInCred.user!;
           final doc = await _db.collection('users').doc(user.uid).get();
-          
+
           if (!doc.exists) {
             // Nếu không tồn tại Firestore doc (tài khoản đã bị xóa), xóa Auth user hiện tại.
             await user.delete();
-            
+
             // Tiến hành đăng ký lại từ đầu!
             final newCred = await _auth.createUserWithEmailAndPassword(
               email: email.trim(),
@@ -171,7 +172,7 @@ class AuthService implements AuthServiceInterface, UserManagementServiceInterfac
   Future<void> setUserRole(String uid, String role) =>
       _db.collection('users').doc(uid).update({'role': role});
 
-  /// Đọc role từ Firestore rồi ghép vào AppUser
+  // Đọc role từ Firestore rồi ghép vào AppUser
   Future<AppUser> _toAppUser(User firebaseUser) async {
     final doc = await _db.collection('users').doc(firebaseUser.uid).get();
     if (!doc.exists) {

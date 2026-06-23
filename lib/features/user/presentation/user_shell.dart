@@ -84,7 +84,8 @@ class _UserShellState extends State<UserShell> {
             child: _ProfileHoverWrapper(
               child: Container(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -106,7 +107,7 @@ class _UserShellState extends State<UserShell> {
       ),
       body: _tab == _UserTab.dashboard
           ? UserDashboard(user: widget.user, onLogout: widget.onLogout)
-          : const VietnamMapScreen(),
+          : VietnamMapScreen(appUser: widget.user),
     );
   }
 }
@@ -172,7 +173,9 @@ class _TabButtonState extends State<_TabButton> {
                 style: TextStyle(
                   color: color,
                   fontSize: 13,
-                  fontWeight: widget.selected || _hovered ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: widget.selected || _hovered
+                      ? FontWeight.w600
+                      : FontWeight.normal,
                 ),
               ),
             ],
