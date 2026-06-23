@@ -55,18 +55,54 @@ class AuthController extends ChangeNotifier {
     });
   }
 
-  Future<void> signIn(String email, String password) async {
+  // Future<void> signIn(String email, String password) async {
+  //   _errorMessage = null;
+  //   _status = AuthStatus.loading;
+  //   notifyListeners();
+
+  //   try {
+  //     _user = await _service.signIn(email, password);
+  //     _status = AuthStatus.authenticated;
+  //     _errorMessage = null;
+  //   } on Exception catch (e) {
+  //     _status = AuthStatus.unauthenticated;
+  //     _errorMessage = _friendlyError(e.toString());
+  //   }
+
+  //   notifyListeners();
+  // }
+
+  Future<void> signIn(
+    String email,
+    String password,
+  ) async {
     _errorMessage = null;
     _status = AuthStatus.loading;
     notifyListeners();
 
     try {
-      _user = await _service.signIn(email, password);
+      print("========== SIGN IN START ==========");
+
+      _user = await _service.signIn(
+        email,
+        password,
+      );
+
+      print("========== SIGN IN SUCCESS ==========");
+
       _status = AuthStatus.authenticated;
       _errorMessage = null;
-    } on Exception catch (e) {
+    } on Exception catch (e, s) {
+      print("========== SIGN IN ERROR ==========");
+      print(e.runtimeType);
+      print(e);
+      print(s);
+      print("===================================");
+
       _status = AuthStatus.unauthenticated;
       _errorMessage = _friendlyError(e.toString());
+
+      rethrow;
     }
 
     notifyListeners();
@@ -118,10 +154,12 @@ class AuthController extends ChangeNotifier {
     if (clean.startsWith('Exception: ')) {
       clean = clean.substring('Exception: '.length);
     }
-    if (clean.contains('Tài khoản của bạn') || clean.contains('Email này đã bị xóa')) {
+    if (clean.contains('Tài khoản của bạn') ||
+        clean.contains('Email này đã bị xóa')) {
       return clean;
     }
-    if (raw.contains('user-not-found') || raw.contains('wrong-password') ||
+    if (raw.contains('user-not-found') ||
+        raw.contains('wrong-password') ||
         raw.contains('invalid-credential')) {
       return 'Email hoặc mật khẩu không đúng.';
     }
