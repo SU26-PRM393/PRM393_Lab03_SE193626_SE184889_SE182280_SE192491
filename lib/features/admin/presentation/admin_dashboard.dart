@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
 import '../../auth/presentation/profile_screen.dart';
+import 'campaign_management_screen.dart';
 import 'user_management_screen.dart';
 
 import 'admin_shell.dart';
 
-enum AdminSection { overview, userManagement }
+enum AdminSection { overview, campaigns, userManagement }
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
 class AdminDashboard extends StatefulWidget {
@@ -91,7 +92,11 @@ class AdminDashboardState extends State<AdminDashboard> {
           backgroundColor: cs.primary,
           foregroundColor: cs.onPrimary,
           title: Text(
-            _section == AdminSection.overview ? 'Dashboard' : 'Người dùng',
+            switch (_section) {
+              AdminSection.overview => 'Dashboard',
+              AdminSection.campaigns => 'Chiến dịch',
+              AdminSection.userManagement => 'Người dùng',
+            },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           actions: [
@@ -209,6 +214,8 @@ class AdminDashboardState extends State<AdminDashboard> {
           admin: widget.admin,
           service: widget._service,
         );
+      case AdminSection.campaigns:
+        return const CampaignManagementScreen();
       case AdminSection.userManagement:
         return UserManagementScreen(
           currentUserId: widget.admin.uid,
@@ -250,6 +257,13 @@ class _Sidebar extends StatelessWidget {
             onTap: () => onSelect(AdminSection.overview),
           ),
           _SidebarItem(
+            icon: Icons.campaign_outlined,
+            label: 'Chiến dịch',
+            selected: section == AdminSection.campaigns,
+            expanded: true,
+            onTap: () => onSelect(AdminSection.campaigns),
+          ),
+          _SidebarItem(
             icon: Icons.group_outlined,
             label: 'Người dùng',
             selected: section == AdminSection.userManagement,
@@ -271,8 +285,6 @@ class _SidebarItem extends StatefulWidget {
     required this.selected,
     required this.expanded,
     required this.onTap,
-    this.disabled = false,
-    this.iconColor,
   });
 
   final IconData icon;
@@ -280,8 +292,6 @@ class _SidebarItem extends StatefulWidget {
   final bool selected;
   final bool expanded;
   final VoidCallback? onTap;
-  final bool disabled;
-  final Color? iconColor;
 
   @override
   State<_SidebarItem> createState() => _SidebarItemState();
@@ -293,13 +303,9 @@ class _SidebarItemState extends State<_SidebarItem> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final defaultColor = widget.selected
+    final effectiveColor = widget.selected
         ? cs.primary
         : (_hovered ? cs.primary : cs.onSurfaceVariant);
-    final activeColor = widget.iconColor ?? defaultColor;
-    final effectiveColor = widget.disabled
-        ? cs.onSurface.withValues(alpha: 0.35)
-        : activeColor;
 
     BoxDecoration? decoration;
     if (widget.selected) {
@@ -317,12 +323,12 @@ class _SidebarItemState extends State<_SidebarItem> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      cursor: widget.disabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+      cursor: SystemMouseCursors.click,
       child: Tooltip(
         message: widget.expanded ? '' : widget.label,
         preferBelow: false,
         child: InkWell(
-          onTap: widget.disabled ? null : widget.onTap,
+          onTap: widget.onTap,
           borderRadius: BorderRadius.circular(8),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
@@ -454,7 +460,8 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Chọn "Người dùng" ở sidebar để quản lí tài khoản, '
+                    'Chọn "Chiến dịch" ở sidebar để quản lí Campaign/Event, '
+                    '"Người dùng" để quản lí tài khoản, '
                     'hoặc chuyển tab "VietMap" để xem bản đồ.',
                     style: textTheme.bodyMedium,
                   ),
@@ -499,12 +506,9 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(value,
               style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: iconColor)),
+                  fontSize: 26, fontWeight: FontWeight.bold, color: iconColor)),
           const SizedBox(height: 2),
-          Text(label,
-              style: TextStyle(fontSize: 14, color: iconColor)),
+          Text(label, style: TextStyle(fontSize: 14, color: iconColor)),
         ],
       ),
     );

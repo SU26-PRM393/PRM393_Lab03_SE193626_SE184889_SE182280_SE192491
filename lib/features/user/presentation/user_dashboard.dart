@@ -191,7 +191,7 @@ class _Sidebar extends StatelessWidget {
             onTap: () => onSelect(_UserSection.overview),
           ),
           // Placeholder items — sẽ phát triển sau
-          _SidebarItem(
+          const _SidebarItem(
             icon: Icons.history_outlined,
             label: 'Lịch sử',
             selected: false,
@@ -199,7 +199,7 @@ class _Sidebar extends StatelessWidget {
             disabled: true,
             onTap: null,
           ),
-          _SidebarItem(
+          const _SidebarItem(
             icon: Icons.bookmark_outline,
             label: 'Đã lưu',
             selected: false,
@@ -223,7 +223,6 @@ class _SidebarItem extends StatefulWidget {
     required this.expanded,
     required this.onTap,
     this.disabled = false,
-    this.iconColor,
   });
 
   final IconData icon;
@@ -232,7 +231,6 @@ class _SidebarItem extends StatefulWidget {
   final bool expanded;
   final VoidCallback? onTap;
   final bool disabled;
-  final Color? iconColor;
 
   @override
   State<_SidebarItem> createState() => _SidebarItemState();
@@ -247,10 +245,8 @@ class _SidebarItemState extends State<_SidebarItem> {
     final defaultColor = widget.selected
         ? cs.primary
         : (_hovered ? cs.primary : cs.onSurfaceVariant);
-    final activeColor = widget.iconColor ?? defaultColor;
-    final effectiveColor = widget.disabled
-        ? cs.onSurface.withValues(alpha: 0.35)
-        : activeColor;
+    final effectiveColor =
+        widget.disabled ? cs.onSurface.withValues(alpha: 0.35) : defaultColor;
 
     BoxDecoration? decoration;
     if (widget.selected) {
@@ -268,7 +264,9 @@ class _SidebarItemState extends State<_SidebarItem> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      cursor: widget.disabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+      cursor: widget.disabled
+          ? SystemMouseCursors.forbidden
+          : SystemMouseCursors.click,
       child: Tooltip(
         message: widget.expanded ? '' : widget.label,
         preferBelow: false,
@@ -336,8 +334,8 @@ class _DashboardOverview extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Bảng điều khiển người dùng',
-            style: textTheme.bodyMedium?.copyWith(
-                color: cs.onSurface.withValues(alpha: 0.6)),
+            style: textTheme.bodyMedium
+                ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
           ),
           const SizedBox(height: 32),
           Wrap(

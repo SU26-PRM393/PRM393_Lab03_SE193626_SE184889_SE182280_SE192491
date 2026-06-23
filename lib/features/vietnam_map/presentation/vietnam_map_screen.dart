@@ -36,7 +36,7 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = VietnamMapController();
+    _controller = VietnamMapController(appUser: widget.appUser);
     _controller.addListener(_onMapControllerChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -46,7 +46,8 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   }
 
   void _onMapControllerChanged() {
-    final hasSelection = _controller.selectedProvince != null || _controller.selectedLowerLevelPlace != null;
+    final hasSelection = _controller.selectedProvince != null ||
+        _controller.selectedLowerLevelPlace != null;
     if (hasSelection && !_isSearchExpanded) {
       _isSearchExpanded = true;
       _controller.toggleCampaignPanel(false);
@@ -117,7 +118,8 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
               : Row(
                   children: [
                     if (_isSearchExpanded) SizedBox(width: 360, child: panel),
-                    if (_controller.isCampaignPanelExpanded) SizedBox(width: 400, child: campaignPanel),
+                    if (_controller.isCampaignPanelExpanded)
+                      SizedBox(width: 400, child: campaignPanel),
                     Expanded(child: map),
                   ],
                 );
@@ -553,7 +555,8 @@ class _UserBadge extends StatelessWidget {
             value: _UserMenuAction.manageUsers,
             child: Row(
               children: [
-                Icon(Icons.manage_accounts_outlined, size: 18, color: cs.primary),
+                Icon(Icons.manage_accounts_outlined,
+                    size: 18, color: cs.primary),
                 const SizedBox(width: 10),
                 const Text('Quản lí người dùng'),
               ],

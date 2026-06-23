@@ -25,9 +25,11 @@ import '../model/province.dart';
 import '../model/commune.dart';
 import '../../admin/domain/campaign.dart';
 import '../../admin/domain/event.dart';
+import '../../admin/domain/event_interaction.dart';
 import '../../admin/domain/school.dart';
 import '../../admin/domain/interaction.dart';
 import '../../admin/data/campaign_repository.dart';
+import '../../auth/data/auth_service.dart';
 
 enum CommuneVisibilityMode {
   details,
@@ -61,14 +63,17 @@ enum AdministrativeImportStatus {
 
 class VietnamMapController extends ChangeNotifier {
   VietnamMapController({
+    AppUser? appUser,
     LocationRepository locationRepository =
         const GeolocatorLocationRepository(),
     AdminBoundarySource adminBoundarySource = const AdminBoundarySource(),
   })  : _locationRepository = locationRepository,
-        _adminBoundarySource = adminBoundarySource;
+        _adminBoundarySource = adminBoundarySource,
+        _appUser = appUser;
 
   final LocationRepository _locationRepository;
   final AdminBoundarySource _adminBoundarySource;
+  final AppUser? _appUser;
   final MapController mapController = MapController();
 
   MapViewport _viewport = MapViewport.initial();
@@ -117,10 +122,12 @@ class VietnamMapController extends ChangeNotifier {
   Event? _selectedEvent;
   bool _isLoadingCampaigns = false;
   bool _isLoadingEvents = false;
-  Map<String, LatLng> _eventCoordinates = {}; 
+  Map<String, LatLng> _eventCoordinates = {};
   Map<String, School> _eventSchools = {};
   Map<String, String> _employeeNames = {};
   Map<String, String> _employeeEmails = {};
+  bool _isSavingInteraction = false;
+  String? _campaignActionMessage;
   bool _showProvinceLabels = true;
   MapEventVisibility _eventVisibility = MapEventVisibility.detail;
   List<Interaction> _eventInteractions = [];
@@ -171,7 +178,10 @@ class VietnamMapController extends ChangeNotifier {
   List<Interaction> get eventInteractions => _eventInteractions;
   Map<String, String> get interactionTargetNames => _interactionTargetNames;
   bool get isLoadingInteractions => _isLoadingInteractions;
+  bool get isSavingInteraction => _isSavingInteraction;
   String? get selectedEmployeeFilterId => _selectedEmployeeFilterId;
+  String? get campaignActionMessage => _campaignActionMessage;
+  AppUser? get appUser => _appUser;
 
   void toggleCampaignPanel(bool expanded) {
     if (_isCampaignPanelExpanded == expanded) return;
@@ -213,27 +223,29 @@ class VietnamMapController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final events = await CampaignRepository.instance.getEventsForCampaign(campaign.id);
+      final events =
+          await CampaignRepository.instance.getEventsForCampaign(campaign.id);
       _selectedCampaignEvents = events;
-      
+
       // Ensure lowerLevelPlaces are loaded so we can resolve commune coordinates
       if (_lowerLevelPlacesStatus != MapLoadStatus.ready) {
         await _ensureLowerLevelPlacesLoaded();
       }
-      
+
       // Resolve coordinates
       final Map<String, LatLng> resolvedCoords = {};
-      
+
       // Extract all unique school IDs
       final Set<String> schoolIdsToFetch = {};
       for (final event in events) {
         schoolIdsToFetch.addAll(event.schoolIds);
       }
-      
+
       // Fetch schools
-      final schools = await CampaignRepository.instance.getSchoolsByIds(schoolIdsToFetch.toList());
+      final schools = await CampaignRepository.instance
+          .getSchoolsByIds(schoolIdsToFetch.toList());
       final Map<String, School> schoolMap = {for (var s in schools) s.id: s};
-      
+
       // Map event ID to first available school's commune coordinate
       for (final event in events) {
         if (event.schoolIds.isNotEmpty) {
@@ -244,41 +256,50 @@ class VietnamMapController extends ChangeNotifier {
             final targetCodeValue = int.tryParse(communeCode);
             // Find coordinate from lowerLevelPlaces
             final place = _boundaryData.lowerLevelPlaces.where((p) {
-              return p.code == communeCode || (targetCodeValue != null && int.tryParse(p.code) == targetCodeValue);
+              return p.code == communeCode ||
+                  (targetCodeValue != null &&
+                      int.tryParse(p.code) == targetCodeValue);
             }).firstOrNull;
             if (place != null) {
               resolvedCoords[event.id] = place.coordinate;
             } else {
-               // Fallback: If not found, use province center
-               final provCode = school.provinceCode;
-               final provTargetValue = int.tryParse(provCode);
-               final provPlace = _boundaryData.provinceBoundaries.where((p) => p.provinceCode == provCode || (provTargetValue != null && int.tryParse(p.provinceCode) == provTargetValue)).firstOrNull;
-               if (provPlace != null && provPlace.polygons.isNotEmpty) {
-                   resolvedCoords[event.id] = provPlace.polygons.first.outerRing.bounds.center;
-               }
+              // Fallback: If not found, use province center
+              final provCode = school.provinceCode;
+              final provTargetValue = int.tryParse(provCode);
+              final provPlace = _boundaryData.provinceBoundaries
+                  .where((p) =>
+                      p.provinceCode == provCode ||
+                      (provTargetValue != null &&
+                          int.tryParse(p.provinceCode) == provTargetValue))
+                  .firstOrNull;
+              if (provPlace != null && provPlace.polygons.isNotEmpty) {
+                resolvedCoords[event.id] =
+                    provPlace.polygons.first.outerRing.bounds.center;
+              }
             }
           }
         }
       }
-      
+
       // Fetch employee names & emails
       final Set<String> employeeIdsToFetch = {};
       for (final event in events) {
         employeeIdsToFetch.addAll(event.assignedEmployeeIds);
       }
-      final employeeDetails = await CampaignRepository.instance.getUserDetailsByIds(employeeIdsToFetch.toList());
+      final employeeDetails = await CampaignRepository.instance
+          .getUserDetailsByIds(employeeIdsToFetch.toList());
       final Map<String, String> employeeNames = {};
       final Map<String, String> employeeEmails = {};
       for (var entry in employeeDetails.entries) {
         employeeNames[entry.key] = entry.value['name'] ?? 'Unknown';
         employeeEmails[entry.key] = entry.value['email'] ?? '';
       }
-      
+
       _eventCoordinates = resolvedCoords;
       _eventSchools = schoolMap;
       _employeeNames = employeeNames;
       _employeeEmails = employeeEmails;
-      
+
       if (resolvedCoords.isNotEmpty) {
         final bounds = LatLngBounds.fromPoints(resolvedCoords.values.toList());
         final targetCamera = CameraFit.bounds(
@@ -287,7 +308,7 @@ class VietnamMapController extends ChangeNotifier {
           maxZoom: 9.5,
           minZoom: viewport.minZoom,
         ).fit(mapController.camera);
-        
+
         _animateCameraTo(
           center: targetCamera.center,
           zoom: targetCamera.zoom,
@@ -303,11 +324,8 @@ class VietnamMapController extends ChangeNotifier {
 
   void selectEvent(Event event) {
     _selectedEvent = event;
-    _selectedEmployeeFilterId = null;
-    _eventInteractions = [];
-    _interactionTargetNames = {};
     notifyListeners();
-    
+
     // Zoom to event coordinate
     final coord = _eventCoordinates[event.id];
     if (coord != null) {
@@ -367,6 +385,56 @@ class VietnamMapController extends ChangeNotifier {
     } else {
       _selectedEmployeeFilterId = employeeId;
     }
+    notifyListeners();
+  }
+
+  Future<void> createInteractionForSelectedEvent({
+    required String targetType,
+    required String targetName,
+    required String notes,
+  }) async {
+    final event = _selectedEvent;
+    final user = _appUser;
+    if (event == null || user == null) return;
+
+    _isSavingInteraction = true;
+    _campaignActionMessage = null;
+    notifyListeners();
+
+    try {
+      await CampaignRepository.instance.createInteraction(
+        event,
+        EventInteraction(
+          id: '',
+          eventId: event.id,
+          employeeId: user.uid,
+          targetType: targetType,
+          targetName: targetName,
+          notes: notes,
+        ),
+      );
+
+      final updatedEvent = event.copyWith(
+        totalInteractions: event.totalInteractions + 1,
+      );
+      _selectedEvent = updatedEvent;
+      final index = _selectedCampaignEvents.indexWhere((e) => e.id == event.id);
+      if (index != -1) {
+        _selectedCampaignEvents[index] = updatedEvent;
+      }
+      _campaignActionMessage = 'Đã ghi nhận tương tác.';
+    } catch (e) {
+      _campaignActionMessage = 'Không thể ghi nhận tương tác: $e';
+      debugPrint('Create interaction error: $e');
+    } finally {
+      _isSavingInteraction = false;
+      notifyListeners();
+    }
+  }
+
+  void clearCampaignActionMessage() {
+    if (_campaignActionMessage == null) return;
+    _campaignActionMessage = null;
     notifyListeners();
   }
 

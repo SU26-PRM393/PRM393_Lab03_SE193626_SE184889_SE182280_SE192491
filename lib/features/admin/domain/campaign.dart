@@ -30,4 +30,34 @@ class Campaign {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name.trim(),
+      'description': description.trim(),
+      'startDate': startDate == null ? null : Timestamp.fromDate(startDate!),
+      'endDate': endDate == null ? null : Timestamp.fromDate(endDate!),
+      'status': status,
+    };
+  }
+
+  Campaign copyWith({
+    String? id,
+    String? name,
+    String? description,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? status,
+    DateTime? createdAt,
+  }) {
+    return Campaign(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
