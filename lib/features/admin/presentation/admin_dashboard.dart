@@ -215,7 +215,7 @@ class AdminDashboardState extends State<AdminDashboard> {
           service: widget._service,
         );
       case AdminSection.campaigns:
-        return const CampaignManagementScreen();
+        return CampaignManagementScreen(currentUser: widget.admin);
       case AdminSection.userManagement:
         return UserManagementScreen(
           currentUserId: widget.admin.uid,

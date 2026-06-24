@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
 import '../../auth/presentation/profile_screen.dart';
+import '../../admin/presentation/campaign_management_screen.dart';
 
-enum _UserSection { overview }
+enum _UserSection { overview, campaigns }
 
 /// Dashboard layout cho user thường: sidebar có thể thu gọn + vùng nội dung
 class UserDashboard extends StatefulWidget {
@@ -51,7 +52,10 @@ class _UserDashboardState extends State<UserDashboard> {
           backgroundColor: cs.primary,
           foregroundColor: cs.onPrimary,
           title: Text(
-            _section == _UserSection.overview ? 'Dashboard' : 'Lịch sử',
+            switch (_section) {
+              _UserSection.overview => 'Dashboard',
+              _UserSection.campaigns => 'Chiến dịch',
+            },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           actions: [
@@ -156,7 +160,12 @@ class _UserDashboardState extends State<UserDashboard> {
   }
 
   Widget _buildBody() {
-    return _DashboardOverview(user: widget.user);
+    switch (_section) {
+      case _UserSection.overview:
+        return _DashboardOverview(user: widget.user);
+      case _UserSection.campaigns:
+        return CampaignManagementScreen(currentUser: widget.user);
+    }
   }
 }
 
@@ -182,13 +191,19 @@ class _Sidebar extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
 
-          // Nav items
           _SidebarItem(
             icon: Icons.dashboard_outlined,
             label: 'Dashboard',
             selected: section == _UserSection.overview,
             expanded: true,
             onTap: () => onSelect(_UserSection.overview),
+          ),
+          _SidebarItem(
+            icon: Icons.campaign_outlined,
+            label: 'Chiến dịch',
+            selected: section == _UserSection.campaigns,
+            expanded: true,
+            onTap: () => onSelect(_UserSection.campaigns),
           ),
           // Placeholder items — sẽ phát triển sau
           const _SidebarItem(

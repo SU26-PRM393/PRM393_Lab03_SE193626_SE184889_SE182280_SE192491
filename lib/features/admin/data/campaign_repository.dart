@@ -5,6 +5,7 @@ import '../domain/event.dart';
 import '../domain/event_interaction.dart';
 import '../domain/school.dart';
 import '../domain/interaction.dart';
+import '../domain/checkin.dart';
 import 'notification_repository.dart';
 
 class CampaignRepository {
@@ -54,6 +55,21 @@ class CampaignRepository {
         campaignName: campaign.name,
         status: campaign.status,
       );
+
+      if (campaign.status == 'canceled') {
+        final eventsQuery = await _db
+            .collection('events')
+            .where('campaignId', isEqualTo: docRef.id)
+            .get();
+        final batch = _db.batch();
+        for (final doc in eventsQuery.docs) {
+          batch.update(doc.reference, {
+            'status': 'canceled',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+      }
     }
     return docRef.id;
   }
@@ -141,7 +157,13 @@ class CampaignRepository {
     });
   }
 
-  Future<void> createInteraction(Event event, EventInteraction interaction) {
+  Future<void> createInteraction({
+    required Event event,
+    required EventInteraction interaction,
+    required String? targetCollection,
+    required Map<String, dynamic>? targetData,
+    String? existingTargetId,
+  }) {
     return _db.runTransaction((transaction) async {
       final eventRef = _db.collection('events').doc(event.id);
       final eventSnapshot = await transaction.get(eventRef);
@@ -149,9 +171,16 @@ class CampaignRepository {
           eventSnapshot.data()?['totalInteractions'] as int? ?? 0;
       final interactionRef = _db.collection('interactions').doc();
 
+      String targetId = existingTargetId ?? interactionRef.id;
+      if (existingTargetId == null && targetCollection != null && targetData != null) {
+        final targetRef = _db.collection(targetCollection).doc();
+        targetId = targetRef.id;
+        transaction.set(targetRef, targetData);
+      }
+
       transaction.set(interactionRef, {
         ...interaction.toMap(),
-        'targetId': interactionRef.id,
+        'targetId': targetId,
         'createdAt': FieldValue.serverTimestamp(),
         'timestamp': FieldValue.serverTimestamp(),
       });
@@ -317,6 +346,51 @@ class CampaignRepository {
             .toList());
   }
 
+  Future<void> deleteInteraction(String id) async {
+    final snap = await _db.collection('interactions').doc(id).get();
+    if (!snap.exists) return;
+
+    final data = snap.data();
+    if (data == null) return;
+
+    final targetId = data['targetId'] as String?;
+    final targetType = data['targetType'] as String?;
+
+    bool shouldDeleteTarget = false;
+    if (targetId != null && targetType != null) {
+      final otherInteractionsSnap = await _db
+          .collection('interactions')
+          .where('targetId', isEqualTo: targetId)
+          .get();
+
+      final otherCount = otherInteractionsSnap.docs.where((doc) => doc.id != id).length;
+      if (otherCount == 0) {
+        shouldDeleteTarget = true;
+      }
+    }
+
+    await _db.runTransaction((transaction) async {
+      final interactionRef = _db.collection('interactions').doc(id);
+      transaction.delete(interactionRef);
+
+      if (shouldDeleteTarget && targetId != null && targetType != null) {
+        String? collection;
+        if (targetType == 'student') {
+          collection = 'students';
+        } else if (targetType == 'relative') {
+          collection = 'relatives';
+        } else if (targetType == 'person') {
+          collection = 'persons';
+        }
+
+        if (collection != null) {
+          final targetRef = _db.collection(collection).doc(targetId);
+          transaction.delete(targetRef);
+        }
+      }
+    });
+  }
+
   Future<Map<String, String>> getTargetNames(List<Map<String, String>> targetRefs) async {
     if (targetRefs.isEmpty) return {};
 
@@ -360,5 +434,28 @@ class CampaignRepository {
     }
 
     return names;
+  }
+
+  Future<void> submitCheckIn(CheckIn checkIn) async {
+    final docRef = _db.collection('checkins').doc();
+    await docRef.set({
+      ...checkIn.toMap(),
+      'id': docRef.id,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<CheckIn>> watchCheckInsForEvent(String eventId) {
+    return _db
+        .collection('checkins')
+        .where('eventId', isEqualTo: eventId)
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => CheckIn.fromMap(doc.id, doc.data()))
+          .toList();
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    });
   }
 }

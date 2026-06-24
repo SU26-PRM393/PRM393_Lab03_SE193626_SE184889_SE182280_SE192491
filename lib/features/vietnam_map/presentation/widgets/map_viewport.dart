@@ -117,7 +117,28 @@ class _MapViewportState extends State<MapViewport> {
                       return ProvinceHoverOutline(state: state);
                     },
                   ),
-                  if (controller.eventCoordinates.isNotEmpty && controller.eventVisibility != MapEventVisibility.hide)
+                  if (controller.eventCoordinates.isNotEmpty && controller.eventVisibility != MapEventVisibility.hide) ...[
+                    CircleLayer(
+                      circles: controller.selectedCampaignEvents.map((event) {
+                        final coord = controller.eventCoordinates[event.id];
+                        if (coord == null) return null;
+                        
+                        final isSelected = controller.selectedEvent?.id == event.id;
+                        
+                        return CircleMarker(
+                          point: coord,
+                          radius: 1000.0, // 1km radius check-in
+                          useRadiusInMeter: true,
+                          color: isSelected 
+                              ? Colors.teal.withValues(alpha: 0.12)
+                              : Colors.blue.withValues(alpha: 0.05),
+                          borderColor: isSelected
+                              ? Colors.teal.withValues(alpha: 0.4)
+                              : Colors.blue.withValues(alpha: 0.18),
+                          borderStrokeWidth: isSelected ? 2.0 : 1.0,
+                        );
+                      }).whereType<CircleMarker>().toList(),
+                    ),
                     MarkerLayer(
                       markers: controller.selectedCampaignEvents.map((event) {
                         final coord = controller.eventCoordinates[event.id];
@@ -204,6 +225,7 @@ class _MapViewportState extends State<MapViewport> {
                         );
                       }).whereType<Marker>().toList(),
                     ),
+                  ],
                   if (controller.locationState.isAvailable)
                     MarkerLayer(
                       markers: [

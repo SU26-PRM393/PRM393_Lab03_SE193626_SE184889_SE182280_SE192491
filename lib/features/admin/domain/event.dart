@@ -10,6 +10,9 @@ class Event {
   final int totalInteractions;
   final String status;
   final DateTime? createdAt;
+  final String? hostId;
+  final double? latitude;
+  final double? longitude;
 
   Event({
     required this.id,
@@ -21,6 +24,9 @@ class Event {
     this.totalInteractions = 0,
     required this.status,
     this.createdAt,
+    this.hostId,
+    this.latitude,
+    this.longitude,
   });
 
   factory Event.fromMap(String id, Map<String, dynamic> data) {
@@ -34,6 +40,9 @@ class Event {
       totalInteractions: data['totalInteractions'] as int? ?? 0,
       status: data['status'] as String? ?? 'in-progress',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      hostId: data['hostId'] as String?,
+      latitude: (data['latitude'] as num?)?.toDouble(),
+      longitude: (data['longitude'] as num?)?.toDouble(),
     );
   }
 
@@ -46,6 +55,9 @@ class Event {
       'assignedEmployeeIds': assignedEmployeeIds,
       'totalInteractions': totalInteractions,
       'status': status,
+      'hostId': hostId,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
@@ -59,6 +71,9 @@ class Event {
     int? totalInteractions,
     String? status,
     DateTime? createdAt,
+    String? hostId,
+    double? latitude,
+    double? longitude,
   }) {
     return Event(
       id: id ?? this.id,
@@ -70,6 +85,9 @@ class Event {
       totalInteractions: totalInteractions ?? this.totalInteractions,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
+      hostId: hostId ?? this.hostId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 }

@@ -15,6 +15,17 @@ class GeolocatorLocationRepository implements LocationRepository {
 
   @override
   Future<CurrentLocationState> currentLocation() async {
+    final isWindows = defaultTargetPlatform == TargetPlatform.windows;
+    if (isWindows) {
+      return CurrentLocationState(
+        status: CurrentLocationStatus.available,
+        coordinate: const LatLng(21.0285, 105.8542), // Hanoi center fallback
+        accuracyMeters: 100.0,
+        message: 'Đã giả lập vị trí trên Windows.',
+        lastUpdatedAt: DateTime.now(),
+      );
+    }
+
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {

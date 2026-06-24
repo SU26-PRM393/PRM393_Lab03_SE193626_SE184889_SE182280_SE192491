@@ -183,13 +183,40 @@ class AuthService
                 }
                 h1 { color: #34c759; margin-top: 0; }
                 p { color: #8e8e93; }
+                .timer { font-weight: bold; color: #0071e3; }
+                .btn {
+                  margin-top: 20px;
+                  padding: 10px 20px;
+                  background-color: #0071e3;
+                  color: white;
+                  border: none;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-weight: 600;
+                  text-decoration: none;
+                  display: inline-block;
+                }
+                .btn:hover { background-color: #0077ed; }
               </style>
             </head>
             <body>
               <div class="card">
                 <h1>Đăng nhập thành công!</h1>
                 <p>Bạn có thể đóng trình duyệt này và quay lại ứng dụng Bản đồ Việt Nam.</p>
+                <p>Trình duyệt sẽ tự động đóng sau <span id="timer" class="timer">5</span> giây...</p>
+                <button onclick="window.close()" class="btn">Đóng trình duyệt ngay</button>
               </div>
+              <script>
+                var sec = 5;
+                var timer = setInterval(function() {
+                  sec--;
+                  document.getElementById("timer").textContent = sec;
+                  if (sec <= 0) {
+                    clearInterval(timer);
+                    window.close();
+                  }
+                }, 1000);
+              </script>
             </body>
             </html>
           ''');

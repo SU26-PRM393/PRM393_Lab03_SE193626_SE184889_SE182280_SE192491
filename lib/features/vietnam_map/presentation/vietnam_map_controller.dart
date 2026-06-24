@@ -403,8 +403,8 @@ class VietnamMapController extends ChangeNotifier {
 
     try {
       await CampaignRepository.instance.createInteraction(
-        event,
-        EventInteraction(
+        event: event,
+        interaction: EventInteraction(
           id: '',
           eventId: event.id,
           employeeId: user.uid,
@@ -412,6 +412,8 @@ class VietnamMapController extends ChangeNotifier {
           targetName: targetName,
           notes: notes,
         ),
+        targetCollection: null,
+        targetData: null,
       );
 
       final updatedEvent = event.copyWith(

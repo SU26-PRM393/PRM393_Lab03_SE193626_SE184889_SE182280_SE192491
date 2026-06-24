@@ -18,7 +18,7 @@ Color _statusColor(String s) => switch (s) {
       'active' || 'in-progress' => const Color(0xFF16A34A),
       'completed' => const Color(0xFF2563EB),
       'canceled' => const Color(0xFF6B7280),
-      'draft' => const Color(0xFFF97316),
+      'preparing' => const Color(0xFFF97316),
       _ => const Color(0xFF6B7280),
     };
 
@@ -27,6 +27,7 @@ String _statusLabel(String s) => switch (s) {
       'in-progress' => 'Đang diễn ra',
       'completed' => 'Hoàn thành',
       'canceled' => 'Đã hủy',
+      'preparing' => 'Chuẩn bị',
       _ => s,
     };
 
@@ -1048,7 +1049,9 @@ class _EventDetailViewState extends State<_EventDetailView> {
         )
       else
         ...filteredInteractions.map((i) {
-          final targetName = controller.interactionTargetNames[i.targetId] ?? 'Không rõ';
+          final targetName = i.targetName.isNotEmpty
+              ? i.targetName
+              : (controller.interactionTargetNames[i.targetId] ?? 'Không rõ');
           final employeeName = controller.employeeNames[i.employeeId] ?? 'Không rõ';
           return _InteractionCard(
             interaction: i,
@@ -1107,7 +1110,6 @@ class _InteractionForm extends StatelessWidget {
               DropdownMenuItem(value: 'student', child: Text('Học sinh')),
               DropdownMenuItem(value: 'person', child: Text('Nhân sự trường')),
               DropdownMenuItem(value: 'relative', child: Text('Phụ huynh')),
-              DropdownMenuItem(value: 'other', child: Text('Khác')),
             ],
             onChanged: isSaving
                 ? null

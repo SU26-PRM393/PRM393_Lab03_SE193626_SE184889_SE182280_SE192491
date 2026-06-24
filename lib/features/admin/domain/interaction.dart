@@ -6,6 +6,7 @@ class Interaction {
   final String employeeId;
   final String targetType;
   final String targetId;
+  final String targetName;
   final String notes;
   final DateTime? timestamp;
 
@@ -15,6 +16,7 @@ class Interaction {
     required this.employeeId,
     required this.targetType,
     required this.targetId,
+    required this.targetName,
     required this.notes,
     this.timestamp,
   });
@@ -26,6 +28,7 @@ class Interaction {
       employeeId: data['employeeId'] as String? ?? '',
       targetType: data['targetType'] as String? ?? '',
       targetId: data['targetId'] as String? ?? '',
+      targetName: data['targetName'] as String? ?? '',
       notes: data['notes'] as String? ?? '',
       timestamp: (data['timestamp'] as Timestamp?)?.toDate(),
     );
