@@ -27,13 +27,20 @@ import '../../admin/domain/campaign.dart';
 import '../../admin/domain/event.dart';
 import '../../admin/domain/event_interaction.dart';
 import '../../admin/domain/school.dart';
+import '../../admin/domain/interaction.dart';
 import '../../admin/data/campaign_repository.dart';
 import '../../auth/data/auth_service.dart';
 
 enum CommuneVisibilityMode {
   details,
   dots,
-  hide,
+  hide;
+}
+
+enum MapEventVisibility {
+  detail,
+  dot,
+  hide;
 }
 
 enum MapLoadStatus {
@@ -122,6 +129,12 @@ class VietnamMapController extends ChangeNotifier {
   bool _isSavingInteraction = false;
   String? _campaignActionMessage;
   bool _showProvinceLabels = true;
+  MapEventVisibility _eventVisibility = MapEventVisibility.detail;
+  List<Interaction> _eventInteractions = [];
+  Map<String, String> _interactionTargetNames = {};
+  bool _isLoadingInteractions = false;
+  String? _selectedEmployeeFilterId;
+  StreamSubscription<List<Interaction>>? _interactionsSubscription;
   // -----------------------
 
   MapViewport get viewport => _viewport;
@@ -147,6 +160,7 @@ class VietnamMapController extends ChangeNotifier {
   MapLoadStatus get lowerLevelPlacesStatus => _lowerLevelPlacesStatus;
   AdministrativeImportStatus get importStatus => _importStatus;
   bool get showProvinceLabels => _showProvinceLabels;
+  MapEventVisibility get eventVisibility => _eventVisibility;
 
   // --- Campaign Getters ---
   bool get isCampaignPanelExpanded => _isCampaignPanelExpanded;
@@ -161,6 +175,14 @@ class VietnamMapController extends ChangeNotifier {
   Map<String, String> get employeeNames => _employeeNames;
   Map<String, String> get employeeEmails => _employeeEmails;
   bool get isSavingInteraction => _isSavingInteraction;
+  String? get campaignActionMessage => _campaignActionMessage;
+  AppUser? get appUser => _appUser;
+
+  List<Interaction> get eventInteractions => _eventInteractions;
+  Map<String, String> get interactionTargetNames => _interactionTargetNames;
+  bool get isLoadingInteractions => _isLoadingInteractions;
+  bool get isSavingInteraction => _isSavingInteraction;
+  String? get selectedEmployeeFilterId => _selectedEmployeeFilterId;
   String? get campaignActionMessage => _campaignActionMessage;
   AppUser? get appUser => _appUser;
 
@@ -195,6 +217,11 @@ class VietnamMapController extends ChangeNotifier {
     _eventSchools = {};
     _employeeNames = {};
     _employeeEmails = {};
+    _eventInteractions = [];
+    _interactionTargetNames = {};
+    _selectedEmployeeFilterId = null;
+    _interactionsSubscription?.cancel();
+    _interactionsSubscription = null;
     _isLoadingEvents = true;
     notifyListeners();
 
@@ -308,6 +335,111 @@ class VietnamMapController extends ChangeNotifier {
     if (coord != null) {
       _animateCameraTo(center: coord, zoom: 12.0);
     }
+
+    _listenToInteractionsForEvent(event.id);
+  }
+
+  void _listenToInteractionsForEvent(String eventId) {
+    _interactionsSubscription?.cancel();
+    _isLoadingInteractions = true;
+    notifyListeners();
+
+    _interactionsSubscription = CampaignRepository.instance
+        .getInteractionsStreamForEvent(eventId)
+        .listen((list) async {
+      // Sort by latest first (timestamp desc)
+      list.sort((a, b) {
+        if (a.timestamp == null && b.timestamp == null) return 0;
+        if (a.timestamp == null) return 1;
+        if (b.timestamp == null) return -1;
+        return b.timestamp!.compareTo(a.timestamp!);
+      });
+
+      _eventInteractions = list;
+
+      // Extract target references that aren't already loaded in _interactionTargetNames
+      final List<Map<String, String>> missingTargetRefs = [];
+      for (final i in list) {
+        if (!_interactionTargetNames.containsKey(i.targetId)) {
+          missingTargetRefs.add({'type': i.targetType, 'id': i.targetId});
+        }
+      }
+
+      if (missingTargetRefs.isNotEmpty) {
+        try {
+          final newNames = await CampaignRepository.instance.getTargetNames(missingTargetRefs);
+          _interactionTargetNames.addAll(newNames);
+        } catch (e) {
+          debugPrint('Error loading target names in stream: $e');
+        }
+      }
+
+      _isLoadingInteractions = false;
+      notifyListeners();
+    }, onError: (e) {
+      debugPrint('Stream interactions error: $e');
+      _isLoadingInteractions = false;
+      notifyListeners();
+    });
+  }
+
+  void toggleEmployeeFilter(String employeeId) {
+    if (_selectedEmployeeFilterId == employeeId) {
+      _selectedEmployeeFilterId = null;
+    } else {
+      _selectedEmployeeFilterId = employeeId;
+    }
+    notifyListeners();
+  }
+
+  Future<void> createInteractionForSelectedEvent({
+    required String targetType,
+    required String targetName,
+    required String notes,
+  }) async {
+    final event = _selectedEvent;
+    final user = _appUser;
+    if (event == null || user == null) return;
+
+    _isSavingInteraction = true;
+    _campaignActionMessage = null;
+    notifyListeners();
+
+    try {
+      await CampaignRepository.instance.createInteraction(
+        event,
+        EventInteraction(
+          id: '',
+          eventId: event.id,
+          employeeId: user.uid,
+          targetType: targetType,
+          targetName: targetName,
+          notes: notes,
+        ),
+      );
+
+      final updatedEvent = event.copyWith(
+        totalInteractions: event.totalInteractions + 1,
+      );
+      _selectedEvent = updatedEvent;
+      final index = _selectedCampaignEvents.indexWhere((e) => e.id == event.id);
+      if (index != -1) {
+        _selectedCampaignEvents[index] = updatedEvent;
+      }
+      _campaignActionMessage = 'Đã ghi nhận tương tác.';
+    } catch (e) {
+      _campaignActionMessage = 'Không thể ghi nhận tương tác: $e';
+      debugPrint('Create interaction error: $e');
+    } finally {
+      _isSavingInteraction = false;
+      notifyListeners();
+    }
+  }
+
+  void clearCampaignActionMessage() {
+    if (_campaignActionMessage == null) return;
+    _campaignActionMessage = null;
+    notifyListeners();
   }
 
   Future<void> createInteractionForSelectedEvent({
@@ -368,6 +500,11 @@ class VietnamMapController extends ChangeNotifier {
     _eventSchools = {};
     _employeeNames = {};
     _employeeEmails = {};
+    _eventInteractions = [];
+    _interactionTargetNames = {};
+    _selectedEmployeeFilterId = null;
+    _interactionsSubscription?.cancel();
+    _interactionsSubscription = null;
     notifyListeners();
   }
   // ------------------------
@@ -1003,6 +1140,12 @@ class VietnamMapController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateEventVisibility(MapEventVisibility val) {
+    if (_eventVisibility == val) return;
+    _eventVisibility = val;
+    notifyListeners();
+  }
+
   void clearPlaceSelection() {
     _selectedLowerLevelPlace = null;
     _selectedCommuneDetails = null;
@@ -1132,6 +1275,7 @@ class VietnamMapController extends ChangeNotifier {
     _isDisposed = true;
     _cancelCameraAnimation();
     _deferredLowerLevelLoadTimer?.cancel();
+    _interactionsSubscription?.cancel();
     provinceHoverNotifier.dispose();
     mapController.dispose();
     super.dispose();

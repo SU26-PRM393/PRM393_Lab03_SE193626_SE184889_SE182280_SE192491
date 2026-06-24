@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
+import '../../auth/presentation/profile_screen.dart';
 
 enum _UserSection { overview }
 
@@ -10,10 +11,12 @@ class UserDashboard extends StatefulWidget {
     super.key,
     required this.user,
     required this.onLogout,
+    required this.onProfileUpdated,
   });
 
   final AppUser user;
   final VoidCallback onLogout;
+  final ValueChanged<AppUser> onProfileUpdated;
 
   @override
   State<UserDashboard> createState() => _UserDashboardState();
@@ -26,6 +29,117 @@ class _UserDashboardState extends State<UserDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    final hasPhoto = widget.user.photoUrl != null && widget.user.photoUrl!.trim().isNotEmpty;
+    final displayName = widget.user.name.isNotEmpty ? widget.user.name : widget.user.email;
+    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+    if (isMobile) {
+      return Scaffold(
+        drawer: Drawer(
+          child: _Sidebar(
+            section: _section,
+            onSelect: (s) {
+              setState(() => _section = s);
+              Navigator.pop(context); // Đóng drawer
+            },
+          ),
+        ),
+        appBar: AppBar(
+          backgroundColor: cs.primary,
+          foregroundColor: cs.onPrimary,
+          title: Text(
+            _section == _UserSection.overview ? 'Dashboard' : 'Lịch sử',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          actions: [
+            PopupMenuButton<String>(
+              offset: const Offset(0, 48),
+              tooltip: 'Tài khoản',
+              onSelected: (val) {
+                if (val == 'logout') {
+                  widget.onLogout();
+                } else if (val == 'profile') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfileScreen(
+                        user: widget.user,
+                        onProfileUpdated: widget.onProfileUpdated,
+                      ),
+                    ),
+                  );
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                      SizedBox(width: 8),
+                      Text('Hồ sơ cá nhân'),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, color: Colors.red, size: 18),
+                      SizedBox(width: 8),
+                      Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                ),
+              ],
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cs.onPrimary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 10,
+                      backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+                      backgroundImage: hasPhoto ? NetworkImage(widget.user.photoUrl!) : null,
+                      onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+                      child: hasPhoto
+                          ? null
+                          : Text(
+                              firstLetter,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: cs.onPrimary,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      displayName,
+                      style: TextStyle(color: cs.onPrimary, fontSize: 12),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: _buildBody(),
+      );
+    }
+
     return Row(
       children: [
         SizedBox(
@@ -208,15 +322,14 @@ class _DashboardOverview extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Xin chào, ${user.email}',
-            style:
-                textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            'Xin chào, ${user.name.isNotEmpty ? user.name : user.email}',
+            style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(

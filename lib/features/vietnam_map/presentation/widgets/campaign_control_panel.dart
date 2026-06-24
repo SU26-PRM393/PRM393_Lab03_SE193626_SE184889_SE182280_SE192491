@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../admin/domain/campaign.dart';
 import '../../../admin/domain/event.dart';
-import '../../../admin/presentation/admin_shell.dart';
+import '../../../admin/domain/interaction.dart';
 import '../vietnam_map_controller.dart';
+import 'map_segmented_control.dart';
 
 // ── Brand palette ──────────────────────────────────────────────────────
 const _kTeal = Color(0xFF0D9488);
@@ -95,6 +96,7 @@ class CampaignControlPanel extends StatelessWidget {
         events: controller.selectedCampaignEvents,
         controller: controller,
         onEventSelected: controller.selectEvent,
+
       );
     }
     return _CampaignListView(
@@ -625,6 +627,7 @@ class _EventListView extends StatefulWidget {
   State<_EventListView> createState() => _EventListViewState();
 }
 
+
 class _EventListViewState extends State<_EventListView> {
   String _search = '';
   String _filter = 'all';
@@ -760,10 +763,37 @@ class _EventListViewState extends State<_EventListView> {
                   value: _search,
                   onChanged: (v) => setState(() => _search = v)),
               const SizedBox(height: 12),
-              _StatusChips(
-                  options: _kEventFilters,
-                  selected: _filter,
-                  onChanged: (v) => setState(() => _filter = v)),
+              _StatusChips(options: _kEventFilters, selected: _filter, onChanged: (v) => setState(() => _filter = v)),
+              const SizedBox(height: 12),
+              AnimatedBuilder(
+                animation: widget.controller,
+                builder: (context, _) {
+                  return SizedBox(
+                    width: double.infinity,
+                    child: MapSegmentedControl<MapEventVisibility>(
+                      value: widget.controller.eventVisibility,
+                      onChanged: widget.controller.updateEventVisibility,
+                      segments: const [
+                        MapSegmentedOption(
+                          value: MapEventVisibility.detail,
+                          icon: Icons.done_rounded,
+                          label: 'Hiện chi tiết',
+                        ),
+                        MapSegmentedOption(
+                          value: MapEventVisibility.dot,
+                          icon: Icons.apps_rounded,
+                          label: 'Hiện chấm',
+                        ),
+                        MapSegmentedOption(
+                          value: MapEventVisibility.hide,
+                          icon: Icons.visibility_off_outlined,
+                          label: 'Ẩn tất cả',
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ]),
           ),
         ),
@@ -887,9 +917,12 @@ class _EventDetailViewState extends State<_EventDetailView> {
         address = school.address;
       }
     }
-    final dateStr = event.date != null
-        ? '${event.date!.day}/${event.date!.month}/${event.date!.year}'
-        : 'N/A';
+    final dateStr = event.date != null ? '${event.date!.day}/${event.date!.month}/${event.date!.year}' : 'N/A';
+
+    final allInteractions = controller.eventInteractions;
+    final filteredInteractions = controller.selectedEmployeeFilterId == null
+        ? allInteractions
+        : allInteractions.where((i) => i.employeeId == controller.selectedEmployeeFilterId).toList();
 
     return ListView(padding: const EdgeInsets.all(16), children: [
       // Hero card
@@ -980,7 +1013,47 @@ class _EventDetailViewState extends State<_EventDetailView> {
           final email = controller.employeeEmails[id] ?? '';
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: _EmployeeCard(name: name, id: id, email: email),
+            child: _EmployeeCard(
+              name: name,
+              id: id,
+              email: email,
+              isSelected: controller.selectedEmployeeFilterId == id,
+              onTap: () => controller.toggleEmployeeFilter(id),
+            ),
+          );
+        }),
+      const SizedBox(height: 20),
+
+      // Interactions section
+      _SectionTitle(
+        label: 'Danh sách tương tác',
+        count: controller.isLoadingInteractions ? null : filteredInteractions.length,
+      ),
+      const SizedBox(height: 8),
+      if (controller.isLoadingInteractions)
+        const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: CircularProgressIndicator(strokeWidth: 3),
+          ),
+        )
+      else if (filteredInteractions.isEmpty)
+        _EmptyState(
+          title: controller.selectedEmployeeFilterId != null
+              ? 'Không có tương tác từ nhân viên này'
+              : 'Chưa có tương tác',
+          subtitle: controller.selectedEmployeeFilterId != null
+              ? 'Nhân viên được chọn chưa thực hiện tương tác nào cho sự kiện này.'
+              : 'Sự kiện này chưa ghi nhận tương tác nào.',
+        )
+      else
+        ...filteredInteractions.map((i) {
+          final targetName = controller.interactionTargetNames[i.targetId] ?? 'Không rõ';
+          final employeeName = controller.employeeNames[i.employeeId] ?? 'Không rõ';
+          return _InteractionCard(
+            interaction: i,
+            targetName: targetName,
+            employeeName: employeeName,
           );
         }),
     ]);
@@ -1175,9 +1248,16 @@ class _InfoItem extends StatelessWidget {
 }
 
 class _EmployeeCard extends StatefulWidget {
-  const _EmployeeCard(
-      {required this.name, required this.id, required this.email});
+  const _EmployeeCard({
+    required this.name,
+    required this.id,
+    required this.email,
+    required this.isSelected,
+    required this.onTap,
+  });
   final String name, id, email;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   @override
   State<_EmployeeCard> createState() => _EmployeeCardState();
@@ -1188,32 +1268,30 @@ class _EmployeeCardState extends State<_EmployeeCard> {
 
   @override
   Widget build(BuildContext context) {
+    final active = widget.isSelected;
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap: () {
-          if (widget.email.isNotEmpty) {
-            AdminNavigation.navigateToUserAndSearch(context, widget.email);
-          }
-        },
+        onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: _hovered ? _kTealLight.withAlpha(80) : _kCardBg,
+            color: active
+                ? _kTeal.withAlpha(40)
+                : (_hovered ? _kTealLight.withAlpha(80) : _kCardBg),
             borderRadius: BorderRadius.circular(_kRadius),
             border: Border.all(
-              color: _hovered ? _kTeal.withAlpha(80) : Colors.grey.shade200,
-              width: _hovered ? 1.5 : 1,
+              color: active
+                  ? _kTeal
+                  : (_hovered ? _kTeal.withAlpha(80) : Colors.grey.shade200),
+              width: active ? 1.5 : 1,
             ),
             boxShadow: [
-              if (_hovered)
-                BoxShadow(
-                    color: _kTeal.withAlpha(15),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2))
+              if (active || _hovered)
+                BoxShadow(color: _kTeal.withAlpha(15), blurRadius: 10, offset: const Offset(0, 2))
               else
                 BoxShadow(
                     color: Colors.black.withAlpha(4),
@@ -1224,32 +1302,142 @@ class _EmployeeCardState extends State<_EmployeeCard> {
           child: Row(children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: _kTealLight,
+              backgroundColor: active ? _kTeal : _kTealLight,
               child: Text(
                 widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
-                style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700, color: _kTeal),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: active ? Colors.white : _kTeal,
+                ),
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  Text(widget.name,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w500)),
-                  Text(
-                    widget.email.isNotEmpty
-                        ? widget.email
-                        : 'ID: ${widget.id.length > 8 ? widget.id.substring(0, 8) : widget.id}...',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                  ),
-                ])),
-            Icon(Icons.chevron_right,
-                size: 18, color: _hovered ? _kTeal : Colors.grey.shade400),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(widget.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              Text(
+                widget.email.isNotEmpty ? widget.email : 'ID: ${widget.id.length > 8 ? widget.id.substring(0, 8) : widget.id}...',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              ),
+            ])),
+            if (active)
+              const Icon(Icons.check_circle, size: 18, color: _kTeal)
+            else
+              Icon(Icons.chevron_right, size: 18, color: _hovered ? _kTeal : Colors.grey.shade400),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+class _InteractionCard extends StatelessWidget {
+  const _InteractionCard({required this.interaction, required this.targetName, required this.employeeName});
+  final Interaction interaction;
+  final String targetName;
+  final String employeeName;
+
+  @override
+  Widget build(BuildContext context) {
+    final typeLabel = switch (interaction.targetType) {
+      'student' => 'Học sinh',
+      'relative' => 'Phụ huynh',
+      'person' => 'Cán bộ',
+      _ => 'Đối tượng khác',
+    };
+
+    final typeColor = switch (interaction.targetType) {
+      'student' => Colors.blue.shade700,
+      'relative' => Colors.purple.shade700,
+      'person' => Colors.amber.shade800,
+      _ => Colors.grey.shade700,
+    };
+
+    final typeBg = switch (interaction.targetType) {
+      'student' => Colors.blue.shade50,
+      'relative' => Colors.purple.shade50,
+      'person' => Colors.amber.shade50,
+      _ => Colors.grey.shade50,
+    };
+
+    final timeStr = interaction.timestamp != null
+        ? '${interaction.timestamp!.hour.toString().padLeft(2, '0')}:${interaction.timestamp!.minute.toString().padLeft(2, '0')} ${interaction.timestamp!.day}/${interaction.timestamp!.month}/${interaction.timestamp!.year}'
+        : 'Không rõ thời gian';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _kCardBg,
+        borderRadius: BorderRadius.circular(_kRadius),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: typeBg,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  typeLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: typeColor,
+                  ),
+                ),
+              ),
+              Text(
+                timeStr,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            targetName,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (interaction.notes.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              interaction.notes,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.person_outline, size: 14, color: Colors.grey.shade500),
+              const SizedBox(width: 4),
+              Text(
+                'Thực hiện: $employeeName',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

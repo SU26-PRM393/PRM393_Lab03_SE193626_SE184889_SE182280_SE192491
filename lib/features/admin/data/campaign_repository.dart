@@ -4,6 +4,7 @@ import '../domain/campaign.dart';
 import '../domain/event.dart';
 import '../domain/event_interaction.dart';
 import '../domain/school.dart';
+import '../domain/interaction.dart';
 import 'notification_repository.dart';
 
 class CampaignRepository {
@@ -294,5 +295,70 @@ class CampaignRepository {
     }
 
     return details;
+  }
+
+  Future<List<Interaction>> getInteractionsForEvent(String eventId) async {
+    final snapshot = await _db
+        .collection('interactions')
+        .where('eventId', isEqualTo: eventId)
+        .get();
+    return snapshot.docs
+        .map((doc) => Interaction.fromMap(doc.id, doc.data()))
+        .toList();
+  }
+
+  Stream<List<Interaction>> getInteractionsStreamForEvent(String eventId) {
+    return _db
+        .collection('interactions')
+        .where('eventId', isEqualTo: eventId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Interaction.fromMap(doc.id, doc.data()))
+            .toList());
+  }
+
+  Future<Map<String, String>> getTargetNames(List<Map<String, String>> targetRefs) async {
+    if (targetRefs.isEmpty) return {};
+
+    final Map<String, String> names = {};
+    
+    // Group by targetType
+    final Map<String, List<String>> grouped = {};
+    for (var ref in targetRefs) {
+      final type = ref['type'];
+      final id = ref['id'];
+      if (type != null && id != null) {
+        grouped.putIfAbsent(type, () => []).add(id);
+      }
+    }
+
+    // For each type, fetch in chunks of 10
+    for (var entry in grouped.entries) {
+      final collectionName = switch (entry.key) {
+        'student' => 'students',
+        'person' => 'persons',
+        'relative' => 'relatives',
+        _ => null,
+      };
+      if (collectionName == null) continue;
+
+      final ids = entry.value;
+      const chunkSize = 10;
+      for (var i = 0; i < ids.length; i += chunkSize) {
+        final chunk = ids.sublist(
+          i,
+          i + chunkSize > ids.length ? ids.length : i + chunkSize,
+        );
+        final snapshot = await _db
+            .collection(collectionName)
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get();
+        for (var doc in snapshot.docs) {
+          names[doc.id] = doc.data()['name'] as String? ?? 'Unknown';
+        }
+      }
+    }
+
+    return names;
   }
 }

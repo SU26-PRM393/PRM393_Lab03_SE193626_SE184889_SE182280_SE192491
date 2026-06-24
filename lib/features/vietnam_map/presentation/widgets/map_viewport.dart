@@ -117,7 +117,7 @@ class _MapViewportState extends State<MapViewport> {
                       return ProvinceHoverOutline(state: state);
                     },
                   ),
-                  if (controller.eventCoordinates.isNotEmpty)
+                  if (controller.eventCoordinates.isNotEmpty && controller.eventVisibility != MapEventVisibility.hide)
                     MarkerLayer(
                       markers: controller.selectedCampaignEvents.map((event) {
                         final coord = controller.eventCoordinates[event.id];
@@ -139,29 +139,65 @@ class _MapViewportState extends State<MapViewport> {
                         }
                         
                         final isSelected = controller.selectedEvent?.id == event.id;
-                        final size = isSelected ? 22.0 : 14.0;
+                        final showLabel = controller.eventVisibility == MapEventVisibility.detail;
                         
                         return Marker(
                           point: coord,
-                          width: size,
-                          height: size,
+                          width: showLabel ? 180 : 32,
+                          height: showLabel ? 60 : 32,
+                          alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () => controller.selectEvent(event),
                             child: Tooltip(
                               message: event.name,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: isSelected ? 2 : 1.5),
-                                  boxShadow: const [
-                                    BoxShadow(blurRadius: 4, color: Colors.black45),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (showLabel) ...[
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: color, width: isSelected ? 2.5 : 1.5),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.15),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        event.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
                                   ],
-                                ),
-                                child: isSelected
-                                    ? const Icon(Icons.location_on, size: 12, color: Colors.white)
-                                    : null,
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: isSelected ? 18 : 12,
+                                    height: isSelected ? 18 : 12,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: isSelected ? 2.0 : 1.5),
+                                      boxShadow: const [
+                                        BoxShadow(blurRadius: 4, color: Colors.black38, offset: Offset(0, 1)),
+                                      ],
+                                    ),
+                                    child: isSelected
+                                        ? const Icon(Icons.location_on, size: 10, color: Colors.white)
+                                        : null,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
