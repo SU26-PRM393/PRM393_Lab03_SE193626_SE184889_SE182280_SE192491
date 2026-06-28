@@ -25,6 +25,15 @@ dependencies:
   firebase_storage: ^13.4.3
   image_picker: ^1.2.2
   http: ^1.6.0
+  fl_chart: ^0.69.0
+  provider: ^6.1.2
+  firebase_crashlytics: ^5.2.4
+  firebase_analytics: ^12.4.3
+  firebase_remote_config: ^6.5.3
+  firebase_messaging: ^16.4.1
+  pdf: ^3.11.0
+  printing: ^5.13.0
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_lints: ^5.0.0
@@ -35,7 +44,6 @@ dependency_overrides:
 flutter:
   uses-material-design: true
   assets:
-    - lib/features/vietnam_map/assets/data/
-    - lib/features/vietnam_map/assets/boundaries/
-    - lib/features/vietnam_map/assets/offline_tiles/
+    - assets/data/
+    - assets/boundaries/
     - assets/images/

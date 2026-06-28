@@ -1,0 +1,646 @@
+import 'dart:math' show log, ln10, pow;
+
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:url_launcher/url_launcher.dart';
+import 'package:vietnam_map_flutter/firebase/analytics_service.dart';
+import 'package:vietnam_map_flutter/services/pdf_export_service.dart';
+import 'package:vietnam_map_flutter/firebase/remote_config_service.dart';
+import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
+import 'package:vietnam_map_flutter/models/province.dart';
+
+const _regionDisplayNames = {
+  'red_river_delta': 'ĐB sông Hồng',
+  'northern_midlands': 'Miền núi Bắc Bộ',
+  'central_coast': 'DH Trung Bộ',
+  'central_highlands': 'Tây Nguyên',
+  'southeast': 'Đông Nam Bộ',
+  'mekong_delta': 'ĐB sông Cửu Long',
+};
+
+const _chartColors = [
+  Color(0xFF378ADD),
+  Color(0xFF1D9E75),
+  Color(0xFFD85A30),
+  Color(0xFFBA7517),
+  Color(0xFF7F77DD),
+  Color(0xFFD4537E),
+];
+
+class StatsScreen extends StatefulWidget {
+  const StatsScreen({super.key, this.isAdmin = false});
+
+  /// Chỉ admin mới thấy nút xuất PDF
+  final bool isAdmin;
+
+  @override
+  State<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends State<StatsScreen> {
+  bool _exporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logStatsScreenViewed();
+  }
+
+  Future<void> _exportPdf(ProvinceStatsViewModel vm) async {
+    setState(() => _exporting = true);
+    try {
+      final url = await PdfExportService.instance.exportAndUpload(vm);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Xuất PDF thành công!'),
+          action: SnackBarAction(
+            label: 'Mở PDF',
+            onPressed: () => launchUrl(
+              Uri.parse(url),
+              mode: LaunchMode.externalApplication,
+            ),
+          ),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi xuất PDF: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ProvinceStatsViewModel(),
+      child: _StatsBody(
+        onExport: _exportPdf,
+        exporting: _exporting,
+        showExportButton:
+            widget.isAdmin && RemoteConfigService.instance.isPdfExportEnabled,
+      ),
+    );
+  }
+}
+
+class _StatsBody extends StatelessWidget {
+  const _StatsBody({
+    required this.onExport,
+    required this.exporting,
+    required this.showExportButton,
+  });
+
+  final Future<void> Function(ProvinceStatsViewModel vm) onExport;
+  final bool exporting;
+  final bool showExportButton;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ProvinceStatsViewModel>(
+      builder: (context, vm, _) {
+        if (vm.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (vm.error != null) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Lỗi: ${vm.error}',
+                    style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                    onPressed: vm.reload, child: const Text('Thử lại')),
+              ],
+            ),
+          );
+        }
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Nút xuất PDF — chỉ hiện với admin khi Remote Config bật enable_pdf_export
+              if (showExportButton)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: exporting ? null : () => onExport(vm),
+                    icon: exporting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.picture_as_pdf_outlined),
+                    label: Text(exporting ? 'Đang xuất...' : 'Xuất PDF'),
+                  ),
+                ),
+              if (showExportButton) const SizedBox(height: 16),
+              _buildStatCards(context, vm),
+              const SizedBox(height: 28),
+              const _SectionTitle('Top 10 tỉnh/thành theo dân số'),
+              const SizedBox(height: 12),
+              _TopProvincesBarChart(
+                provinces: vm.top10Population,
+                getValue: (p) => (p.population ?? 0).toDouble(),
+                formatLabel: (v) =>
+                    '${(v / 1000000).toStringAsFixed(1)}M',
+                color: const Color(0xFF378ADD),
+              ),
+              const SizedBox(height: 28),
+              const _SectionTitle('Top 10 tỉnh/thành theo diện tích'),
+              const SizedBox(height: 12),
+              _TopProvincesBarChart(
+                provinces: vm.top10Area,
+                getValue: (p) => p.areaKm2 ?? 0,
+                formatLabel: (v) => '${v.toStringAsFixed(0)} km²',
+                color: const Color(0xFF1D9E75),
+              ),
+              const SizedBox(height: 28),
+              const _SectionTitle('Top 10 tỉnh/thành theo mật độ dân số'),
+              const SizedBox(height: 12),
+              _TopProvincesBarChart(
+                provinces: vm.top10Density,
+                getValue: (p) => p.density ?? 0,
+                formatLabel: (v) => v.toStringAsFixed(0),
+                color: const Color(0xFF7F77DD),
+              ),
+              const SizedBox(height: 28),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final wide = constraints.maxWidth > 600;
+                  if (wide) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _SectionTitle('Phân bố vùng miền'),
+                              const SizedBox(height: 12),
+                              _RegionPieChart(regionStats: vm.regionStats),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const _SectionTitle('Phân loại đơn vị'),
+                              const SizedBox(height: 12),
+                              _TypePieChart(typeStats: vm.typeStats),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _SectionTitle('Phân bố vùng miền'),
+                      const SizedBox(height: 12),
+                      _RegionPieChart(regionStats: vm.regionStats),
+                      const SizedBox(height: 28),
+                      const _SectionTitle('Phân loại đơn vị'),
+                      const SizedBox(height: 12),
+                      _TypePieChart(typeStats: vm.typeStats),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatCards(BuildContext context, ProvinceStatsViewModel vm) {
+    final cs = Theme.of(context).colorScheme;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        _StatCard(
+          icon: Icons.location_city_outlined,
+          label: 'Tỉnh/Thành',
+          value: vm.totalProvinces.toString(),
+          color: cs.primaryContainer,
+          iconColor: cs.onPrimaryContainer,
+        ),
+        _StatCard(
+          icon: Icons.people_outline,
+          label: 'Dân số (triệu)',
+          value: (vm.totalPopulation / 1e6).toStringAsFixed(1),
+          color: cs.secondaryContainer,
+          iconColor: cs.onSecondaryContainer,
+        ),
+        _StatCard(
+          icon: Icons.map_outlined,
+          label: 'Diện tích (km²)',
+          value: _fmt(vm.totalAreaKm2),
+          color: cs.tertiaryContainer,
+          iconColor: cs.onTertiaryContainer,
+        ),
+        _StatCard(
+          icon: Icons.people_alt_outlined,
+          label: 'Mật độ TB (ng/km²)',
+          value: vm.avgDensity.toStringAsFixed(0),
+          color: cs.surfaceContainerHighest,
+          iconColor: cs.onSurface,
+        ),
+      ],
+    );
+  }
+
+  String _fmt(double v) {
+    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+    return v.toStringAsFixed(0);
+  }
+}
+
+// ── Stat card ────────────────────────────────────────────────────────────────
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.iconColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor, size: 26),
+          const SizedBox(height: 10),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: iconColor)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: TextStyle(fontSize: 11, color: iconColor),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Section title ────────────────────────────────────────────────────────────
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.title);
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: Theme.of(context)
+          .textTheme
+          .titleMedium
+          ?.copyWith(fontWeight: FontWeight.bold),
+    );
+  }
+}
+
+// ── Chart axis helpers ───────────────────────────────────────────────────────
+
+/// Tính interval "đẹp" để y-axis chia đều ~5 bước, tránh label đè nhau.
+double _niceInterval(double maxVal) {
+  if (maxVal <= 0) return 1;
+  final raw = maxVal / 5;
+  final exp = (log(raw) / ln10).floor();
+  final magnitude = pow(10, exp).toDouble();
+  final ratio = raw / magnitude;
+  if (ratio <= 2) return 2 * magnitude;
+  if (ratio <= 5) return 5 * magnitude;
+  return 10 * magnitude;
+}
+
+/// Làm tròn maxY lên bội số của interval để label trên cùng không bị cắt.
+double _niceMax(double maxVal) {
+  final interval = _niceInterval(maxVal);
+  return (maxVal / interval).ceil() * interval;
+}
+
+// ── Top provinces bar chart ──────────────────────────────────────────────────
+
+class _TopProvincesBarChart extends StatelessWidget {
+  const _TopProvincesBarChart({
+    required this.provinces,
+    required this.getValue,
+    required this.formatLabel,
+    required this.color,
+  });
+
+  final List<Province> provinces;
+  final double Function(Province) getValue;
+  final String Function(double) formatLabel;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    if (provinces.isEmpty) return const SizedBox.shrink();
+
+    final maxVal = provinces.map(getValue).reduce((a, b) => a > b ? a : b);
+    final chartMax = _niceMax(maxVal);
+    final chartInterval = _niceInterval(maxVal);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: SizedBox(
+        height: 240,
+        child: BarChart(
+          BarChartData(
+            alignment: BarChartAlignment.spaceAround,
+            maxY: chartMax,
+            barGroups: [
+              for (int i = 0; i < provinces.length; i++)
+                BarChartGroupData(
+                  x: i,
+                  barRods: [
+                    BarChartRodData(
+                      toY: getValue(provinces[i]),
+                      color: color,
+                      width: 18,
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(4)),
+                    ),
+                  ],
+                ),
+            ],
+            titlesData: FlTitlesData(
+              topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false)),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 56,
+                  getTitlesWidget: (val, meta) {
+                    final i = val.toInt();
+                    if (i < 0 || i >= provinces.length) {
+                      return const SizedBox.shrink();
+                    }
+                    final label =
+                        provinces[i].tenShort ?? provinces[i].ten;
+                    return SideTitleWidget(
+                      axisSide: meta.axisSide,
+                      child: RotatedBox(
+                        quarterTurns: 1,
+                        child: Text(
+                          label,
+                          style: const TextStyle(fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 68,
+                  interval: chartInterval,
+                  getTitlesWidget: (val, meta) => SideTitleWidget(
+                    axisSide: meta.axisSide,
+                    child: Text(
+                      formatLabel(val),
+                      style: const TextStyle(fontSize: 10),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            gridData: const FlGridData(
+              show: true,
+              drawVerticalLine: false,
+            ),
+            borderData: FlBorderData(show: false),
+            barTouchData: BarTouchData(
+              touchTooltipData: BarTouchTooltipData(
+                getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                  final p = provinces[group.x];
+                  return BarTooltipItem(
+                    '${p.ten}\n${formatLabel(rod.toY)}',
+                    const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Region pie chart ─────────────────────────────────────────────────────────
+
+class _RegionPieChart extends StatelessWidget {
+  const _RegionPieChart({required this.regionStats});
+  final List<RegionStat> regionStats;
+
+  @override
+  Widget build(BuildContext context) {
+    if (regionStats.isEmpty) return const SizedBox.shrink();
+    final total = regionStats.fold(0, (s, r) => s + r.count);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 180,
+            child: PieChart(
+              PieChartData(
+                sections: [
+                  for (int i = 0; i < regionStats.length; i++)
+                    PieChartSectionData(
+                      value: regionStats[i].count.toDouble(),
+                      color: _chartColors[i % _chartColors.length],
+                      title:
+                          '${(regionStats[i].count / total * 100).toStringAsFixed(0)}%',
+                      radius: 65,
+                      titleStyle: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                ],
+                sectionsSpace: 2,
+                centerSpaceRadius: 28,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _Legend(
+            items: [
+              for (int i = 0; i < regionStats.length; i++)
+                _LegendItem(
+                  color: _chartColors[i % _chartColors.length],
+                  label:
+                      '${_regionDisplayNames[regionStats[i].name] ?? regionStats[i].name} (${regionStats[i].count})',
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Type pie chart ───────────────────────────────────────────────────────────
+
+class _TypePieChart extends StatelessWidget {
+  const _TypePieChart({required this.typeStats});
+  final List<TypeStat> typeStats;
+
+  @override
+  Widget build(BuildContext context) {
+    if (typeStats.isEmpty) return const SizedBox.shrink();
+    final total = typeStats.fold(0, (s, t) => s + t.count);
+
+    const typeColors = [
+      Color(0xFFD85A30),
+      Color(0xFFBA7517),
+      Color(0xFF639922),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 180,
+            child: PieChart(
+              PieChartData(
+                sections: [
+                  for (int i = 0; i < typeStats.length; i++)
+                    PieChartSectionData(
+                      value: typeStats[i].count.toDouble(),
+                      color: typeColors[i % typeColors.length],
+                      title:
+                          '${(typeStats[i].count / total * 100).toStringAsFixed(0)}%',
+                      radius: 65,
+                      titleStyle: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
+                ],
+                sectionsSpace: 2,
+                centerSpaceRadius: 28,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _Legend(
+            items: [
+              for (int i = 0; i < typeStats.length; i++)
+                _LegendItem(
+                  color: typeColors[i % typeColors.length],
+                  label: '${typeStats[i].name} (${typeStats[i].count})',
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Legend ───────────────────────────────────────────────────────────────────
+
+class _LegendItem {
+  const _LegendItem({required this.color, required this.label});
+  final Color color;
+  final String label;
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend({required this.items});
+  final List<_LegendItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 6,
+      children: [
+        for (final item in items)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: item.color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text(item.label,
+                  style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+      ],
+    );
+  }
+}
