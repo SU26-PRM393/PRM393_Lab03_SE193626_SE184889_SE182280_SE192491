@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../auth/data/auth_service.dart';
 import '../../auth/presentation/profile_screen.dart';
 import '../../admin/presentation/campaign_management_screen.dart';
+import '../../stats/presentation/stats_screen.dart';
 
-enum _UserSection { overview, campaigns }
+enum _UserSection { overview, campaigns, stats }
 
 /// Dashboard layout cho user thường: sidebar có thể thu gọn + vùng nội dung
 class UserDashboard extends StatefulWidget {
@@ -55,6 +56,7 @@ class _UserDashboardState extends State<UserDashboard> {
             switch (_section) {
               _UserSection.overview => 'Dashboard',
               _UserSection.campaigns => 'Chiến dịch',
+              _UserSection.stats => 'Thống Kê',
             },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -165,6 +167,8 @@ class _UserDashboardState extends State<UserDashboard> {
         return _DashboardOverview(user: widget.user);
       case _UserSection.campaigns:
         return CampaignManagementScreen(currentUser: widget.user);
+      case _UserSection.stats:
+        return const StatsScreen();
     }
   }
 }
@@ -205,22 +209,12 @@ class _Sidebar extends StatelessWidget {
             expanded: true,
             onTap: () => onSelect(_UserSection.campaigns),
           ),
-          // Placeholder items — sẽ phát triển sau
-          const _SidebarItem(
-            icon: Icons.history_outlined,
-            label: 'Lịch sử',
-            selected: false,
+          _SidebarItem(
+            icon: Icons.bar_chart_outlined,
+            label: 'Thống Kê',
+            selected: section == _UserSection.stats,
             expanded: true,
-            disabled: true,
-            onTap: null,
-          ),
-          const _SidebarItem(
-            icon: Icons.bookmark_outline,
-            label: 'Đã lưu',
-            selected: false,
-            expanded: true,
-            disabled: true,
-            onTap: null,
+            onTap: () => onSelect(_UserSection.stats),
           ),
 
           const Spacer(),

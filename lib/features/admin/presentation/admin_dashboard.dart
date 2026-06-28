@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../auth/data/auth_service.dart';
 import '../../auth/presentation/profile_screen.dart';
+import '../../stats/presentation/stats_screen.dart';
 import 'campaign_management_screen.dart';
 import 'user_management_screen.dart';
 
 import 'admin_shell.dart';
 
-enum AdminSection { overview, campaigns, userManagement }
+enum AdminSection { overview, campaigns, userManagement, stats }
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
 class AdminDashboard extends StatefulWidget {
@@ -96,6 +97,7 @@ class AdminDashboardState extends State<AdminDashboard> {
               AdminSection.overview => 'Dashboard',
               AdminSection.campaigns => 'Chiến dịch',
               AdminSection.userManagement => 'Người dùng',
+              AdminSection.stats => 'Thống Kê',
             },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -222,6 +224,8 @@ class AdminDashboardState extends State<AdminDashboard> {
           initialSearchText: _searchEmail,
           service: widget._service,
         );
+      case AdminSection.stats:
+        return const StatsScreen();
     }
   }
 }
@@ -269,6 +273,13 @@ class _Sidebar extends StatelessWidget {
             selected: section == AdminSection.userManagement,
             expanded: true,
             onTap: () => onSelect(AdminSection.userManagement),
+          ),
+          _SidebarItem(
+            icon: Icons.bar_chart_outlined,
+            label: 'Thống Kê',
+            selected: section == AdminSection.stats,
+            expanded: true,
+            onTap: () => onSelect(AdminSection.stats),
           ),
 
           const Spacer(),
