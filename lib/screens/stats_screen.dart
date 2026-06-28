@@ -4,6 +4,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vietnam_map_flutter/firebase/analytics_service.dart';
 import 'package:vietnam_map_flutter/services/pdf_export_service.dart';
 import 'package:vietnam_map_flutter/firebase/remote_config_service.dart';
@@ -54,15 +55,15 @@ class _StatsScreenState extends State<StatsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Xuất PDF thành công! Đã lưu lên Firebase Storage.'),
+          content: const Text('Xuất PDF thành công!'),
           action: SnackBarAction(
-            label: 'Copy link',
-            onPressed: () {
-              // Link đã upload — trong thực tế có thể dùng url_launcher để mở
-              debugPrint('[PdfExport] URL: $url');
-            },
+            label: 'Mở PDF',
+            onPressed: () => launchUrl(
+              Uri.parse(url),
+              mode: LaunchMode.externalApplication,
+            ),
           ),
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 6),
         ),
       );
     } catch (e) {

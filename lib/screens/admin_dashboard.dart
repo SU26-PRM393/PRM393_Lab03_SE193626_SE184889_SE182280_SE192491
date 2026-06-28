@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/stats_screen.dart';
+import 'package:vietnam_map_flutter/screens/firebase_demo_screen.dart';
 import 'campaign_management_screen.dart';
 import 'user_management_screen.dart';
 
 import 'admin_shell.dart';
 
-enum AdminSection { overview, campaigns, userManagement, stats }
+enum AdminSection { overview, campaigns, userManagement, stats, firebaseDemo }
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
 class AdminDashboard extends StatefulWidget {
@@ -98,6 +99,7 @@ class AdminDashboardState extends State<AdminDashboard> {
               AdminSection.campaigns => 'Chiến dịch',
               AdminSection.userManagement => 'Người dùng',
               AdminSection.stats => 'Thống Kê',
+              AdminSection.firebaseDemo => 'Firebase Demo',
             },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
@@ -226,6 +228,8 @@ class AdminDashboardState extends State<AdminDashboard> {
         );
       case AdminSection.stats:
         return const StatsScreen(isAdmin: true);
+      case AdminSection.firebaseDemo:
+        return const FirebaseDemoScreen(isAdmin: true);
     }
   }
 }
@@ -280,6 +284,13 @@ class _Sidebar extends StatelessWidget {
             selected: section == AdminSection.stats,
             expanded: true,
             onTap: () => onSelect(AdminSection.stats),
+          ),
+          _SidebarItem(
+            icon: Icons.local_fire_department_outlined,
+            label: 'Firebase Demo',
+            selected: section == AdminSection.firebaseDemo,
+            expanded: true,
+            onTap: () => onSelect(AdminSection.firebaseDemo),
           ),
 
           const Spacer(),
