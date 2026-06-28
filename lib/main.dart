@@ -3,11 +3,11 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:vietnam_map_flutter/firebase_options.dart';
-import 'package:vietnam_map_flutter/shared/performance/map_startup_trace.dart';
-import 'package:vietnam_map_flutter/shared/services/notification_service.dart';
-import 'package:vietnam_map_flutter/shared/services/remote_config_service.dart';
-import 'app/map_app.dart';
+import 'package:vietnam_map_flutter/firebase/firebase_options.dart';
+import 'package:vietnam_map_flutter/utils/map_startup_trace.dart';
+import 'package:vietnam_map_flutter/firebase/notification_service.dart';
+import 'package:vietnam_map_flutter/firebase/remote_config_service.dart';
+import 'package:vietnam_map_flutter/screens/map_app.dart';
 
 // Phải đăng ký trước runApp() — Firebase gọi handler này trong isolate riêng
 // khi app ở background và nhận FCM message
