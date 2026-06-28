@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../../../features/vietnam_map/data/firestore_repository.dart';
 import '../../../features/vietnam_map/model/province.dart';
+import '../../../shared/services/remote_config_service.dart';
 
 class RegionStat {
   const RegionStat({required this.name, required this.count});
@@ -71,17 +72,19 @@ class ProvinceStatsViewModel extends ChangeNotifier {
   }
 
   void _compute() {
+    final n = RemoteConfigService.instance.provinceCount;
+
     final withPop = _all.where((p) => p.population != null).toList()
       ..sort((a, b) => b.population!.compareTo(a.population!));
-    top10Population = withPop.take(10).toList();
+    top10Population = withPop.take(n).toList();
 
     final withArea = _all.where((p) => p.areaKm2 != null).toList()
       ..sort((a, b) => b.areaKm2!.compareTo(a.areaKm2!));
-    top10Area = withArea.take(10).toList();
+    top10Area = withArea.take(n).toList();
 
     final withDensity = _all.where((p) => p.density != null).toList()
       ..sort((a, b) => b.density!.compareTo(a.density!));
-    top10Density = withDensity.take(10).toList();
+    top10Density = withDensity.take(n).toList();
 
     // Đếm theo macroRegion
     final regionMap = <String, int>{};

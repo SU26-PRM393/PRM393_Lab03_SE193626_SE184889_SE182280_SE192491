@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../firebase_options.dart';
+import '../../../shared/services/analytics_service.dart';
 
 /// Role của user trong hệ thống
 enum UserRole { user, admin }
@@ -104,6 +105,7 @@ class AuthService
           });
         }
       }
+      AnalyticsService.instance.logLogin('google');
       return _toAppUser(user);
     }
 
@@ -310,6 +312,7 @@ class AuthService
       email: email.trim(),
       password: password,
     );
+    AnalyticsService.instance.logLogin('email');
     return _toAppUser(credential.user!);
   }
 

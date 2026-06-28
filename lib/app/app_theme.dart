@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   const AppTheme._();
@@ -11,9 +12,13 @@ class AppTheme {
       brightness: Brightness.light,
     );
 
+    // Be Vietnam Pro hỗ trợ đầy đủ dấu tiếng Việt trên mọi thiết bị Android
+    final textTheme = GoogleFonts.beVietnamProTextTheme();
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
+      textTheme: textTheme,
       scaffoldBackgroundColor: colorScheme.surface,
       visualDensity: VisualDensity.standard,
       appBarTheme: AppBarTheme(

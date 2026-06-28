@@ -225,7 +225,7 @@ class AdminDashboardState extends State<AdminDashboard> {
           service: widget._service,
         );
       case AdminSection.stats:
-        return const StatsScreen();
+        return const StatsScreen(isAdmin: true);
     }
   }
 }

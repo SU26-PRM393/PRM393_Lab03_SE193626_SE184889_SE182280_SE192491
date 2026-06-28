@@ -1,7 +1,12 @@
+import 'dart:math' show log, ln10, pow;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../shared/services/analytics_service.dart';
+import '../../../shared/services/pdf_export_service.dart';
+import '../../../shared/services/remote_config_service.dart';
 import '../viewmodel/province_stats_viewmodel.dart';
 import '../../vietnam_map/model/province.dart';
 
@@ -23,20 +28,77 @@ const _chartColors = [
   Color(0xFFD4537E),
 ];
 
-class StatsScreen extends StatelessWidget {
-  const StatsScreen({super.key});
+class StatsScreen extends StatefulWidget {
+  const StatsScreen({super.key, this.isAdmin = false});
+
+  /// Chỉ admin mới thấy nút xuất PDF
+  final bool isAdmin;
+
+  @override
+  State<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends State<StatsScreen> {
+  bool _exporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.logStatsScreenViewed();
+  }
+
+  Future<void> _exportPdf(ProvinceStatsViewModel vm) async {
+    setState(() => _exporting = true);
+    try {
+      final url = await PdfExportService.instance.exportAndUpload(vm);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Xuất PDF thành công! Đã lưu lên Firebase Storage.'),
+          action: SnackBarAction(
+            label: 'Copy link',
+            onPressed: () {
+              // Link đã upload — trong thực tế có thể dùng url_launcher để mở
+              debugPrint('[PdfExport] URL: $url');
+            },
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Lỗi xuất PDF: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ProvinceStatsViewModel(),
-      child: const _StatsBody(),
+      child: _StatsBody(
+        onExport: _exportPdf,
+        exporting: _exporting,
+        showExportButton:
+            widget.isAdmin && RemoteConfigService.instance.isPdfExportEnabled,
+      ),
     );
   }
 }
 
 class _StatsBody extends StatelessWidget {
-  const _StatsBody();
+  const _StatsBody({
+    required this.onExport,
+    required this.exporting,
+    required this.showExportButton,
+  });
+
+  final Future<void> Function(ProvinceStatsViewModel vm) onExport;
+  final bool exporting;
+  final bool showExportButton;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +126,23 @@ class _StatsBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Nút xuất PDF — chỉ hiện với admin khi Remote Config bật enable_pdf_export
+              if (showExportButton)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: exporting ? null : () => onExport(vm),
+                    icon: exporting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.picture_as_pdf_outlined),
+                    label: Text(exporting ? 'Đang xuất...' : 'Xuất PDF'),
+                  ),
+                ),
+              if (showExportButton) const SizedBox(height: 16),
               _buildStatCards(context, vm),
               const SizedBox(height: 28),
               const _SectionTitle('Top 10 tỉnh/thành theo dân số'),
@@ -256,6 +335,26 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+// ── Chart axis helpers ───────────────────────────────────────────────────────
+
+/// Tính interval "đẹp" để y-axis chia đều ~5 bước, tránh label đè nhau.
+double _niceInterval(double maxVal) {
+  if (maxVal <= 0) return 1;
+  final raw = maxVal / 5;
+  final exp = (log(raw) / ln10).floor();
+  final magnitude = pow(10, exp).toDouble();
+  final ratio = raw / magnitude;
+  if (ratio <= 2) return 2 * magnitude;
+  if (ratio <= 5) return 5 * magnitude;
+  return 10 * magnitude;
+}
+
+/// Làm tròn maxY lên bội số của interval để label trên cùng không bị cắt.
+double _niceMax(double maxVal) {
+  final interval = _niceInterval(maxVal);
+  return (maxVal / interval).ceil() * interval;
+}
+
 // ── Top provinces bar chart ──────────────────────────────────────────────────
 
 class _TopProvincesBarChart extends StatelessWidget {
@@ -276,6 +375,8 @@ class _TopProvincesBarChart extends StatelessWidget {
     if (provinces.isEmpty) return const SizedBox.shrink();
 
     final maxVal = provinces.map(getValue).reduce((a, b) => a > b ? a : b);
+    final chartMax = _niceMax(maxVal);
+    final chartInterval = _niceInterval(maxVal);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -289,7 +390,7 @@ class _TopProvincesBarChart extends StatelessWidget {
         child: BarChart(
           BarChartData(
             alignment: BarChartAlignment.spaceAround,
-            maxY: maxVal * 1.15,
+            maxY: chartMax,
             barGroups: [
               for (int i = 0; i < provinces.length; i++)
                 BarChartGroupData(
@@ -339,7 +440,8 @@ class _TopProvincesBarChart extends StatelessWidget {
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 52,
+                  reservedSize: 68,
+                  interval: chartInterval,
                   getTitlesWidget: (val, meta) => SideTitleWidget(
                     axisSide: meta.axisSide,
                     child: Text(
