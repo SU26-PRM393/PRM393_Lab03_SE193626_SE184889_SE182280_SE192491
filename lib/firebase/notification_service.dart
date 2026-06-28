@@ -39,7 +39,11 @@ class NotificationService {
       return;
     }
 
-    // 2. Lấy FCM token của thiết bị — dùng để gửi push đến đúng máy
+    // 2. Subscribe vào topic chung — admin sẽ broadcast push đến topic này
+    await _fm.subscribeToTopic('all_users');
+    debugPrint('[FCM] subscribed to topic: all_users');
+
+    // 3. Lấy FCM token của thiết bị — dùng để gửi push đến đúng máy
     final token = await _fm.getToken();
     debugPrint('[FCM] device token: $token');
 

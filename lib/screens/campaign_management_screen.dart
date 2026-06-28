@@ -14,6 +14,7 @@ import 'package:http/http.dart' as http;
 import 'package:collection/collection.dart';
 
 import 'package:vietnam_map_flutter/services/campaign_repository.dart';
+import 'package:vietnam_map_flutter/firebase/notification_repository.dart';
 import 'package:vietnam_map_flutter/models/campaign.dart';
 import 'package:vietnam_map_flutter/models/event.dart';
 import 'package:vietnam_map_flutter/models/school.dart';
@@ -299,7 +300,8 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
 
               if (_searchQuery.trim().isNotEmpty) {
                 campaigns = campaigns
-                    .where((c) => c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+                    .where((c) =>
+                        c.name.toLowerCase().contains(_searchQuery.toLowerCase()))
                     .toList();
               }
 
@@ -983,6 +985,11 @@ class _EventPaneState extends State<_EventPane> {
     if (confirm != true) return;
 
     await _repo.deleteEvent(event.id);
+    await NotificationRepository.instance.publishEventDeleted(
+      campaignId: event.campaignId,
+      eventId: event.id,
+      eventName: event.name,
+    );
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -2390,16 +2397,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                             ],
                           );
                         } else {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              sidebar,
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                height: 650,
-                                child: mainContent,
-                              ),
-                            ],
+                          return SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                sidebar,
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  height: 650,
+                                  child: mainContent,
+                                ),
+                              ],
+                            ),
                           );
                         }
                       },
@@ -2542,7 +2551,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                           onPressed: () async {
                             await FirebaseFirestore.instance.collection('events').doc(event.id).update({
                               'status': 'in-progress',
+                              'updatedAt': FieldValue.serverTimestamp(),
                             });
+                            await NotificationRepository.instance.publishEventChange(
+                              campaignId: event.campaignId,
+                              eventId: event.id,
+                              eventName: event.name,
+                              status: 'in-progress',
+                            );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Đã bắt đầu sự kiện.')),
@@ -2586,7 +2602,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                             if (confirm == true) {
                               await FirebaseFirestore.instance.collection('events').doc(event.id).update({
                                 'status': 'canceled',
+                                'updatedAt': FieldValue.serverTimestamp(),
                               });
+                              await NotificationRepository.instance.publishEventChange(
+                                campaignId: event.campaignId,
+                                eventId: event.id,
+                                eventName: event.name,
+                                status: 'canceled',
+                              );
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Đã hủy sự kiện.')),
@@ -2635,7 +2658,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                             if (confirm == true) {
                               await FirebaseFirestore.instance.collection('events').doc(event.id).update({
                                 'status': 'completed',
+                                'updatedAt': FieldValue.serverTimestamp(),
                               });
+                              await NotificationRepository.instance.publishEventChange(
+                                campaignId: event.campaignId,
+                                eventId: event.id,
+                                eventName: event.name,
+                                status: 'completed',
+                              );
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Đã kết thúc sự kiện.')),
@@ -2680,7 +2710,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                             if (confirm == true) {
                               await FirebaseFirestore.instance.collection('events').doc(event.id).update({
                                 'status': 'canceled',
+                                'updatedAt': FieldValue.serverTimestamp(),
                               });
+                              await NotificationRepository.instance.publishEventChange(
+                                campaignId: event.campaignId,
+                                eventId: event.id,
+                                eventName: event.name,
+                                status: 'canceled',
+                              );
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Đã hủy sự kiện.')),
@@ -2728,7 +2765,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                         if (confirm == true) {
                           await FirebaseFirestore.instance.collection('events').doc(event.id).update({
                             'status': 'in-progress',
+                            'updatedAt': FieldValue.serverTimestamp(),
                           });
+                          await NotificationRepository.instance.publishEventChange(
+                            campaignId: event.campaignId,
+                            eventId: event.id,
+                            eventName: event.name,
+                            status: 'in-progress',
+                          );
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Sự kiện đã được khôi phục về trạng thái đang diễn ra.')),
@@ -5625,6 +5669,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     if (confirm != true) return;
 
     await _repo.deleteEvent(event.id);
+    await NotificationRepository.instance.publishEventDeleted(
+      campaignId: event.campaignId,
+      eventId: event.id,
+      eventName: event.name,
+    );
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(

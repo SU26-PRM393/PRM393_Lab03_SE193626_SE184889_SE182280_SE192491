@@ -49,11 +49,21 @@ class CampaignRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    if (previousStatus != campaign.status) {
+    if (campaign.id.isEmpty) {
+      await NotificationRepository.instance.publishCampaignCreated(
+        campaignId: docRef.id,
+        campaignName: campaign.name,
+      );
+    } else if (previousStatus != campaign.status) {
       await NotificationRepository.instance.publishCampaignChange(
         campaignId: docRef.id,
         campaignName: campaign.name,
         status: campaign.status,
+      );
+    } else {
+      await NotificationRepository.instance.publishCampaignUpdated(
+        campaignId: docRef.id,
+        campaignName: campaign.name,
       );
 
       if (campaign.status == 'canceled') {
@@ -75,6 +85,9 @@ class CampaignRepository {
   }
 
   Future<void> deleteCampaign(String campaignId) async {
+    final snap = await _db.collection('campaigns').doc(campaignId).get();
+    final campaignName = snap.data()?['name'] as String? ?? campaignId;
+
     final events = await getEventsForCampaign(campaignId);
     final batch = _db.batch();
     for (final event in events) {
@@ -82,6 +95,11 @@ class CampaignRepository {
     }
     batch.delete(_db.collection('campaigns').doc(campaignId));
     await batch.commit();
+
+    await NotificationRepository.instance.publishCampaignDeleted(
+      campaignId: campaignId,
+      campaignName: campaignName,
+    );
   }
 
   Future<List<Event>> getEventsForCampaign(String campaignId) async {
@@ -132,12 +150,24 @@ class CampaignRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    if (previousStatus != event.status) {
+    if (event.id.isEmpty) {
+      await NotificationRepository.instance.publishEventCreated(
+        campaignId: event.campaignId,
+        eventId: docRef.id,
+        eventName: event.name,
+      );
+    } else if (previousStatus != event.status) {
       await NotificationRepository.instance.publishEventChange(
         campaignId: event.campaignId,
         eventId: docRef.id,
         eventName: event.name,
         status: event.status,
+      );
+    } else {
+      await NotificationRepository.instance.publishEventUpdated(
+        campaignId: event.campaignId,
+        eventId: docRef.id,
+        eventName: event.name,
       );
     }
     return docRef.id;

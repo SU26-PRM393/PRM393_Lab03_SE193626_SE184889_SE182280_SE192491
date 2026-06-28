@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/stats_screen.dart';
 import 'package:vietnam_map_flutter/screens/firebase_demo_screen.dart';
+import 'package:vietnam_map_flutter/screens/notification_center_screen.dart';
+import 'package:vietnam_map_flutter/viewmodels/notification_viewmodel.dart';
 import 'campaign_management_screen.dart';
 import 'user_management_screen.dart';
 
 import 'admin_shell.dart';
 
-enum AdminSection { overview, campaigns, userManagement, stats, firebaseDemo }
+enum AdminSection {
+  overview,
+  campaigns,
+  userManagement,
+  stats,
+  firebaseDemo,
+  notifications,
+}
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
 class AdminDashboard extends StatefulWidget {
@@ -65,152 +75,6 @@ class AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isMobile = MediaQuery.of(context).size.width < 700;
-
-    final hasPhoto = widget.admin.photoUrl != null && widget.admin.photoUrl!.trim().isNotEmpty;
-    final displayName = widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email;
-    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
-
-    if (isMobile) {
-      return Scaffold(
-        drawer: Drawer(
-          child: _Sidebar(
-            section: _section,
-            onSelect: (s) {
-              setState(() {
-                _section = s;
-                if (s != AdminSection.userManagement) {
-                  _searchEmail = null;
-                }
-              });
-              Navigator.pop(context); // Đóng drawer
-            },
-          ),
-        ),
-        appBar: AppBar(
-          backgroundColor: cs.primary,
-          foregroundColor: cs.onPrimary,
-          title: Text(
-            switch (_section) {
-              AdminSection.overview => 'Dashboard',
-              AdminSection.campaigns => 'Chiến dịch',
-              AdminSection.userManagement => 'Người dùng',
-              AdminSection.stats => 'Thống Kê',
-              AdminSection.firebaseDemo => 'Firebase Demo',
-            },
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          actions: [
-            PopupMenuButton<String>(
-              offset: const Offset(0, 48),
-              tooltip: 'Tài khoản',
-              onSelected: (val) {
-                if (val == 'logout') {
-                  widget.onLogout();
-                } else if (val == 'profile') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(
-                        user: widget.admin,
-                        onProfileUpdated: widget.onProfileUpdated,
-                      ),
-                    ),
-                  );
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem<String>(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline, color: Colors.black87, size: 18),
-                      SizedBox(width: 8),
-                      Text('Hồ sơ cá nhân'),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.red, size: 18),
-                      SizedBox(width: 8),
-                      Text('Đăng xuất', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cs.onPrimary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      radius: 10,
-                      backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
-                      backgroundImage: hasPhoto ? NetworkImage(widget.admin.photoUrl!) : null,
-                      onBackgroundImageError: hasPhoto ? (_, __) {} : null,
-                      child: hasPhoto
-                          ? null
-                          : Text(
-                              firstLetter,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: cs.onPrimary,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      displayName,
-                      style: TextStyle(color: cs.onPrimary, fontSize: 12),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: _buildBody(),
-      );
-    }
-
-    return Row(
-      children: [
-        SizedBox(
-          width: _expandedWidth,
-          child: _Sidebar(
-            section: _section,
-            onSelect: (s) => setState(() {
-              _section = s;
-              if (s != AdminSection.userManagement) {
-                _searchEmail = null;
-              }
-            }),
-          ),
-        ),
-        const VerticalDivider(width: 1, thickness: 1),
-        Expanded(
-          child: _buildBody(),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBody() {
     switch (_section) {
       case AdminSection.overview:
@@ -230,7 +94,215 @@ class AdminDashboardState extends State<AdminDashboard> {
         return const StatsScreen(isAdmin: true);
       case AdminSection.firebaseDemo:
         return const FirebaseDemoScreen(isAdmin: true);
+      case AdminSection.notifications:
+        return NotificationCenterScreen(
+            userId: widget.admin.uid, currentUser: widget.admin);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => NotificationViewModel(widget.admin.uid),
+      child: Builder(builder: (context) {
+        final vm = context.watch<NotificationViewModel>();
+        final cs = Theme.of(context).colorScheme;
+        final isMobile = MediaQuery.of(context).size.width < 700;
+
+        final hasPhoto = widget.admin.photoUrl != null &&
+            widget.admin.photoUrl!.trim().isNotEmpty;
+        final displayName = widget.admin.name.isNotEmpty
+            ? widget.admin.name
+            : widget.admin.email;
+        final firstLetter =
+            displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+        final unread = vm.unreadCount;
+
+        Widget bellButton() => Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  color: cs.onPrimary,
+                  tooltip: 'Thông báo',
+                  onPressed: () =>
+                      setState(() => _section = AdminSection.notifications),
+                ),
+                if (unread > 0)
+                  Positioned(
+                    right: 6,
+                    top: 6,
+                    child: IgnorePointer(
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints:
+                            const BoxConstraints(minWidth: 16, minHeight: 16),
+                        child: Text(
+                          unread > 99 ? '99+' : '$unread',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+
+        if (isMobile) {
+          return Scaffold(
+            drawer: Drawer(
+              child: _Sidebar(
+                section: _section,
+                unread: unread,
+                onSelect: (s) {
+                  setState(() {
+                    _section = s;
+                    if (s != AdminSection.userManagement) {
+                      _searchEmail = null;
+                    }
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            appBar: AppBar(
+              backgroundColor: cs.primary,
+              foregroundColor: cs.onPrimary,
+              title: Text(
+                switch (_section) {
+                  AdminSection.overview => 'Dashboard',
+                  AdminSection.campaigns => 'Chiến dịch',
+                  AdminSection.userManagement => 'Người dùng',
+                  AdminSection.stats => 'Thống Kê',
+                  AdminSection.firebaseDemo => 'Firebase Demo',
+                  AdminSection.notifications => 'Thông báo',
+                },
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              actions: [
+                bellButton(),
+                PopupMenuButton<String>(
+                  offset: const Offset(0, 48),
+                  tooltip: 'Tài khoản',
+                  onSelected: (val) {
+                    if (val == 'logout') {
+                      widget.onLogout();
+                    } else if (val == 'profile') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfileScreen(
+                            user: widget.admin,
+                            onProfileUpdated: widget.onProfileUpdated,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem<String>(
+                      value: 'profile',
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_outline,
+                              color: Colors.black87, size: 18),
+                          SizedBox(width: 8),
+                          Text('Hồ sơ cá nhân'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuDivider(),
+                    const PopupMenuItem<String>(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(Icons.logout, color: Colors.red, size: 18),
+                          SizedBox(width: 8),
+                          Text('Đăng xuất',
+                              style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 8, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: cs.onPrimary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 10,
+                          backgroundColor:
+                              cs.onPrimary.withValues(alpha: 0.2),
+                          backgroundImage: hasPhoto
+                              ? NetworkImage(widget.admin.photoUrl!)
+                              : null,
+                          onBackgroundImageError:
+                              hasPhoto ? (_, __) {} : null,
+                          child: hasPhoto
+                              ? null
+                              : Text(
+                                  firstLetter,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                    color: cs.onPrimary,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(displayName,
+                            style:
+                                TextStyle(color: cs.onPrimary, fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Icon(Icons.arrow_drop_down,
+                            size: 14, color: cs.onPrimary),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+            body: _buildBody(),
+          );
+        }
+
+        return Row(
+          children: [
+            SizedBox(
+              width: _expandedWidth,
+              child: _Sidebar(
+                section: _section,
+                unread: unread,
+                onSelect: (s) => setState(() {
+                  _section = s;
+                  if (s != AdminSection.userManagement) {
+                    _searchEmail = null;
+                  }
+                }),
+              ),
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(child: _buildBody()),
+          ],
+        );
+      }),
+    );
   }
 }
 
@@ -240,10 +312,12 @@ class _Sidebar extends StatelessWidget {
   const _Sidebar({
     required this.section,
     required this.onSelect,
+    this.unread = 0,
   });
 
   final AdminSection section;
   final ValueChanged<AdminSection> onSelect;
+  final int unread;
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +330,6 @@ class _Sidebar extends StatelessWidget {
         children: [
           const SizedBox(height: 12),
 
-          // Nav items
           _SidebarItem(
             icon: Icons.dashboard_outlined,
             label: 'Dashboard',
@@ -292,6 +365,14 @@ class _Sidebar extends StatelessWidget {
             expanded: true,
             onTap: () => onSelect(AdminSection.firebaseDemo),
           ),
+          _SidebarItem(
+            icon: Icons.notifications_outlined,
+            label: 'Thông báo',
+            selected: section == AdminSection.notifications,
+            expanded: true,
+            badge: unread > 0 ? unread : null,
+            onTap: () => onSelect(AdminSection.notifications),
+          ),
 
           const Spacer(),
         ],
@@ -307,6 +388,7 @@ class _SidebarItem extends StatefulWidget {
     required this.selected,
     required this.expanded,
     required this.onTap,
+    this.badge,
   });
 
   final IconData icon;
@@ -314,6 +396,7 @@ class _SidebarItem extends StatefulWidget {
   final bool selected;
   final bool expanded;
   final VoidCallback? onTap;
+  final int? badge;
 
   @override
   State<_SidebarItem> createState() => _SidebarItemState();
@@ -356,7 +439,8 @@ class _SidebarItemState extends State<_SidebarItem> {
             duration: const Duration(milliseconds: 150),
             height: 44,
             margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            padding: EdgeInsets.symmetric(horizontal: widget.expanded ? 10 : 0),
+            padding:
+                EdgeInsets.symmetric(horizontal: widget.expanded ? 10 : 0),
             decoration: decoration,
             child: Row(
               mainAxisAlignment: widget.expanded
@@ -379,6 +463,23 @@ class _SidebarItemState extends State<_SidebarItem> {
                       ),
                     ),
                   ),
+                  if (widget.badge != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        widget.badge! > 99 ? '99+' : '${widget.badge}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),
@@ -416,11 +517,8 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
   Future<void> _loadUserCount() async {
     try {
       final users = await _svc.getOtherUsers(widget.admin.uid);
-      // +1 để tính cả chính admin đang đăng nhập
       if (mounted) setState(() => _userCount = users.length + 1);
-    } catch (_) {
-      // Nếu lỗi giữ hiển thị '—'
-    }
+    } catch (_) {}
   }
 
   @override
@@ -433,13 +531,17 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Xin chào, ${widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email}',
-              style: textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold)),
+          Text(
+            'Xin chào, ${widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email}',
+            style:
+                textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
-          Text('Bảng điều khiển quản trị viên',
-              style: textTheme.bodyMedium
-                  ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6))),
+          Text(
+            'Bảng điều khiển quản trị viên',
+            style: textTheme.bodyMedium
+                ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
+          ),
           const SizedBox(height: 32),
           Wrap(
             spacing: 16,

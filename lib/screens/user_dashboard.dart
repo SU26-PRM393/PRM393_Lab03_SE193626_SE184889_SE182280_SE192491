@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/campaign_management_screen.dart';
 import 'package:vietnam_map_flutter/screens/stats_screen.dart';
+import 'package:vietnam_map_flutter/screens/notification_center_screen.dart';
+import 'package:vietnam_map_flutter/viewmodels/notification_viewmodel.dart';
 
-enum _UserSection { overview, campaigns, stats }
+enum _UserSection { overview, campaigns, stats, notifications }
 
 /// Dashboard layout cho user thường: sidebar có thể thu gọn + vùng nội dung
 class UserDashboard extends StatefulWidget {
@@ -31,18 +34,65 @@ class _UserDashboardState extends State<UserDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => NotificationViewModel(widget.user.uid),
+      child: Builder(builder: (context) => _buildInner(context)),
+    );
+  }
+
+  Widget _buildInner(BuildContext context) {
+    final vm = context.watch<NotificationViewModel>();
     final cs = Theme.of(context).colorScheme;
     final isMobile = MediaQuery.of(context).size.width < 700;
 
     final hasPhoto = widget.user.photoUrl != null && widget.user.photoUrl!.trim().isNotEmpty;
     final displayName = widget.user.name.isNotEmpty ? widget.user.name : widget.user.email;
     final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+    final unread = vm.unreadCount;
+
+    Widget bellButton() => Stack(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              color: cs.onPrimary,
+              tooltip: 'Thông báo',
+              onPressed: () =>
+                  setState(() => _section = _UserSection.notifications),
+            ),
+            if (unread > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints:
+                        const BoxConstraints(minWidth: 16, minHeight: 16),
+                    child: Text(
+                      unread > 99 ? '99+' : '$unread',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
 
     if (isMobile) {
       return Scaffold(
         drawer: Drawer(
           child: _Sidebar(
             section: _section,
+            unread: unread,
             onSelect: (s) {
               setState(() => _section = s);
               Navigator.pop(context); // Đóng drawer
@@ -57,10 +107,12 @@ class _UserDashboardState extends State<UserDashboard> {
               _UserSection.overview => 'Dashboard',
               _UserSection.campaigns => 'Chiến dịch',
               _UserSection.stats => 'Thống Kê',
+              _UserSection.notifications => 'Thông báo',
             },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           actions: [
+            bellButton(),
             PopupMenuButton<String>(
               offset: const Offset(0, 48),
               tooltip: 'Tài khoản',
@@ -152,6 +204,7 @@ class _UserDashboardState extends State<UserDashboard> {
           width: _expandedWidth,
           child: _Sidebar(
             section: _section,
+            unread: unread,
             onSelect: (s) => setState(() => _section = s),
           ),
         ),
@@ -169,6 +222,9 @@ class _UserDashboardState extends State<UserDashboard> {
         return CampaignManagementScreen(currentUser: widget.user);
       case _UserSection.stats:
         return const StatsScreen();
+      case _UserSection.notifications:
+        return NotificationCenterScreen(
+            userId: widget.user.uid, currentUser: widget.user);
     }
   }
 }
@@ -179,10 +235,12 @@ class _Sidebar extends StatelessWidget {
   const _Sidebar({
     required this.section,
     required this.onSelect,
+    this.unread = 0,
   });
 
   final _UserSection section;
   final ValueChanged<_UserSection> onSelect;
+  final int unread;
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +274,14 @@ class _Sidebar extends StatelessWidget {
             expanded: true,
             onTap: () => onSelect(_UserSection.stats),
           ),
+          _SidebarItem(
+            icon: Icons.notifications_outlined,
+            label: 'Thông báo',
+            selected: section == _UserSection.notifications,
+            expanded: true,
+            badge: unread > 0 ? unread : null,
+            onTap: () => onSelect(_UserSection.notifications),
+          ),
 
           const Spacer(),
         ],
@@ -232,6 +298,7 @@ class _SidebarItem extends StatefulWidget {
     required this.expanded,
     required this.onTap,
     this.disabled = false,
+    this.badge,
   });
 
   final IconData icon;
@@ -240,6 +307,7 @@ class _SidebarItem extends StatefulWidget {
   final bool expanded;
   final VoidCallback? onTap;
   final bool disabled;
+  final int? badge;
 
   @override
   State<_SidebarItem> createState() => _SidebarItemState();
@@ -309,6 +377,23 @@ class _SidebarItemState extends State<_SidebarItem> {
                       ),
                     ),
                   ),
+                  if (widget.badge != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        widget.badge! > 99 ? '99+' : '${widget.badge}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                 ],
               ],
             ),
