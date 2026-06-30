@@ -95,11 +95,13 @@ class _StatsBody extends StatelessWidget {
     required this.onExport,
     required this.exporting,
     required this.showExportButton,
+    this.isEmbedded = false,
   });
 
   final Future<void> Function(ProvinceStatsViewModel vm) onExport;
   final bool exporting;
   final bool showExportButton;
+  final bool isEmbedded;
 
   @override
   Widget build(BuildContext context) {
@@ -122,153 +124,162 @@ class _StatsBody extends StatelessWidget {
             ),
           );
         }
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
+        {
+          final col = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Nút xuất PDF — chỉ hiện với admin khi Remote Config bật enable_pdf_export
-              if (showExportButton)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.icon(
-                    onPressed: exporting ? null : () => onExport(vm),
-                    icon: exporting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.picture_as_pdf_outlined),
-                    label: Text(exporting ? 'Đang xuất...' : 'Xuất PDF'),
-                  ),
-                ),
-              if (showExportButton) const SizedBox(height: 16),
-              _buildStatCards(context, vm),
-              const SizedBox(height: 28),
-              const _SectionTitle('Top 10 tỉnh/thành theo dân số'),
-              const SizedBox(height: 12),
-              _TopProvincesBarChart(
-                provinces: vm.top10Population,
-                getValue: (p) => (p.population ?? 0).toDouble(),
-                formatLabel: (v) =>
-                    '${(v / 1000000).toStringAsFixed(1)}M',
-                color: const Color(0xFF378ADD),
-              ),
-              const SizedBox(height: 28),
-              const _SectionTitle('Top 10 tỉnh/thành theo diện tích'),
-              const SizedBox(height: 12),
-              _TopProvincesBarChart(
-                provinces: vm.top10Area,
-                getValue: (p) => p.areaKm2 ?? 0,
-                formatLabel: (v) => '${v.toStringAsFixed(0)} km²',
-                color: const Color(0xFF1D9E75),
-              ),
-              const SizedBox(height: 28),
-              const _SectionTitle('Top 10 tỉnh/thành theo mật độ dân số'),
-              const SizedBox(height: 12),
-              _TopProvincesBarChart(
-                provinces: vm.top10Density,
-                getValue: (p) => p.density ?? 0,
-                formatLabel: (v) => v.toStringAsFixed(0),
-                color: const Color(0xFF7F77DD),
-              ),
-              const SizedBox(height: 28),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth > 600;
-                  if (wide) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _SectionTitle('Phân bố vùng miền'),
-                              const SizedBox(height: 12),
-                              _RegionPieChart(regionStats: vm.regionStats),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const _SectionTitle('Phân loại đơn vị'),
-                              const SizedBox(height: 12),
-                              _TypePieChart(typeStats: vm.typeStats),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                  return Column(
+            children: _buildContentChildren(context, vm),
+          );
+          if (isEmbedded) return col;
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: col,
+          );
+        }
+      },
+    );
+  }
+
+  List<Widget> _buildContentChildren(
+      BuildContext context, ProvinceStatsViewModel vm) {
+    return [
+      if (showExportButton)
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed: exporting ? null : () => onExport(vm),
+            icon: exporting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.picture_as_pdf_outlined),
+            label: Text(exporting ? 'Đang xuất...' : 'Xuất PDF'),
+          ),
+        ),
+      if (showExportButton) const SizedBox(height: 16),
+      _buildStatsCards(context, vm),
+      const SizedBox(height: 28),
+      const _SectionTitle('Top 10 tỉnh/thành theo dân số'),
+      const SizedBox(height: 12),
+      _TopProvincesBarChart(
+        provinces: vm.top10Population,
+        getValue: (p) => (p.population ?? 0).toDouble(),
+        formatLabel: (v) => '${(v / 1000000).toStringAsFixed(1)}M',
+        color: const Color(0xFF378ADD),
+      ),
+      const SizedBox(height: 28),
+      const _SectionTitle('Top 10 tỉnh/thành theo diện tích'),
+      const SizedBox(height: 12),
+      _TopProvincesBarChart(
+        provinces: vm.top10Area,
+        getValue: (p) => p.areaKm2 ?? 0,
+        formatLabel: (v) => '${v.toStringAsFixed(0)} km²',
+        color: const Color(0xFF1D9E75),
+      ),
+      const SizedBox(height: 28),
+      const _SectionTitle('Top 10 tỉnh/thành theo mật độ dân số'),
+      const SizedBox(height: 12),
+      _TopProvincesBarChart(
+        provinces: vm.top10Density,
+        getValue: (p) => p.density ?? 0,
+        formatLabel: (v) => v.toStringAsFixed(0),
+        color: const Color(0xFF7F77DD),
+      ),
+      const SizedBox(height: 28),
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth > 600;
+          if (wide) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const _SectionTitle('Phân bố vùng miền'),
                       const SizedBox(height: 12),
                       _RegionPieChart(regionStats: vm.regionStats),
-                      const SizedBox(height: 28),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       const _SectionTitle('Phân loại đơn vị'),
                       const SizedBox(height: 12),
                       _TypePieChart(typeStats: vm.typeStats),
                     ],
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
+                  ),
+                ),
+              ],
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _SectionTitle('Phân bố vùng miền'),
+              const SizedBox(height: 12),
+              _RegionPieChart(regionStats: vm.regionStats),
+              const SizedBox(height: 28),
+              const _SectionTitle('Phân loại đơn vị'),
+              const SizedBox(height: 12),
+              _TypePieChart(typeStats: vm.typeStats),
             ],
-          ),
-        );
-      },
-    );
+          );
+        },
+      ),
+      const SizedBox(height: 20),
+    ];
   }
+}
 
-  Widget _buildStatCards(BuildContext context, ProvinceStatsViewModel vm) {
-    final cs = Theme.of(context).colorScheme;
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: [
-        _StatCard(
-          icon: Icons.location_city_outlined,
-          label: 'Tỉnh/Thành',
-          value: vm.totalProvinces.toString(),
-          color: cs.primaryContainer,
-          iconColor: cs.onPrimaryContainer,
-        ),
-        _StatCard(
-          icon: Icons.people_outline,
-          label: 'Dân số (triệu)',
-          value: (vm.totalPopulation / 1e6).toStringAsFixed(1),
-          color: cs.secondaryContainer,
-          iconColor: cs.onSecondaryContainer,
-        ),
-        _StatCard(
-          icon: Icons.map_outlined,
-          label: 'Diện tích (km²)',
-          value: _fmt(vm.totalAreaKm2),
-          color: cs.tertiaryContainer,
-          iconColor: cs.onTertiaryContainer,
-        ),
-        _StatCard(
-          icon: Icons.people_alt_outlined,
-          label: 'Mật độ TB (ng/km²)',
-          value: vm.avgDensity.toStringAsFixed(0),
-          color: cs.surfaceContainerHighest,
-          iconColor: cs.onSurface,
-        ),
-      ],
-    );
-  }
+// ── Module-level helpers ──────────────────────────────────────────────────────
 
-  String _fmt(double v) {
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-    return v.toStringAsFixed(0);
-  }
+String _fmt(double v) {
+  if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
+  return v.toStringAsFixed(0);
+}
+
+Widget _buildStatsCards(BuildContext context, ProvinceStatsViewModel vm) {
+  final cs = Theme.of(context).colorScheme;
+  return Wrap(
+    spacing: 12,
+    runSpacing: 12,
+    children: [
+      _StatCard(
+        icon: Icons.location_city_outlined,
+        label: 'Tỉnh/Thành',
+        value: vm.totalProvinces.toString(),
+        color: cs.primaryContainer,
+        iconColor: cs.onPrimaryContainer,
+      ),
+      _StatCard(
+        icon: Icons.people_outline,
+        label: 'Dân số (triệu)',
+        value: (vm.totalPopulation / 1e6).toStringAsFixed(1),
+        color: cs.secondaryContainer,
+        iconColor: cs.onSecondaryContainer,
+      ),
+      _StatCard(
+        icon: Icons.map_outlined,
+        label: 'Diện tích (km²)',
+        value: _fmt(vm.totalAreaKm2),
+        color: cs.tertiaryContainer,
+        iconColor: cs.onTertiaryContainer,
+      ),
+      _StatCard(
+        icon: Icons.people_alt_outlined,
+        label: 'Mật độ TB (ng/km²)',
+        value: vm.avgDensity.toStringAsFixed(0),
+        color: cs.surfaceContainerHighest,
+        iconColor: cs.onSurface,
+      ),
+    ],
+  );
 }
 
 // ── Stat card ────────────────────────────────────────────────────────────────
@@ -641,6 +652,26 @@ class _Legend extends StatelessWidget {
             ],
           ),
       ],
+    );
+  }
+}
+
+// ── Embeddable stats widget ───────────────────────────────────────────────────
+
+/// Nhúng nội dung thống kê vào bên trong ScrollView cha mà không tạo scroll mới.
+class StatsEmbeddedContent extends StatelessWidget {
+  const StatsEmbeddedContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ProvinceStatsViewModel(),
+      child: _StatsBody(
+        onExport: (_) async {},
+        exporting: false,
+        showExportButton: false,
+        isEmbedded: true,
+      ),
     );
   }
 }

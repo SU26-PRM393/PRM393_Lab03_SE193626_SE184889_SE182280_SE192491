@@ -29,15 +29,43 @@ class NotificationCenterScreen extends StatelessWidget {
   }
 }
 
-class _NotificationBody extends StatelessWidget {
+enum _NotifFilter { all, created, updated, ended }
+
+class _NotificationBody extends StatefulWidget {
   const _NotificationBody({required this.currentUser});
 
   final AppUser currentUser;
 
   @override
+  State<_NotificationBody> createState() => _NotificationBodyState();
+}
+
+class _NotificationBodyState extends State<_NotificationBody> {
+  _NotifFilter _filter = _NotifFilter.all;
+
+  bool _matchesFilter(NotificationMessage n) => switch (_filter) {
+        _NotifFilter.all => true,
+        _NotifFilter.created => n.type.contains('created'),
+        _NotifFilter.updated => n.type.contains('updated'),
+        _NotifFilter.ended =>
+          n.type.contains('ended') ||
+              n.type.contains('completed') ||
+              n.type.contains('deleted'),
+      };
+
+  String _filterLabel(_NotifFilter f) => switch (f) {
+        _NotifFilter.all => 'Tất cả',
+        _NotifFilter.created => 'Tạo mới',
+        _NotifFilter.updated => 'Cập nhật',
+        _NotifFilter.ended => 'Kết thúc',
+      };
+
+  @override
   Widget build(BuildContext context) {
     final vm = context.watch<NotificationViewModel>();
     final cs = Theme.of(context).colorScheme;
+
+    final filtered = vm.notifications.where(_matchesFilter).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -51,35 +79,72 @@ class _NotificationBody extends StatelessWidget {
             ),
         ],
       ),
-      body: vm.notifications.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.notifications_none_outlined,
-                      size: 64, color: cs.onSurfaceVariant),
-                  const SizedBox(height: 12),
-                  Text('Chưa có thông báo',
-                      style: TextStyle(color: cs.onSurfaceVariant)),
-                ],
-              ),
-            )
-          : ListView.separated(
-              itemCount: vm.notifications.length,
-              separatorBuilder: (_, __) =>
-                  const Divider(height: 1, indent: 16, endIndent: 16),
-              itemBuilder: (context, i) {
-                final n = vm.notifications[i];
-                return _NotificationTile(
-                  notification: n,
-                  isRead: n.isReadBy(vm.userId),
-                  onTap: () {
-                    vm.markAsRead(n.id);
-                    _navigateToCampaign(context, n);
-                  },
+      body: Column(
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: _NotifFilter.values.map((f) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: Text(_filterLabel(f)),
+                    selected: _filter == f,
+                    selectedColor: cs.primaryContainer,
+                    checkmarkColor: cs.onPrimaryContainer,
+                    labelStyle: TextStyle(
+                      color: _filter == f
+                          ? cs.onPrimaryContainer
+                          : cs.onSurfaceVariant,
+                      fontWeight: _filter == f
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                    onSelected: (_) => setState(() => _filter = f),
+                  ),
                 );
-              },
+              }).toList(),
             ),
+          ),
+          Divider(height: 1, color: cs.outlineVariant),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.notifications_none_outlined,
+                            size: 64, color: cs.onSurfaceVariant),
+                        const SizedBox(height: 12),
+                        Text(
+                          _filter == _NotifFilter.all
+                              ? 'Chưa có thông báo'
+                              : 'Không có thông báo loại này',
+                          style: TextStyle(color: cs.onSurfaceVariant),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.separated(
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, indent: 16, endIndent: 16),
+                    itemBuilder: (context, i) {
+                      final n = filtered[i];
+                      return _NotificationTile(
+                        notification: n,
+                        isRead: n.isReadBy(vm.userId),
+                        onTap: () {
+                          vm.markAsRead(n.id);
+                          _navigateToCampaign(context, n);
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -129,7 +194,7 @@ class _NotificationBody extends StatelessWidget {
             campaign: campaign,
             events: events,
             employees: employees,
-            currentUser: currentUser,
+            currentUser: widget.currentUser,
             highlightEventId: notification.eventId,
           ),
         ),

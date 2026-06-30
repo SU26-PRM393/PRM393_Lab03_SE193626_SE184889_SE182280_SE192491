@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
-import 'package:vietnam_map_flutter/screens/stats_screen.dart';
+import 'package:vietnam_map_flutter/screens/stats_screen.dart' show StatsEmbeddedContent;
 import 'package:vietnam_map_flutter/screens/firebase_demo_screen.dart';
 import 'package:vietnam_map_flutter/screens/notification_center_screen.dart';
 import 'package:vietnam_map_flutter/viewmodels/notification_viewmodel.dart';
@@ -16,7 +16,6 @@ enum AdminSection {
   overview,
   campaigns,
   userManagement,
-  stats,
   firebaseDemo,
   notifications,
 }
@@ -90,8 +89,6 @@ class AdminDashboardState extends State<AdminDashboard> {
           initialSearchText: _searchEmail,
           service: widget._service,
         );
-      case AdminSection.stats:
-        return const StatsScreen(isAdmin: true);
       case AdminSection.firebaseDemo:
         return const FirebaseDemoScreen(isAdmin: true);
       case AdminSection.notifications:
@@ -180,7 +177,6 @@ class AdminDashboardState extends State<AdminDashboard> {
                   AdminSection.overview => 'Dashboard',
                   AdminSection.campaigns => 'Chiến dịch',
                   AdminSection.userManagement => 'Người dùng',
-                  AdminSection.stats => 'Thống Kê',
                   AdminSection.firebaseDemo => 'Firebase Demo',
                   AdminSection.notifications => 'Thông báo',
                 },
@@ -350,13 +346,6 @@ class _Sidebar extends StatelessWidget {
             selected: section == AdminSection.userManagement,
             expanded: true,
             onTap: () => onSelect(AdminSection.userManagement),
-          ),
-          _SidebarItem(
-            icon: Icons.bar_chart_outlined,
-            label: 'Thống Kê',
-            selected: section == AdminSection.stats,
-            expanded: true,
-            onTap: () => onSelect(AdminSection.stats),
           ),
           _SidebarItem(
             icon: Icons.local_fire_department_outlined,
@@ -593,6 +582,15 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
               ],
             ),
           ),
+          const SizedBox(height: 32),
+          Divider(color: cs.outlineVariant),
+          const SizedBox(height: 24),
+          Text(
+            'Thống Kê',
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          const StatsEmbeddedContent(),
         ],
       ),
     );

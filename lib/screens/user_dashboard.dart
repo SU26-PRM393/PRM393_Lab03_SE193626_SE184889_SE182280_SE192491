@@ -4,11 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/campaign_management_screen.dart';
-import 'package:vietnam_map_flutter/screens/stats_screen.dart';
+import 'package:vietnam_map_flutter/screens/stats_screen.dart' show StatsEmbeddedContent;
 import 'package:vietnam_map_flutter/screens/notification_center_screen.dart';
 import 'package:vietnam_map_flutter/viewmodels/notification_viewmodel.dart';
 
-enum _UserSection { overview, campaigns, stats, notifications }
+enum _UserSection { overview, campaigns, notifications }
 
 /// Dashboard layout cho user thường: sidebar có thể thu gọn + vùng nội dung
 class UserDashboard extends StatefulWidget {
@@ -106,7 +106,6 @@ class _UserDashboardState extends State<UserDashboard> {
             switch (_section) {
               _UserSection.overview => 'Dashboard',
               _UserSection.campaigns => 'Chiến dịch',
-              _UserSection.stats => 'Thống Kê',
               _UserSection.notifications => 'Thông báo',
             },
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -220,8 +219,6 @@ class _UserDashboardState extends State<UserDashboard> {
         return _DashboardOverview(user: widget.user);
       case _UserSection.campaigns:
         return CampaignManagementScreen(currentUser: widget.user);
-      case _UserSection.stats:
-        return const StatsScreen();
       case _UserSection.notifications:
         return NotificationCenterScreen(
             userId: widget.user.uid, currentUser: widget.user);
@@ -266,13 +263,6 @@ class _Sidebar extends StatelessWidget {
             selected: section == _UserSection.campaigns,
             expanded: true,
             onTap: () => onSelect(_UserSection.campaigns),
-          ),
-          _SidebarItem(
-            icon: Icons.bar_chart_outlined,
-            label: 'Thống Kê',
-            selected: section == _UserSection.stats,
-            expanded: true,
-            onTap: () => onSelect(_UserSection.stats),
           ),
           _SidebarItem(
             icon: Icons.notifications_outlined,
@@ -473,6 +463,15 @@ class _DashboardOverview extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 32),
+          Divider(color: cs.outlineVariant),
+          const SizedBox(height: 24),
+          Text(
+            'Thống Kê',
+            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          const StatsEmbeddedContent(),
         ],
       ),
     );
