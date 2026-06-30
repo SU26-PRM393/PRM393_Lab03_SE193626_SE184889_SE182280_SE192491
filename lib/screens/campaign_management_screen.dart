@@ -24,9 +24,9 @@ import 'package:vietnam_map_flutter/models/event_interaction.dart';
 import 'package:vietnam_map_flutter/models/checkin.dart';
 
 // ── Design Tokens & Palette ──────────────────────────────────────────
-const _kTeal = Color(0xFF0D9488);
-const _kTealLight = Color(0xFFF2FBF9);
-const _kBg = Color(0xFFF8FAFB);
+const _kTeal = Color(0xFF1B6C6A);
+const _kTealLight = Color(0xFFD0EDEC);
+const _kBg = Color(0xFFF4FAFA);
 const _kCardBg = Colors.white;
 const _kRadius = 14.0;
 const _kBorderRadius = 12.0;

@@ -106,10 +106,10 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
             children: [
               _remoteConfigSection(),
               const SizedBox(height: 28),
-              _crashlyticsSection(),
+              _crashlyticsSection(context),
               if (widget.isAdmin && RemoteConfigService.instance.isPdfExportEnabled) ...[
                 const SizedBox(height: 28),
-                _pdfExportSection(vm),
+                _pdfExportSection(context, vm),
               ],
               const SizedBox(height: 20),
             ],
@@ -166,7 +166,8 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
 
   // ── Crashlytics ────────────────────────────────────────────────────────────
 
-  Widget _crashlyticsSection() {
+  Widget _crashlyticsSection(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return _Section(
       icon: Icons.bug_report_outlined,
       title: 'Crashlytics Demo',
@@ -180,14 +181,14 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.green.shade50,
+                color: cs.primaryContainer.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green.shade200),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.check_circle_outline,
-                      color: Colors.green, size: 18),
+                  Icon(Icons.check_circle_outline,
+                      color: cs.primary, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(_crashlyticsStatus!,
@@ -234,7 +235,8 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
 
   // ── PDF Export ─────────────────────────────────────────────────────────────
 
-  Widget _pdfExportSection(ProvinceStatsViewModel vm) {
+  Widget _pdfExportSection(BuildContext context, ProvinceStatsViewModel vm) {
+    final cs = Theme.of(context).colorScheme;
     return _Section(
       icon: Icons.picture_as_pdf_outlined,
       title: 'Xuất Báo Cáo PDF',
@@ -246,13 +248,13 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: cs.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
+                border: Border.all(color: cs.secondary.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.link, color: Colors.blue, size: 18),
+                  Icon(Icons.link, color: cs.secondary, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
