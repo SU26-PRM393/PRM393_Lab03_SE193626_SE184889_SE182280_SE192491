@@ -174,7 +174,7 @@ class AdminDashboardState extends State<AdminDashboard> {
               foregroundColor: cs.onPrimary,
               title: Text(
                 switch (_section) {
-                  AdminSection.overview => 'Dashboard',
+                  AdminSection.overview => 'Thống Kê',
                   AdminSection.campaigns => 'Chiến dịch',
                   AdminSection.userManagement => 'Người dùng',
                   AdminSection.firebaseDemo => 'Firebase Demo',
@@ -279,6 +279,7 @@ class AdminDashboardState extends State<AdminDashboard> {
         }
 
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
               width: _expandedWidth,
@@ -328,7 +329,7 @@ class _Sidebar extends StatelessWidget {
 
           _SidebarItem(
             icon: Icons.dashboard_outlined,
-            label: 'Dashboard',
+            label: 'Thống Kê',
             selected: section == AdminSection.overview,
             expanded: true,
             onTap: () => onSelect(AdminSection.overview),
@@ -512,7 +513,6 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return SingleChildScrollView(
@@ -521,118 +521,18 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Xin chào, ${widget.admin.name.isNotEmpty ? widget.admin.name : widget.admin.email}',
-            style:
-                textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Bảng điều khiển quản trị viên',
-            style: textTheme.bodyMedium
-                ?.copyWith(color: cs.onSurface.withValues(alpha: 0.6)),
-          ),
-          const SizedBox(height: 32),
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              _StatCard(
-                icon: Icons.group_outlined,
-                label: 'Người dùng',
-                value: _userCount == null ? '...' : '$_userCount',
-                color: cs.primaryContainer,
-                iconColor: cs.onPrimaryContainer,
-              ),
-              _StatCard(
-                icon: Icons.map_outlined,
-                label: 'Bản đồ',
-                value: 'Việt Nam',
-                color: cs.secondaryContainer,
-                iconColor: cs.onSecondaryContainer,
-              ),
-              _StatCard(
-                icon: Icons.location_city_outlined,
-                label: 'Tỉnh/Thành',
-                value: '63',
-                color: cs.tertiaryContainer,
-                iconColor: cs.onTertiaryContainer,
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: cs.outlineVariant),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: cs.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Chọn "Chiến dịch" ở sidebar để quản lí Campaign/Event, '
-                    '"Người dùng" để quản lí tài khoản, '
-                    'hoặc chuyển tab "VietMap" để xem bản đồ.',
-                    style: textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 32),
-          Divider(color: cs.outlineVariant),
-          const SizedBox(height: 24),
-          Text(
             'Thống Kê',
-            style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 16),
-          const StatsEmbeddedContent(),
+          const SizedBox(height: 24),
+          StatsEmbeddedContent(
+            showUserCard: true,
+            userCount: _userCount,
+            showMapCard: true,
+          ),
         ],
       ),
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.iconColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: iconColor, size: 28),
-          const SizedBox(height: 12),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 26, fontWeight: FontWeight.bold, color: iconColor)),
-          const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 14, color: iconColor)),
-        ],
-      ),
-    );
-  }
-}

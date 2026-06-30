@@ -81,7 +81,7 @@ class AdminShellState extends State<AdminShell> {
                           const SizedBox(width: 24),
                           // Tab buttons
                           _TabButton(
-                            label: 'Dashboard',
+                            label: 'Thống Kê',
                             icon: Icons.dashboard_outlined,
                             selected: _tab == AdminTab.dashboard,
                             onTap: () => setState(() => _tab = AdminTab.dashboard),
@@ -201,7 +201,7 @@ class AdminShellState extends State<AdminShell> {
                 BottomNavigationBarItem(
                   icon: Icon(Icons.dashboard_outlined),
                   activeIcon: Icon(Icons.dashboard),
-                  label: 'Dashboard',
+                  label: 'Thống Kê',
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.map_outlined),

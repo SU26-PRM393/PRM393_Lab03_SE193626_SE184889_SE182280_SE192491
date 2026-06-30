@@ -74,14 +74,14 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
     final cs = Theme.of(context).colorScheme;
 
     return Container(
-      color: _kBg,
+      color: cs.surface,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth >= 900;
 
           if (isWide) {
             return Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildLeftPanel(cs),
                 Expanded(
@@ -92,7 +92,7 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
                           subtitle: 'Danh sách sự kiện và thống kê chi tiết sẽ hiển thị ở đây.',
                         )
                       : Padding(
-                          padding: const EdgeInsets.only(top: 16, right: 24, bottom: 24),
+                          padding: const EdgeInsets.all(24),
                           child: _EventPane(
                             campaign: _selectedCampaign!,
                             currentUser: widget.currentUser,
@@ -148,18 +148,12 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
 
   Widget _buildLeftPanel(ColorScheme cs) {
     return Container(
-      width: 350,
-      margin: const EdgeInsets.all(20),
+      width: 320,
       decoration: BoxDecoration(
-        color: _kCardBg,
-        borderRadius: BorderRadius.circular(_kRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: cs.surfaceContainerLow,
+        border: Border(
+          right: BorderSide(color: cs.outlineVariant, width: 1),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -181,8 +175,8 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
                   IconButton(
                     tooltip: 'Tạo chiến dịch mới',
                     style: IconButton.styleFrom(
-                      backgroundColor: _kTeal.withOpacity(0.1),
-                      foregroundColor: _kTeal,
+                      backgroundColor: cs.primary.withOpacity(0.1),
+                      foregroundColor: cs.primary,
                     ),
                     icon: const Icon(Icons.add, size: 20),
                     onPressed: () => _openCampaignForm(),
@@ -214,7 +208,7 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
           hintStyle: const TextStyle(fontSize: 15),
           prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
           isDense: true,
-          fillColor: _kBg,
+          fillColor: cs.surface,
           filled: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           border: OutlineInputBorder(
@@ -223,7 +217,7 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: const BorderSide(color: _kTeal, width: 1.5),
+            borderSide: BorderSide(color: cs.primary, width: 1.5),
           ),
         ),
       ),
@@ -637,15 +631,9 @@ class _EventPaneState extends State<_EventPane> {
         final headerCard = Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: _kCardBg,
-            borderRadius: BorderRadius.circular(_kRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(_kBorderRadius),
+            border: Border.all(color: cs.outlineVariant, width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -852,8 +840,9 @@ class _EventPaneState extends State<_EventPane> {
                   Container(
                     padding: const EdgeInsets.all(40),
                     decoration: BoxDecoration(
-                      color: _kCardBg,
-                      borderRadius: BorderRadius.circular(_kRadius),
+                      color: cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(_kBorderRadius),
+                      border: Border.all(color: cs.outlineVariant, width: 1),
                     ),
                     child: const _EmptyPanel(
                       icon: Icons.event_available_outlined,
@@ -891,12 +880,13 @@ class _EventPaneState extends State<_EventPane> {
   }
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _kBg,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(_kBorderRadius),
-        border: Border.all(color: Colors.grey.shade100, width: 1),
+        border: Border.all(color: cs.outlineVariant, width: 1),
       ),
       child: Row(
         children: [
@@ -1026,6 +1016,7 @@ class _CampaignTileState extends State<_CampaignTile> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final repo = CampaignRepository.instance;
 
     return MouseRegion(
@@ -1036,19 +1027,19 @@ class _CampaignTileState extends State<_CampaignTile> {
         transform: Matrix4.identity()..translate(0.0, _isHovered ? -2.0 : 0.0),
         decoration: BoxDecoration(
           color: widget.selected 
-              ? _kTealLight 
-              : (_isHovered ? Colors.grey.shade50 : _kCardBg),
+              ? cs.primary.withOpacity(0.12) 
+              : (_isHovered ? cs.surfaceContainerHigh : cs.surface),
           borderRadius: BorderRadius.circular(_kBorderRadius),
           border: Border.all(
             color: widget.selected 
-                ? _kTeal 
-                : (_isHovered ? _kTeal.withOpacity(0.3) : Colors.grey.shade100),
+                ? cs.primary 
+                : (_isHovered ? cs.primary.withOpacity(0.3) : cs.outlineVariant),
             width: widget.selected ? 1.5 : 1.0,
           ),
           boxShadow: [
             if (widget.selected)
               BoxShadow(
-                color: _kTeal.withOpacity(0.08),
+                color: cs.primary.withOpacity(0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               )
@@ -1075,7 +1066,7 @@ class _CampaignTileState extends State<_CampaignTile> {
                 if (widget.selected)
                   Container(
                     width: 4,
-                    color: _kTeal,
+                    color: cs.primary,
                   ),
                 Expanded(
                   child: InkWell(
@@ -1090,13 +1081,13 @@ class _CampaignTileState extends State<_CampaignTile> {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: (widget.selected ? _kTeal : Colors.grey).withOpacity(0.08),
+                                  color: (widget.selected ? cs.primary : Colors.grey).withOpacity(0.08),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
                                   Icons.campaign_rounded,
                                   size: 18,
-                                  color: widget.selected ? _kTeal : Colors.grey.shade600,
+                                  color: widget.selected ? cs.primary : Colors.grey.shade600,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -1221,16 +1212,9 @@ class _EventTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _kCardBg,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(_kBorderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade100, width: 1),
+        border: Border.all(color: cs.outlineVariant, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1241,10 +1225,10 @@ class _EventTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: _kTeal.withOpacity(0.08),
+                  color: cs.primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.event_available_outlined, color: _kTeal, size: 22),
+                child: Icon(Icons.event_available_outlined, color: cs.primary, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -2302,18 +2286,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           builder: (context, interactionsSnapshot) {
             if (interactionsSnapshot.connectionState == ConnectionState.waiting || _isLoadingTargetNames) {
               return Scaffold(
-                backgroundColor: _kBg,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 appBar: AppBar(
                   title: Text(
                     event.name,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black87,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
                   elevation: 0.5,
                 ),
-                body: const Center(
-                  child: CircularProgressIndicator(color: _kTeal),
+                body: Center(
+                  child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
                 ),
               );
             }
@@ -2331,15 +2315,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
               });
             }
 
+            final cs = Theme.of(context).colorScheme;
+
             return Scaffold(
-              backgroundColor: _kBg,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               appBar: AppBar(
                 title: Text(
                   event.name,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black87,
+                backgroundColor: cs.surface,
+                foregroundColor: cs.onSurface,
                 elevation: 0.5,
               ),
               body: Padding(
@@ -2357,12 +2343,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Container(
-                              color: Colors.white,
+                              color: cs.surface,
                               child: TabBar(
                                 controller: _tabController,
-                                labelColor: _kTeal,
+                                labelColor: cs.primary,
                                 unselectedLabelColor: Colors.grey,
-                                indicatorColor: _kTeal,
+                                indicatorColor: cs.primary,
                                 tabs: const [
                                   Tab(text: 'Tương tác & Lịch sử'),
                                   Tab(text: 'Điểm danh & Check-in'),
@@ -5484,6 +5470,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
   }
 
   Widget _buildToolbar() {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -5500,7 +5487,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                   hintStyle: const TextStyle(fontSize: 14),
                   prefixIcon: const Icon(Icons.search, size: 18),
                   isDense: true,
-                  fillColor: _kBg,
+                  fillColor: cs.surfaceContainerLow,
                   filled: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   border: OutlineInputBorder(
@@ -5509,7 +5496,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: _kTeal, width: 1.5),
+                    borderSide: BorderSide(color: cs.primary, width: 1.5),
                   ),
                 ),
               ),
@@ -5518,7 +5505,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: _kBg,
+                color: cs.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButtonHideUnderline(
@@ -5557,6 +5544,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
   }
 
   Widget _buildFilterChip(String value, String label) {
+    final cs = Theme.of(context).colorScheme;
     final selected = _targetTypeFilter == value;
     return ChoiceChip(
       selected: selected,
@@ -5568,8 +5556,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           fontSize: 13,
         ),
       ),
-      selectedColor: _kTeal,
-      backgroundColor: _kBg,
+      selectedColor: cs.primary,
+      backgroundColor: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(

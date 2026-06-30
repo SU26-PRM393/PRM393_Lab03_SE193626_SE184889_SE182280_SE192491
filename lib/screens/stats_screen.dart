@@ -96,12 +96,18 @@ class _StatsBody extends StatelessWidget {
     required this.exporting,
     required this.showExportButton,
     this.isEmbedded = false,
+    this.showUserCard = false,
+    this.userCount,
+    this.showMapCard = false,
   });
 
   final Future<void> Function(ProvinceStatsViewModel vm) onExport;
   final bool exporting;
   final bool showExportButton;
   final bool isEmbedded;
+  final bool showUserCard;
+  final int? userCount;
+  final bool showMapCard;
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +164,13 @@ class _StatsBody extends StatelessWidget {
           ),
         ),
       if (showExportButton) const SizedBox(height: 16),
-      _buildStatsCards(context, vm),
+      _buildStatsCards(
+        context,
+        vm,
+        showUserCard: showUserCard,
+        userCount: userCount,
+        showMapCard: showMapCard,
+      ),
       const SizedBox(height: 28),
       const _SectionTitle('Top 10 tỉnh/thành theo dân số'),
       const SizedBox(height: 12),
@@ -244,39 +256,61 @@ String _fmt(double v) {
   return v.toStringAsFixed(0);
 }
 
-Widget _buildStatsCards(BuildContext context, ProvinceStatsViewModel vm) {
+Widget _buildStatsCards(
+  BuildContext context,
+  ProvinceStatsViewModel vm, {
+  bool showUserCard = false,
+  int? userCount,
+  bool showMapCard = false,
+}) {
   final cs = Theme.of(context).colorScheme;
   return Wrap(
     spacing: 12,
     runSpacing: 12,
     children: [
+      if (showUserCard)
+        _StatCard(
+          icon: Icons.group_outlined,
+          label: 'Người dùng',
+          value: userCount == null ? '...' : '$userCount',
+          color: cs.primaryContainer,
+          iconColor: cs.onPrimaryContainer,
+        ),
+      if (showMapCard)
+        _StatCard(
+          icon: Icons.map_outlined,
+          label: 'Bản đồ',
+          value: 'Việt Nam',
+          color: cs.secondaryContainer,
+          iconColor: cs.onSecondaryContainer,
+        ),
       _StatCard(
         icon: Icons.location_city_outlined,
         label: 'Tỉnh/Thành',
         value: vm.totalProvinces.toString(),
-        color: cs.primaryContainer,
-        iconColor: cs.onPrimaryContainer,
+        color: cs.tertiaryContainer,
+        iconColor: cs.onTertiaryContainer,
       ),
       _StatCard(
         icon: Icons.people_outline,
         label: 'Dân số (triệu)',
         value: (vm.totalPopulation / 1e6).toStringAsFixed(1),
-        color: cs.secondaryContainer,
-        iconColor: cs.onSecondaryContainer,
+        color: cs.surfaceContainerHighest,
+        iconColor: cs.onSurface,
       ),
       _StatCard(
         icon: Icons.map_outlined,
         label: 'Diện tích (km²)',
         value: _fmt(vm.totalAreaKm2),
-        color: cs.tertiaryContainer,
-        iconColor: cs.onTertiaryContainer,
+        color: cs.primaryContainer,
+        iconColor: cs.onPrimaryContainer,
       ),
       _StatCard(
         icon: Icons.people_alt_outlined,
         label: 'Mật độ TB (ng/km²)',
         value: vm.avgDensity.toStringAsFixed(0),
-        color: cs.surfaceContainerHighest,
-        iconColor: cs.onSurface,
+        color: cs.secondaryContainer,
+        iconColor: cs.onSecondaryContainer,
       ),
     ],
   );
@@ -660,7 +694,16 @@ class _Legend extends StatelessWidget {
 
 /// Nhúng nội dung thống kê vào bên trong ScrollView cha mà không tạo scroll mới.
 class StatsEmbeddedContent extends StatelessWidget {
-  const StatsEmbeddedContent({super.key});
+  const StatsEmbeddedContent({
+    super.key,
+    this.showUserCard = false,
+    this.userCount,
+    this.showMapCard = false,
+  });
+
+  final bool showUserCard;
+  final int? userCount;
+  final bool showMapCard;
 
   @override
   Widget build(BuildContext context) {
@@ -671,6 +714,9 @@ class StatsEmbeddedContent extends StatelessWidget {
         exporting: false,
         showExportButton: false,
         isEmbedded: true,
+        showUserCard: showUserCard,
+        userCount: userCount,
+        showMapCard: showMapCard,
       ),
     );
   }
