@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:vietnam_map_flutter/utils/map_startup_trace.dart';
+import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/user_management_dialog.dart';
 import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
@@ -79,7 +80,8 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 980;
+          // Use responsive breakpoints instead of hardcoded 980px
+          final compact = constraints.maxWidth < ResponsiveBreakpoints.sidePanelThreshold;
           final map = _MapSurface(controller: _controller);
           final panel = AnimatedBuilder(
             animation: _controller,

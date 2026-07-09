@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:vietnam_map_flutter/utils/platform_utils.dart';
+import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
+
 class MapZoomControls extends StatelessWidget {
   const MapZoomControls({
     required this.onZoomIn,
@@ -13,6 +16,10 @@ class MapZoomControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    // Ensure minimum 48px touch targets on touch devices
+    final buttonSize = PlatformUtils.usesTouchInteraction 
+        ? ResponsiveBreakpoints.minTouchTarget 
+        : 40.0;
 
     return Material(
       color: colorScheme.surface,
@@ -25,20 +32,28 @@ class MapZoomControls extends StatelessWidget {
           Semantics(
             button: true,
             label: 'Phóng to',
-            child: IconButton(
-              tooltip: 'Phóng to',
-              icon: const Icon(Icons.add),
-              onPressed: onZoomIn,
+            child: SizedBox(
+              width: buttonSize,
+              height: buttonSize,
+              child: IconButton(
+                tooltip: 'Phóng to',
+                icon: const Icon(Icons.add),
+                onPressed: onZoomIn,
+              ),
             ),
           ),
           Divider(height: 1, color: colorScheme.outlineVariant),
           Semantics(
             button: true,
             label: 'Thu nhỏ',
-            child: IconButton(
-              tooltip: 'Thu nhỏ',
-              icon: const Icon(Icons.remove),
-              onPressed: onZoomOut,
+            child: SizedBox(
+              width: buttonSize,
+              height: buttonSize,
+              child: IconButton(
+                tooltip: 'Thu nhỏ',
+                icon: const Icon(Icons.remove),
+                onPressed: onZoomOut,
+              ),
             ),
           ),
         ],

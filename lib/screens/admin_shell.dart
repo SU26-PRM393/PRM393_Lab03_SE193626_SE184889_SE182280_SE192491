@@ -1,5 +1,6 @@
   import 'package:flutter/material.dart';
 
+import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/vietnam_map_screen.dart';
@@ -47,7 +48,8 @@ class AdminShellState extends State<AdminShell> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    // Use responsive breakpoints instead of hardcoded 700px
+    final isMobile = context.useCompactNavigation;
 
     // Determine whether to show the outer AppBar
     // If we are on mobile and on the dashboard tab, the dashboard has its own AppBar

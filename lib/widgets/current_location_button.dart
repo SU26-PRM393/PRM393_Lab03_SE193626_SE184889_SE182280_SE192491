@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
+
 class CurrentLocationButton extends StatelessWidget {
   const CurrentLocationButton({
     required this.isLoading,
@@ -28,9 +30,14 @@ class CurrentLocationButton extends StatelessWidget {
       child: Tooltip(
         message: 'Hiển thị vị trí hiện tại',
         child: isMobile
-            ? IconButton.filledTonal(
-                onPressed: isLoading ? null : onPressed,
-                icon: iconWidget,
+            // Ensure minimum 48px touch target on mobile
+            ? SizedBox(
+                width: ResponsiveBreakpoints.minTouchTarget,
+                height: ResponsiveBreakpoints.minTouchTarget,
+                child: IconButton.filledTonal(
+                  onPressed: isLoading ? null : onPressed,
+                  icon: iconWidget,
+                ),
               )
             : FilledButton.tonalIcon(
                 onPressed: isLoading ? null : onPressed,

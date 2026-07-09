@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:vietnam_map_flutter/utils/platform_utils.dart';
+import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'current_location_button.dart';
 import 'map_zoom_controls.dart';
 
@@ -21,7 +23,8 @@ class MapOverlayControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    // Use responsive breakpoints and platform detection
+    final isMobile = context.useCompactNavigation || PlatformUtils.usesTouchInteraction;
 
     return Semantics(
       container: true,
@@ -43,9 +46,14 @@ class MapOverlayControls extends StatelessWidget {
           Tooltip(
             message: 'Căn giữa về Việt Nam',
             child: isMobile
-                ? IconButton.filledTonal(
-                    onPressed: onRecenter,
-                    icon: const Icon(Icons.center_focus_strong),
+                // Ensure minimum 48px touch target on mobile
+                ? SizedBox(
+                    width: ResponsiveBreakpoints.minTouchTarget,
+                    height: ResponsiveBreakpoints.minTouchTarget,
+                    child: IconButton.filledTonal(
+                      onPressed: onRecenter,
+                      icon: const Icon(Icons.center_focus_strong),
+                    ),
                   )
                 : FilledButton.tonalIcon(
                     onPressed: onRecenter,

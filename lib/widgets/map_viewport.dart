@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:vector_map_tiles/vector_map_tiles.dart' as vector_tiles;
 
 import 'package:vietnam_map_flutter/utils/map_constants.dart';
+import 'package:vietnam_map_flutter/utils/platform_utils.dart';
 import 'package:vietnam_map_flutter/models/current_location_state.dart';
 import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
 import 'current_location_indicator.dart';
@@ -31,11 +34,30 @@ class MapViewport extends StatefulWidget {
 class _MapViewportState extends State<MapViewport> {
   late final TileProvider _tileProvider = NetworkTileProvider();
 
+  void _handleLongPress(LatLng point) {
+    if (!PlatformUtils.usesTouchInteraction) return;
+    
+    // Trigger haptic feedback for touch devices
+    HapticFeedback.mediumImpact();
+    
+    // Show preview (same as hover on desktop)
+    widget.controller.previewProvinceAt(point);
+    
+    // Auto-dismiss preview after a short delay
+    Future.delayed(const Duration(milliseconds: 2000), () {
+      if (mounted) {
+        widget.controller.clearProvincePreview();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
     final tileSource = controller.tileSource;
     final urlTemplate = tileSource.urlTemplate;
+
+    final usesTouch = PlatformUtils.usesTouchInteraction;
 
     return ClipRect(
       child: Stack(
@@ -55,10 +77,19 @@ class _MapViewportState extends State<MapViewport> {
                   ),
                   onMapReady: controller.markMapReady,
                   onPositionChanged: controller.updateViewport,
-                  onPointerHover: (_, point) {
-                    controller.updateProvinceHover(point);
-                  },
+                  // Hover only works on desktop (mouse)
+                  onPointerHover: PlatformUtils.supportsHover
+                      ? (_, point) => controller.updateProvinceHover(point)
+                      : null,
+                  // Long-press for province preview on touch devices
+                  onLongPress: usesTouch
+                      ? (_, point) => _handleLongPress(point)
+                      : null,
                   onTap: (_, point) {
+                    // On touch devices, clear any preview first
+                    if (usesTouch) {
+                      controller.clearProvincePreview();
+                    }
                     controller.selectProvinceAt(point);
                   },
                 ),

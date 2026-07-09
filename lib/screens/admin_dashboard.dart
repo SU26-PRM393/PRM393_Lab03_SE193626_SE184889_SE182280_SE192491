@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/stats_screen.dart' show StatsEmbeddedContent;
@@ -104,7 +105,8 @@ class AdminDashboardState extends State<AdminDashboard> {
       child: Builder(builder: (context) {
         final vm = context.watch<NotificationViewModel>();
         final cs = Theme.of(context).colorScheme;
-        final isMobile = MediaQuery.of(context).size.width < 700;
+        // Use responsive breakpoints instead of hardcoded 700px
+        final isMobile = context.useCompactNavigation;
 
         final hasPhoto = widget.admin.photoUrl != null &&
             widget.admin.photoUrl!.trim().isNotEmpty;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/vietnam_map_screen.dart';
@@ -31,7 +32,8 @@ class _UserShellState extends State<UserShell> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    // Use responsive breakpoints instead of hardcoded 700px
+    final isMobile = context.useCompactNavigation;
 
     final showOuterAppBar = !isMobile || _tab == _UserTab.vietmap;
 

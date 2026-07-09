@@ -1110,6 +1110,34 @@ class VietnamMapController extends ChangeNotifier {
     _setProvinceHoverState(ProvinceHoverState.inactive());
   }
 
+  /// Preview a province at the given coordinate (for touch devices via long-press).
+  /// This shows the hover outline without selecting the province.
+  void previewProvinceAt(LatLng coordinate) {
+    if (!_boundaryData.hasProvinceBoundaries) {
+      return;
+    }
+
+    final nextState = MapStartupTrace.timeSync(
+      'province.preview.resolve',
+      () => ProvinceHoverResolver.resolve(
+        coordinate: coordinate,
+        boundaries: _boundaryData.provinceBoundaries,
+        occurredAt: DateTime.now(),
+      ),
+      arguments: {'boundaryCount': _boundaryData.provinceBoundaries.length},
+    );
+
+    _setProvinceHoverState(nextState);
+  }
+
+  /// Clear the province preview (used after long-press ends on touch devices).
+  void clearProvincePreview() {
+    if (provinceHoverState.isInactive) {
+      return;
+    }
+    _setProvinceHoverState(ProvinceHoverState.inactive());
+  }
+
   void _moveTo(LatLng center, double zoom) {
     _cancelCameraAnimation();
     final viewport = _currentViewport();
