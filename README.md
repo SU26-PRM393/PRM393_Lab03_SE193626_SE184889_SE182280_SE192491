@@ -43,6 +43,25 @@ To run the Google Patrol auth flow using values from `.env.test`:
 Keep identifiers such as test emails in the shared example file when useful.
 Keep passwords, tokens, and other secrets only in `.env.test` or your CI secret store.
 
+## Security Configuration
+
+### FCM Admin Service
+
+The Firebase Cloud Messaging (FCM) admin service requires a private key for authentication. **NEVER commit private keys to version control!**
+
+For development/testing, pass the key as a compile-time environment variable:
+
+```powershell
+flutter run --dart-define=FCM_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+```
+
+For production deployments, use secure alternatives:
+- Firebase Admin SDK with service account JSON file
+- Google Cloud Secret Manager
+- Environment-specific configuration management system
+
+See `.env.test.example` for detailed configuration instructions.
+
 The current feature is UI-first:
 
 - The Viet Nam map is interactive through pan and zoom.

@@ -20,6 +20,15 @@ Thumbs.db
 .env.*
 !.env.test.example
 
+# Security: Private keys and service accounts (NEVER commit these!)
+*.pem
+*.key
+*-key.json
+*serviceaccount*.json
+service-account*.json
+firebase-adminsdk-*.json
+google-credentials*.json
+
 # Native build outputs
 **/windows/flutter/ephemeral/
 **/linux/flutter/ephemeral/
