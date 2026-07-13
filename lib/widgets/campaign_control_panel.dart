@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:vietnam_map_flutter/models/campaign.dart';
 import 'package:vietnam_map_flutter/models/event.dart';
 import 'package:vietnam_map_flutter/models/interaction.dart';
+import 'package:vietnam_map_flutter/models/checkin.dart';
+import 'package:vietnam_map_flutter/services/campaign_repository.dart';
 import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
 import 'map_segmented_control.dart';
 
@@ -1009,13 +1011,31 @@ class _EventDetailViewState extends State<_EventDetailView> {
           ),
         ])
       else
-        _InteractionForm(
-          targetNameController: _targetNameController,
-          notesController: _notesController,
-          targetType: _targetType,
-          isSaving: controller.isSavingInteraction,
-          onTargetTypeChanged: (value) => setState(() => _targetType = value),
-          onSubmit: _submitInteraction,
+        StreamBuilder<List<CheckIn>>(
+          stream: CampaignRepository.instance.watchCheckInsForEvent(event.id),
+          builder: (context, snapshot) {
+            final checkIns = snapshot.data ?? [];
+            final hasCheckedIn = checkIns.any((c) => c.employeeId == controller.appUser!.uid);
+
+            if (!hasCheckedIn) {
+              return const _InfoCard(children: [
+                _InfoItem(
+                  icon: Icons.info_outline,
+                  label: 'Trạng thái',
+                  value: 'Bạn phải check-in trước mới có thể tạo tương tác.',
+                ),
+              ]);
+            }
+
+            return _InteractionForm(
+              targetNameController: _targetNameController,
+              notesController: _notesController,
+              targetType: _targetType,
+              isSaving: controller.isSavingInteraction,
+              onTargetTypeChanged: (value) => setState(() => _targetType = value),
+              onSubmit: _submitInteraction,
+            );
+          },
         ),
       const SizedBox(height: 16),
 

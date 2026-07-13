@@ -1570,6 +1570,342 @@ double _getFallbackLongitude(String schoolId) {
   return 105.8342 + (hash % 100) / 1000.0;
 }
 
+double _getSchoolLatitude(School school) {
+  return school.latitude ?? _getFallbackLatitude(school.id);
+}
+
+double _getSchoolLongitude(School school) {
+  return school.longitude ?? _getFallbackLongitude(school.id);
+}
+
+double _getSchoolLatitudeById(String schoolId, List<School> schools) {
+  final school = schools.firstWhereOrNull((s) => s.id == schoolId);
+  if (school != null) return _getSchoolLatitude(school);
+  return _getFallbackLatitude(schoolId);
+}
+
+double _getSchoolLongitudeById(String schoolId, List<School> schools) {
+  final school = schools.firstWhereOrNull((s) => s.id == schoolId);
+  if (school != null) return _getSchoolLongitude(school);
+  return _getFallbackLongitude(schoolId);
+}
+
+class _SchoolPickerDialog extends StatefulWidget {
+  const _SchoolPickerDialog({
+    required this.schools,
+    required this.selectedSchoolId,
+  });
+
+  final List<School> schools;
+  final String? selectedSchoolId;
+
+  @override
+  State<_SchoolPickerDialog> createState() => _SchoolPickerDialogState();
+}
+
+class _SchoolPickerDialogState extends State<_SchoolPickerDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  String _searchQuery = '';
+  bool _sortByClosest = false;
+  Position? _currentPos;
+  bool _isLocating = false;
+  Map<String, double> _schoolDistances = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase().trim();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  Future<Position?> _getUserLocation() async {
+    if (Platform.isWindows) {
+      return Position(
+        latitude: 10.8789,
+        longitude: 106.8012,
+        timestamp: DateTime.now(),
+        accuracy: 0.0,
+        altitude: 0.0,
+        altitudeAccuracy: 0.0,
+        heading: 0.0,
+        headingAccuracy: 0.0,
+        speed: 0.0,
+        speedAccuracy: 0.0,
+      );
+    }
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return null;
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return null;
+      }
+      if (permission == LocationPermission.deniedForever) return null;
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+        ),
+      ).timeout(const Duration(seconds: 5));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _enableSortByClosest() async {
+    setState(() {
+      _isLocating = true;
+    });
+
+    final pos = await _getUserLocation();
+    if (pos != null) {
+      final Map<String, double> distances = {};
+      for (final school in widget.schools) {
+        final lat = _getSchoolLatitude(school);
+        final lng = _getSchoolLongitude(school);
+        final dist = Geolocator.distanceBetween(
+          pos.latitude,
+          pos.longitude,
+          lat,
+          lng,
+        );
+        distances[school.id] = dist;
+      }
+      if (mounted) {
+        setState(() {
+          _currentPos = pos;
+          _schoolDistances = distances;
+          _sortByClosest = true;
+          _isLocating = false;
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLocating = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không thể lấy vị trí hiện tại của thiết bị.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<School> filtered = widget.schools.where((school) {
+      if (_searchQuery.isEmpty) return true;
+      final name = school.schoolName.toLowerCase();
+      final commune = school.communeName.toLowerCase();
+      final province = school.provinceName.toLowerCase();
+      return name.contains(_searchQuery) ||
+          commune.contains(_searchQuery) ||
+          province.contains(_searchQuery);
+    }).toList();
+
+    if (_sortByClosest && _currentPos != null) {
+      filtered.sort((a, b) {
+        final distA = _schoolDistances[a.id] ?? double.infinity;
+        final distB = _schoolDistances[b.id] ?? double.infinity;
+        return distA.compareTo(distB);
+      });
+    } else {
+      filtered.sort((a, b) => a.schoolName.compareTo(b.schoolName));
+    }
+
+    final cs = Theme.of(context).colorScheme;
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+      title: const Text(
+        'Chọn địa điểm (Trường học)',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      ),
+      content: SizedBox(
+        width: 480,
+        height: 500,
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm tên trường, xã, tỉnh...',
+                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.grey),
+                        onPressed: () => _searchController.clear(),
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: _kTeal, width: 1.5),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: !_sortByClosest ? Colors.white : cs.onSurface,
+                      backgroundColor: !_sortByClosest ? _kTeal : Colors.transparent,
+                      side: BorderSide(color: !_sortByClosest ? _kTeal : Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    icon: const Icon(Icons.sort_by_alpha, size: 16),
+                    label: const Text('Tên trường A-Z', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    onPressed: () {
+                      setState(() {
+                        _sortByClosest = false;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _sortByClosest ? Colors.white : cs.onSurface,
+                      backgroundColor: _sortByClosest ? _kTeal : Colors.transparent,
+                      side: BorderSide(color: _sortByClosest ? _kTeal : Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    icon: _isLocating
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: _kTeal),
+                          )
+                        : const Icon(Icons.my_location, size: 16),
+                    label: const Text('Gần nhất', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    onPressed: _isLocating
+                        ? null
+                        : () {
+                            if (_sortByClosest) return;
+                            _enableSortByClosest();
+                          },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: filtered.isEmpty
+                  ? const Center(
+                      child: Text('Không tìm thấy trường nào phù hợp.', style: TextStyle(color: Colors.grey)),
+                    )
+                  : Scrollbar(
+                      controller: _scrollController,
+                      thumbVisibility: true,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemCount: filtered.length,
+                        itemBuilder: (context, index) {
+                          final school = filtered[index];
+                          final isSelected = school.id == widget.selectedSchoolId;
+                          final distance = _schoolDistances[school.id];
+                          String distanceText = '';
+                          if (distance != null) {
+                            if (distance < 1000) {
+                              distanceText = '${distance.toStringAsFixed(0)} m';
+                            } else {
+                              distanceText = '${(distance / 1000.0).toStringAsFixed(1)} km';
+                            }
+                          }
+
+                          return Card(
+                            color: isSelected ? _kTeal.withValues(alpha: 0.08) : Colors.white,
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              side: BorderSide(
+                                color: isSelected ? _kTeal : Colors.grey.shade200,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              title: Text(
+                                school.schoolName,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${school.communeName}, ${school.provinceName}',
+                                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                  ),
+                                  if (school.address.isNotEmpty) ...[
+                                    const SizedBox(height: 1),
+                                    Text(
+                                      school.address,
+                                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                    ),
+                                  ]
+                                ],
+                              ),
+                              trailing: distanceText.isNotEmpty
+                                  ? Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: _kTeal.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        distanceText,
+                                        style: const TextStyle(
+                                          color: _kTeal,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    )
+                                  : null,
+                              onTap: () {
+                                Navigator.pop(context, school);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Hủy', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+        ),
+      ],
+    );
+  }
+}
+
 class _EventFormDialog extends StatefulWidget {
   const _EventFormDialog({
     required this.campaignId,
@@ -1590,6 +1926,7 @@ class _EventFormDialog extends StatefulWidget {
 class _EventFormDialogState extends State<_EventFormDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
+  late final TextEditingController _schoolController;
   late final TextEditingController _latController;
   late final TextEditingController _lngController;
   late String _status;
@@ -1603,8 +1940,6 @@ class _EventFormDialogState extends State<_EventFormDialog> {
     super.initState();
     final event = widget.event;
     _nameController = TextEditingController(text: event?.name ?? '');
-    _latController = TextEditingController(text: event?.latitude?.toString() ?? '');
-    _lngController = TextEditingController(text: event?.longitude?.toString() ?? '');
     _status = event?.status ?? 'preparing';
     _date = event?.date;
     _hostId = event?.hostId;
@@ -1617,11 +1952,28 @@ class _EventFormDialogState extends State<_EventFormDialog> {
         widget.schools.any((s) => s.id == candidateSchoolId);
     _schoolId = schoolExists ? candidateSchoolId : defaultSchoolId;
     _employeeIds = {...?event?.assignedEmployeeIds};
+
+    double? initialLat = event?.latitude;
+    double? initialLng = event?.longitude;
+    if (initialLat == null && initialLng == null && _schoolId != null) {
+      initialLat = _getSchoolLatitudeById(_schoolId!, widget.schools);
+      initialLng = _getSchoolLongitudeById(_schoolId!, widget.schools);
+    }
+    _latController = TextEditingController(text: initialLat?.toString() ?? '');
+    _lngController = TextEditingController(text: initialLng?.toString() ?? '');
+
+    final selectedSchool = widget.schools.firstWhereOrNull((s) => s.id == _schoolId);
+    _schoolController = TextEditingController(
+      text: selectedSchool != null
+          ? '${selectedSchool.schoolName} - ${selectedSchool.communeName}'
+          : 'Chọn địa điểm',
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _schoolController.dispose();
     _latController.dispose();
     _lngController.dispose();
     super.dispose();
@@ -1666,24 +2018,34 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                   onPick: (value) => setState(() => _date = value),
                 ),
                 const SizedBox(height: 10),
-                DropdownButtonFormField<String>(
-                  initialValue: _schoolId,
-                  isExpanded: true,
-                  style: const TextStyle(fontSize: 15, color: Colors.black87),
-                  decoration: _dialogInputDecoration('Địa điểm'),
-                  items: widget.schools
-                      .map(
-                        (school) => DropdownMenuItem(
-                          value: school.id,
-                          child: Text(
-                            '${school.schoolName} - ${school.communeName}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => _schoolId = value),
-                  validator: (value) => value == null ? 'Chọn địa điểm' : null,
+                InkWell(
+                  onTap: () async {
+                    final School? selected = await showDialog<School>(
+                      context: context,
+                      builder: (context) => _SchoolPickerDialog(
+                        schools: widget.schools,
+                        selectedSchoolId: _schoolId,
+                      ),
+                    );
+                    if (selected != null) {
+                      setState(() {
+                        _schoolId = selected.id;
+                        _schoolController.text = '${selected.schoolName} - ${selected.communeName}';
+                        _latController.text = _getSchoolLatitude(selected).toString();
+                        _lngController.text = _getSchoolLongitude(selected).toString();
+                      });
+                    }
+                  },
+                  child: IgnorePointer(
+                    child: TextFormField(
+                      controller: _schoolController,
+                      style: const TextStyle(fontSize: 15),
+                      decoration: _dialogInputDecoration('Địa điểm').copyWith(
+                        suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                      ),
+                      validator: (value) => _schoolId == null ? 'Chọn địa điểm' : null,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
@@ -1849,8 +2211,8 @@ class _EventFormDialogState extends State<_EventFormDialog> {
 
             if (lat == null || lng == null) {
               if (_schoolId != null) {
-                lat = _getFallbackLatitude(_schoolId!);
-                lng = _getFallbackLongitude(_schoolId!);
+                lat = _getSchoolLatitudeById(_schoolId!, widget.schools);
+                lng = _getSchoolLongitudeById(_schoolId!, widget.schools);
               }
             }
 
@@ -2253,8 +2615,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     if (Platform.isWindows) {
       // Windows desktops lack physical GPS hardware. Return fallback/event coordinates to prevent hanging.
       return Position(
-        latitude: defaultLat ?? 21.0285,
-        longitude: defaultLng ?? 105.8542,
+        latitude: defaultLat ?? 10.8789,
+        longitude: defaultLng ?? 106.8012,
         timestamp: DateTime.now(),
         accuracy: 0.0,
         altitude: 0.0,
@@ -4891,7 +5253,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     XFile? image;
     Position? currentPos;
     bool isLocating = true;
-    bool simulateProximity = false;
     double? calculatedDistance;
     String? error;
 
@@ -4927,7 +5288,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
             }
 
             final distKm = calculatedDistance != null ? (calculatedDistance! / 1000.0) : null;
-            final isNear = (calculatedDistance != null && calculatedDistance! <= 1000.0) || simulateProximity;
+            final isNear = calculatedDistance != null && calculatedDistance! <= 1000.0;
             final canSubmit = image != null && currentPos != null && isNear && !isLocating;
 
             return AlertDialog(
@@ -5094,25 +5455,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                           label: const Text('Chọn / Chụp ảnh minh chứng', style: TextStyle(color: _kTeal)),
                         ),
                       const SizedBox(height: 16),
-                      // Development Simulation Toggle
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: simulateProximity,
-                            onChanged: (val) {
-                              if (val != null) {
-                                setDialogState(() => simulateProximity = val);
-                              }
-                            },
-                          ),
-                          const Expanded(
-                            child: Text(
-                              'Giả lập vị trí ở gần (<1km) [Dev Mode]',
-                              style: TextStyle(fontSize: 13, color: Colors.grey),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -5170,9 +5512,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                             employeeId: widget.currentUser.uid,
                             employeeName: widget.currentUser.name,
                             photoUrl: photoUrl,
-                            latitude: simulateProximity ? (event.latitude ?? 21.0278) : currentPos!.latitude,
-                            longitude: simulateProximity ? (event.longitude ?? 105.8342) : currentPos!.longitude,
-                            distanceMeters: simulateProximity ? 350.0 : (calculatedDistance ?? 0.0),
+                            latitude: currentPos!.latitude,
+                            longitude: currentPos!.longitude,
+                            distanceMeters: calculatedDistance ?? 0.0,
                             timestamp: DateTime.now(),
                           );
 

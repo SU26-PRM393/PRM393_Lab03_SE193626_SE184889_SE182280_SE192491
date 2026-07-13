@@ -19,7 +19,7 @@ class GeolocatorLocationRepository implements LocationRepository {
     if (isWindows) {
       return CurrentLocationState(
         status: CurrentLocationStatus.available,
-        coordinate: const LatLng(21.0285, 105.8542), // Hanoi center fallback
+        coordinate: const LatLng(10.8789, 106.8012), // Lưu Hữu Phước fallback
         accuracyMeters: 100.0,
         message: 'Đã giả lập vị trí trên Windows.',
         lastUpdatedAt: DateTime.now(),

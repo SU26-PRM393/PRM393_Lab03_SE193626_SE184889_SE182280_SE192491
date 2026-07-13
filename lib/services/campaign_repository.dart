@@ -281,11 +281,33 @@ class CampaignRepository {
   }
 
   Future<List<School>> getAllSchools() async {
-    final snapshot =
-        await _db.collection('schools').orderBy('schoolName').limit(500).get();
-    return snapshot.docs
-        .map((doc) => School.fromMap(doc.id, doc.data()))
-        .toList();
+    try {
+      // Run queries in parallel
+      final results = await Future.wait([
+        _db.collection('schools').orderBy('schoolName').limit(500).get(),
+        _db.collection('schools').where('latitude', isNull: false).get(),
+      ]);
+
+      final Map<String, School> schoolsMap = {};
+      
+      // Merge alphabetical schools
+      for (final doc in results[0].docs) {
+        schoolsMap[doc.id] = School.fromMap(doc.id, doc.data());
+      }
+      
+      // Merge schools that have coordinates
+      for (final doc in results[1].docs) {
+        schoolsMap[doc.id] = School.fromMap(doc.id, doc.data());
+      }
+
+      return schoolsMap.values.toList();
+    } catch (e) {
+      // Fallback to simple query if composite index or query fails
+      final snapshot = await _db.collection('schools').orderBy('schoolName').limit(500).get();
+      return snapshot.docs
+          .map((doc) => School.fromMap(doc.id, doc.data()))
+          .toList();
+    }
   }
 
   Future<List<Map<String, String>>> getEmployees() async {

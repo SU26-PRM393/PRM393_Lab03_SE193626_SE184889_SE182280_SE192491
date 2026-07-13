@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart' show EdgeInsets;
@@ -264,6 +265,10 @@ class VietnamMapController extends ChangeNotifier {
   }
 
   LatLng? _resolveSchoolCoordinate(School school) {
+    if (school.latitude != null && school.longitude != null) {
+      return LatLng(school.latitude!, school.longitude!);
+    }
+
     final communeCoordinate = _findCommuneCoordinate(school.communeCode);
     if (communeCoordinate != null) {
       return communeCoordinate;
@@ -447,6 +452,20 @@ class VietnamMapController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Enforce check-in before creating interaction
+      final checkInQuery = await FirebaseFirestore.instance
+          .collection('checkins')
+          .where('eventId', isEqualTo: event.id)
+          .where('employeeId', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+
+      if (checkInQuery.docs.isEmpty) {
+        _campaignActionMessage = 'Bạn phải check-in trước khi tạo tương tác.';
+        _isSavingInteraction = false;
+        notifyListeners();
+        return;
+      }
       await CampaignRepository.instance.createInteraction(
         event: event,
         interaction: EventInteraction(
