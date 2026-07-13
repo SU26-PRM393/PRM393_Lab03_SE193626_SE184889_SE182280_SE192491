@@ -8,6 +8,34 @@ import 'package:vietnam_map_flutter/models/interaction.dart';
 import 'package:vietnam_map_flutter/models/checkin.dart';
 import 'package:vietnam_map_flutter/firebase/notification_repository.dart';
 
+String? _targetCollection(String targetType) {
+  return switch (targetType) {
+    'student' => 'students',
+    'person' => 'persons',
+    'relative' => 'relatives',
+    _ => null,
+  };
+}
+
+Map<String, List<String>> _groupTargetRefs(List<Map<String, String>> targetRefs) {
+  final grouped = <String, List<String>>{};
+  for (final ref in targetRefs) {
+    final type = ref['type'];
+    final id = ref['id'];
+    if (type != null && id != null) {
+      grouped.putIfAbsent(type, () => []).add(id);
+    }
+  }
+  return grouped;
+}
+
+Iterable<List<T>> _chunked<T>(List<T> items, int chunkSize) sync* {
+  for (var index = 0; index < items.length; index += chunkSize) {
+    final end = index + chunkSize > items.length ? items.length : index + chunkSize;
+    yield items.sublist(index, end);
+  }
+}
+
 class CampaignRepository {
   CampaignRepository._();
   static final instance = CampaignRepository._();
@@ -404,15 +432,7 @@ class CampaignRepository {
       transaction.delete(interactionRef);
 
       if (shouldDeleteTarget && targetId != null && targetType != null) {
-        String? collection;
-        if (targetType == 'student') {
-          collection = 'students';
-        } else if (targetType == 'relative') {
-          collection = 'relatives';
-        } else if (targetType == 'person') {
-          collection = 'persons';
-        }
-
+        final collection = _targetCollection(targetType);
         if (collection != null) {
           final targetRef = _db.collection(collection).doc(targetId);
           transaction.delete(targetRef);
@@ -425,39 +445,19 @@ class CampaignRepository {
     if (targetRefs.isEmpty) return {};
 
     final Map<String, String> names = {};
-    
-    // Group by targetType
-    final Map<String, List<String>> grouped = {};
-    for (var ref in targetRefs) {
-      final type = ref['type'];
-      final id = ref['id'];
-      if (type != null && id != null) {
-        grouped.putIfAbsent(type, () => []).add(id);
-      }
-    }
+    final grouped = _groupTargetRefs(targetRefs);
 
-    // For each type, fetch in chunks of 10
-    for (var entry in grouped.entries) {
-      final collectionName = switch (entry.key) {
-        'student' => 'students',
-        'person' => 'persons',
-        'relative' => 'relatives',
-        _ => null,
-      };
+    for (final entry in grouped.entries) {
+      final collectionName = _targetCollection(entry.key);
       if (collectionName == null) continue;
 
-      final ids = entry.value;
       const chunkSize = 10;
-      for (var i = 0; i < ids.length; i += chunkSize) {
-        final chunk = ids.sublist(
-          i,
-          i + chunkSize > ids.length ? ids.length : i + chunkSize,
-        );
+      for (final chunk in _chunked(entry.value, chunkSize)) {
         final snapshot = await _db
             .collection(collectionName)
             .where(FieldPath.documentId, whereIn: chunk)
             .get();
-        for (var doc in snapshot.docs) {
+        for (final doc in snapshot.docs) {
           names[doc.id] = doc.data()['name'] as String? ?? 'Unknown';
         }
       }

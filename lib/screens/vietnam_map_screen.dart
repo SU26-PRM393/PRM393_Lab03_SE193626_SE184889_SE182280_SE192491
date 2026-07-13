@@ -75,6 +75,289 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     );
   }
 
+  void _closeSearchPanel() {
+    _controller.clearSelection();
+    setState(() {
+      _isSearchExpanded = false;
+      _panelHeightState = _PanelHeightState.collapsed;
+    });
+  }
+
+  void _closeCampaignPanel() {
+    _controller.toggleCampaignPanel(false);
+    _controller.deselectCampaign();
+    setState(() {
+      _panelHeightState = _PanelHeightState.collapsed;
+    });
+  }
+
+  void _openSearchPanel() {
+    _controller.deselectCampaign();
+    _controller.toggleCampaignPanel(false);
+    setState(() {
+      _isSearchExpanded = true;
+      _panelHeightState = _PanelHeightState.collapsed;
+    });
+  }
+
+  void _openCampaignPanel() {
+    _controller.clearSelection();
+    setState(() {
+      _isSearchExpanded = false;
+      _panelHeightState = _PanelHeightState.collapsed;
+    });
+    _controller.toggleCampaignPanel(true);
+  }
+
+  Widget _buildMapSurface() {
+    return _MapSurface(controller: _controller);
+  }
+
+  Widget _buildSearchPanel() {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return MapControlPanel(
+          controller: _controller,
+          onClose: _closeSearchPanel,
+        );
+      },
+    );
+  }
+
+  Widget _buildCampaignPanel() {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        return CampaignControlPanel(
+          controller: _controller,
+          onClose: _closeCampaignPanel,
+        );
+      },
+    );
+  }
+
+  Widget _buildDesktopBody(Widget map, Widget panel, Widget campaignPanel) {
+    return Row(
+      children: [
+        if (_isSearchExpanded) SizedBox(width: 360, child: panel),
+        if (_controller.isCampaignPanelExpanded)
+          SizedBox(width: 400, child: campaignPanel),
+        Expanded(child: map),
+      ],
+    );
+  }
+
+  double _panelBaseHeight({
+    required double minimizedHeight,
+    required double collapsedHeight,
+    required double expandedHeight,
+  }) {
+    switch (_panelHeightState) {
+      case _PanelHeightState.expanded:
+        return expandedHeight;
+      case _PanelHeightState.collapsed:
+        return collapsedHeight;
+      case _PanelHeightState.minimized:
+        return minimizedHeight;
+    }
+  }
+
+  void _cyclePanelHeightState() {
+    setState(() {
+      if (_panelHeightState == _PanelHeightState.minimized) {
+        _panelHeightState = _PanelHeightState.collapsed;
+      } else if (_panelHeightState == _PanelHeightState.collapsed) {
+        _panelHeightState = _PanelHeightState.expanded;
+      } else {
+        _panelHeightState = _PanelHeightState.collapsed;
+      }
+    });
+  }
+
+  void _startPanelDrag() {
+    setState(() {
+      _isDragging = true;
+      _dragOffset = 0.0;
+    });
+  }
+
+  void _updatePanelDrag(double deltaY) {
+    setState(() {
+      _dragOffset += deltaY;
+    });
+  }
+
+  void _resetPanelDrag() {
+    setState(() {
+      _isDragging = false;
+      _dragOffset = 0.0;
+    });
+  }
+
+  void _finishPanelDrag({
+    required double baseHeight,
+    required double minimizedHeight,
+    required double collapsedHeight,
+    required double expandedHeight,
+  }) {
+    final finalHeight = baseHeight - _dragOffset;
+    final diffMinimized = (finalHeight - minimizedHeight).abs();
+    final diffCollapsed = (finalHeight - collapsedHeight).abs();
+    final diffExpanded = (finalHeight - expandedHeight).abs();
+
+    setState(() {
+      _isDragging = false;
+      _dragOffset = 0.0;
+      if (diffMinimized < diffCollapsed && diffMinimized < diffExpanded) {
+        _panelHeightState = _PanelHeightState.minimized;
+      } else if (diffExpanded < diffMinimized && diffExpanded < diffCollapsed) {
+        _panelHeightState = _PanelHeightState.expanded;
+      } else {
+        _panelHeightState = _PanelHeightState.collapsed;
+      }
+    });
+  }
+
+  Widget _buildCompactBottomPanel({
+    required BuildContext context,
+    required Widget child,
+    required double collapsedRatio,
+  }) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    const minimizedHeight = 24.0;
+    final collapsedHeight = screenHeight * collapsedRatio;
+    final expandedHeight = screenHeight * 0.75;
+    final baseHeight = _panelBaseHeight(
+      minimizedHeight: minimizedHeight,
+      collapsedHeight: collapsedHeight,
+      expandedHeight: expandedHeight,
+    );
+    final displayHeight =
+        (baseHeight - _dragOffset).clamp(minimizedHeight, expandedHeight);
+    final showContent = displayHeight > 56.0;
+
+    return AnimatedPositioned(
+      duration: _isDragging ? Duration.zero : const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      height: displayHeight,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: _cyclePanelHeightState,
+              onVerticalDragStart: (_) => _startPanelDrag(),
+              onVerticalDragUpdate: (details) =>
+                  _updatePanelDrag(details.delta.dy),
+              onVerticalDragEnd: (_) => _finishPanelDrag(
+                baseHeight: baseHeight,
+                minimizedHeight: minimizedHeight,
+                collapsedHeight: collapsedHeight,
+                expandedHeight: expandedHeight,
+              ),
+              onVerticalDragCancel: _resetPanelDrag,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                alignment: Alignment.center,
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
+            ),
+            if (showContent)
+              Expanded(
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
+                  child: child,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpandButtons(BuildContext context) {
+    return Positioned(
+      left: 16,
+      top: 12,
+      child: Row(
+        children: [
+          _CompactFAB(
+            heroTag: 'expand_search_btn',
+            icon: Icons.search,
+            color: Theme.of(context).colorScheme.primary,
+            onTap: _openSearchPanel,
+          ),
+          const SizedBox(width: 10),
+          _CompactFAB(
+            heroTag: 'expand_campaign_btn',
+            icon: Icons.campaign_outlined,
+            color: Theme.of(context).colorScheme.secondary,
+            onTap: _openCampaignPanel,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDraggableUserBadge(BoxConstraints constraints) {
+    return ValueListenableBuilder<Offset?>(
+      valueListenable: _avatarOffset,
+      builder: (context, offset, child) {
+        final left = offset?.dx ?? (constraints.maxWidth - 52);
+        final top = offset?.dy ?? 12;
+        return Positioned(
+          left: left,
+          top: top,
+          child: GestureDetector(
+            onPanUpdate: (details) {
+              final cur =
+                  _avatarOffset.value ?? Offset(constraints.maxWidth - 52, 12);
+              _avatarOffset.value = Offset(
+                (cur.dx + details.delta.dx)
+                    .clamp(0.0, constraints.maxWidth - 40),
+                (cur.dy + details.delta.dy)
+                    .clamp(0.0, constraints.maxHeight - 40),
+              );
+            },
+            child: child,
+          ),
+        );
+      },
+      child: _UserBadge(
+        user: widget.appUser!,
+        onManageUsers: _showUserManagement,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,365 +365,34 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
         builder: (context, constraints) {
           // Use responsive breakpoints instead of hardcoded 980px
           final compact = constraints.maxWidth < ResponsiveBreakpoints.sidePanelThreshold;
-          final map = _MapSurface(controller: _controller);
-          final panel = AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              return MapControlPanel(
-                controller: _controller,
-                onClose: () {
-                  _controller.clearSelection();
-                  setState(() {
-                    _isSearchExpanded = false;
-                    _panelHeightState = _PanelHeightState.collapsed;
-                  });
-                },
-              );
-            },
-          );
-
-          final campaignPanel = AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              return CampaignControlPanel(
-                controller: _controller,
-                onClose: () {
-                  _controller.toggleCampaignPanel(false);
-                  _controller.deselectCampaign();
-                  setState(() {
-                    _panelHeightState = _PanelHeightState.collapsed;
-                  });
-                },
-              );
-            },
-          );
-
+          final map = _buildMapSurface();
+          final panel = _buildSearchPanel();
+          final campaignPanel = _buildCampaignPanel();
           final body = compact
               ? map
-              : Row(
-                  children: [
-                    if (_isSearchExpanded) SizedBox(width: 360, child: panel),
-                    if (_controller.isCampaignPanelExpanded)
-                      SizedBox(width: 400, child: campaignPanel),
-                    Expanded(child: map),
-                  ],
-                );
+              : _buildDesktopBody(map, panel, campaignPanel);
 
           return Stack(
             children: [
               body,
               if (compact) ...[
                 if (_isSearchExpanded)
-                  Builder(
-                    builder: (context) {
-                      final screenHeight = MediaQuery.of(context).size.height;
-                      final hMinimized = 24.0;
-                      final hCollapsed = screenHeight * 0.35;
-                      final hExpanded = screenHeight * 0.75;
-
-                      double baseHeight;
-                      switch (_panelHeightState) {
-                        case _PanelHeightState.expanded:
-                          baseHeight = hExpanded;
-                          break;
-                        case _PanelHeightState.collapsed:
-                          baseHeight = hCollapsed;
-                          break;
-                        case _PanelHeightState.minimized:
-                          baseHeight = hMinimized;
-                          break;
-                      }
-
-                      final displayHeight = (baseHeight - _dragOffset).clamp(hMinimized, hExpanded);
-                      final showContent = displayHeight > 56.0;
-
-                      return AnimatedPositioned(
-                        duration: _isDragging ? Duration.zero : const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: displayHeight,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 10,
-                                offset: const Offset(0, -2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    if (_panelHeightState == _PanelHeightState.minimized) {
-                                      _panelHeightState = _PanelHeightState.collapsed;
-                                    } else if (_panelHeightState == _PanelHeightState.collapsed) {
-                                      _panelHeightState = _PanelHeightState.expanded;
-                                    } else {
-                                      _panelHeightState = _PanelHeightState.collapsed;
-                                    }
-                                  });
-                                },
-                                onVerticalDragStart: (_) {
-                                  setState(() {
-                                    _isDragging = true;
-                                    _dragOffset = 0.0;
-                                  });
-                                },
-                                onVerticalDragUpdate: (details) {
-                                  setState(() {
-                                    _dragOffset += details.delta.dy;
-                                  });
-                                },
-                                onVerticalDragEnd: (details) {
-                                  final finalHeight = baseHeight - _dragOffset;
-                                  final diffMinimized = (finalHeight - hMinimized).abs();
-                                  final diffCollapsed = (finalHeight - hCollapsed).abs();
-                                  final diffExpanded = (finalHeight - hExpanded).abs();
-
-                                  setState(() {
-                                    _isDragging = false;
-                                    _dragOffset = 0.0;
-                                    if (diffMinimized < diffCollapsed && diffMinimized < diffExpanded) {
-                                      _panelHeightState = _PanelHeightState.minimized;
-                                    } else if (diffExpanded < diffMinimized && diffExpanded < diffCollapsed) {
-                                      _panelHeightState = _PanelHeightState.expanded;
-                                    } else {
-                                      _panelHeightState = _PanelHeightState.collapsed;
-                                    }
-                                  });
-                                },
-                                onVerticalDragCancel: () {
-                                  setState(() {
-                                    _isDragging = false;
-                                    _dragOffset = 0.0;
-                                  });
-                                },
-                                behavior: HitTestBehavior.opaque,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  alignment: Alignment.center,
-                                  child: Container(
-                                    width: 40,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(2.5),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (showContent)
-                                Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                                    child: panel,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
+                  _buildCompactBottomPanel(
+                    context: context,
+                    child: panel,
+                    collapsedRatio: 0.35,
                   ),
                 if (_controller.isCampaignPanelExpanded)
-                  Builder(
-                    builder: (context) {
-                      final screenHeight = MediaQuery.of(context).size.height;
-                      final hMinimized = 24.0;
-                      final hCollapsed = screenHeight * 0.38;
-                      final hExpanded = screenHeight * 0.75;
-
-                      double baseHeight;
-                      switch (_panelHeightState) {
-                        case _PanelHeightState.expanded:
-                          baseHeight = hExpanded;
-                          break;
-                        case _PanelHeightState.collapsed:
-                          baseHeight = hCollapsed;
-                          break;
-                        case _PanelHeightState.minimized:
-                          baseHeight = hMinimized;
-                          break;
-                      }
-
-                      final displayHeight = (baseHeight - _dragOffset).clamp(hMinimized, hExpanded);
-                      final showContent = displayHeight > 56.0;
-
-                      return AnimatedPositioned(
-                        duration: _isDragging ? Duration.zero : const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        height: displayHeight,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 10,
-                                offset: const Offset(0, -2),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    if (_panelHeightState == _PanelHeightState.minimized) {
-                                      _panelHeightState = _PanelHeightState.collapsed;
-                                    } else if (_panelHeightState == _PanelHeightState.collapsed) {
-                                      _panelHeightState = _PanelHeightState.expanded;
-                                    } else {
-                                      _panelHeightState = _PanelHeightState.collapsed;
-                                    }
-                                  });
-                                },
-                                onVerticalDragStart: (_) {
-                                  setState(() {
-                                    _isDragging = true;
-                                    _dragOffset = 0.0;
-                                  });
-                                },
-                                onVerticalDragUpdate: (details) {
-                                  setState(() {
-                                    _dragOffset += details.delta.dy;
-                                  });
-                                },
-                                onVerticalDragEnd: (details) {
-                                  final finalHeight = baseHeight - _dragOffset;
-                                  final diffMinimized = (finalHeight - hMinimized).abs();
-                                  final diffCollapsed = (finalHeight - hCollapsed).abs();
-                                  final diffExpanded = (finalHeight - hExpanded).abs();
-
-                                  setState(() {
-                                    _isDragging = false;
-                                    _dragOffset = 0.0;
-                                    if (diffMinimized < diffCollapsed && diffMinimized < diffExpanded) {
-                                      _panelHeightState = _PanelHeightState.minimized;
-                                    } else if (diffExpanded < diffMinimized && diffExpanded < diffCollapsed) {
-                                      _panelHeightState = _PanelHeightState.expanded;
-                                    } else {
-                                      _panelHeightState = _PanelHeightState.collapsed;
-                                    }
-                                  });
-                                },
-                                onVerticalDragCancel: () {
-                                  setState(() {
-                                    _isDragging = false;
-                                    _dragOffset = 0.0;
-                                  });
-                                },
-                                behavior: HitTestBehavior.opaque,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
-                                  alignment: Alignment.center,
-                                  child: Container(
-                                    width: 40,
-                                    height: 5,
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(2.5),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              if (showContent)
-                                Expanded(
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                                    child: campaignPanel,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }
+                  _buildCompactBottomPanel(
+                    context: context,
+                    child: campaignPanel,
+                    collapsedRatio: 0.38,
                   ),
               ],
               if (!_isSearchExpanded && !_controller.isCampaignPanelExpanded)
-                Positioned(
-                  left: 16,
-                  top: 12,
-                  child: Row(
-                    children: [
-                      _CompactFAB(
-                        heroTag: 'expand_search_btn',
-                        icon: Icons.search,
-                        color: Theme.of(context).colorScheme.primary,
-                        onTap: () {
-                          _controller.deselectCampaign();
-                          _controller.toggleCampaignPanel(false);
-                          setState(() {
-                            _isSearchExpanded = true;
-                            _panelHeightState = _PanelHeightState.collapsed;
-                          });
-                        },
-                      ),
-                      const SizedBox(width: 10),
-                      _CompactFAB(
-                        heroTag: 'expand_campaign_btn',
-                        icon: Icons.campaign_outlined,
-                        color: Theme.of(context).colorScheme.secondary,
-                        onTap: () {
-                          _controller.clearSelection();
-                          setState(() {
-                            _isSearchExpanded = false;
-                            _panelHeightState = _PanelHeightState.collapsed;
-                          });
-                          _controller.toggleCampaignPanel(true);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                _buildExpandButtons(context),
               if (widget.appUser != null)
-                // ValueListenableBuilder chỉ rebuild Positioned + avatar
-                // Map và panel KHÔNG bị rebuild khi kéo → mượt hơn
-                ValueListenableBuilder<Offset?>(
-                  valueListenable: _avatarOffset,
-                  builder: (context, offset, child) {
-                    final left = offset?.dx ?? (constraints.maxWidth - 52);
-                    final top = offset?.dy ?? 12;
-                    return Positioned(
-                      left: left,
-                      top: top,
-                      child: GestureDetector(
-                        onPanUpdate: (details) {
-                          // Gán trực tiếp vào .value — không gọi setState
-                          final cur = _avatarOffset.value ??
-                              Offset(constraints.maxWidth - 52, 12);
-                          _avatarOffset.value = Offset(
-                            (cur.dx + details.delta.dx)
-                                .clamp(0.0, constraints.maxWidth - 40),
-                            (cur.dy + details.delta.dy)
-                                .clamp(0.0, constraints.maxHeight - 40),
-                          );
-                        },
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _UserBadge(
-                    user: widget.appUser!,
-                    onManageUsers: _showUserManagement,
-                  ),
-                ),
+                _buildDraggableUserBadge(constraints),
             ],
           );
         },

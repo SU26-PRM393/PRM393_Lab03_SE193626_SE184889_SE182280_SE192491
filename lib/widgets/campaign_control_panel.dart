@@ -13,23 +13,38 @@ const _kBg = Color(0xFFF8FAFB);
 const _kCardBg = Colors.white;
 const _kRadius = 12.0;
 const _kChipRadius = 20.0;
+const _kStatusInProgress = 'in-progress';
+const _kStatusCompleted = 'completed';
+const _kStatusCanceled = 'canceled';
+const _kStatusDoneLabel = 'Hoàn thành';
+const _kStatusCanceledLabel = 'Đã hủy';
+const _kAllFilterLabel = 'Tất cả';
 
 Color _statusColor(String s) => switch (s) {
-      'active' || 'in-progress' => const Color(0xFF16A34A),
-      'completed' => const Color(0xFF2563EB),
-      'canceled' => const Color(0xFF6B7280),
+      'active' || _kStatusInProgress => const Color(0xFF16A34A),
+      _kStatusCompleted => const Color(0xFF2563EB),
+      _kStatusCanceled => const Color(0xFF6B7280),
       'preparing' => const Color(0xFFF97316),
       _ => const Color(0xFF6B7280),
     };
 
 String _statusLabel(String s) => switch (s) {
       'active' => 'Hoạt động',
-      'in-progress' => 'Đang diễn ra',
-      'completed' => 'Hoàn thành',
-      'canceled' => 'Đã hủy',
+      _kStatusInProgress => 'Đang diễn ra',
+      _kStatusCompleted => _kStatusDoneLabel,
+      _kStatusCanceled => _kStatusCanceledLabel,
       'preparing' => 'Chuẩn bị',
       _ => s,
     };
+
+String _employeeSubtitle(String email, String id) {
+  if (email.isNotEmpty) {
+    return email;
+  }
+
+  final shortId = id.length > 8 ? id.substring(0, 8) : id;
+  return 'ID: $shortId...';
+}
 
 // ══════════════════════════════════════════════════════════════════════
 // Root panel
@@ -45,11 +60,15 @@ class CampaignControlPanel extends StatelessWidget {
   final VietnamMapController controller;
   final VoidCallback onClose;
 
-  String get _title => controller.selectedEvent != null
-      ? 'Chi tiết sự kiện'
-      : controller.selectedCampaign != null
-          ? 'Sự kiện'
-          : 'Chiến dịch';
+  String get _title {
+    if (controller.selectedEvent != null) {
+      return 'Chi tiết sự kiện';
+    }
+    if (controller.selectedCampaign != null) {
+      return 'Sự kiện';
+    }
+    return 'Chiến dịch';
+  }
 
   int get _count => controller.selectedCampaign != null
       ? controller.selectedCampaignEvents.length
@@ -520,10 +539,10 @@ class _EmptyState extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════
 
 const _kCampaignFilters = {
-  'all': 'Tất cả',
+  'all': _kAllFilterLabel,
   'active': 'Hoạt động',
-  'completed': 'Hoàn thành',
-  'canceled': 'Đã hủy'
+  _kStatusCompleted: _kStatusDoneLabel,
+  _kStatusCanceled: _kStatusCanceledLabel,
 };
 
 class _CampaignListView extends StatefulWidget {
@@ -605,10 +624,10 @@ class _CampaignListViewState extends State<_CampaignListView> {
 // ══════════════════════════════════════════════════════════════════════
 
 const _kEventFilters = {
-  'all': 'Tất cả',
-  'in-progress': 'Đang diễn ra',
-  'completed': 'Hoàn thành',
-  'canceled': 'Đã hủy'
+  'all': _kAllFilterLabel,
+  _kStatusInProgress: 'Đang diễn ra',
+  _kStatusCompleted: _kStatusDoneLabel,
+  _kStatusCanceled: _kStatusCanceledLabel,
 };
 
 class _EventListView extends StatefulWidget {
@@ -1318,7 +1337,7 @@ class _EmployeeCardState extends State<_EmployeeCard> {
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(widget.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               Text(
-                widget.email.isNotEmpty ? widget.email : 'ID: ${widget.id.length > 8 ? widget.id.substring(0, 8) : widget.id}...',
+                _employeeSubtitle(widget.email, widget.id),
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),
             ])),

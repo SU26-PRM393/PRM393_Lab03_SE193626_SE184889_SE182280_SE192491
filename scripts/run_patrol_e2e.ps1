@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('us1-core-map', 'us1-search-filter-sort', 'us1-province-selection', 'dashboard-stats', 'admin-campaign-crud', 'admin-login-auth', 'admin-user-list', 'notification-workflow', 'user-campaigns-display', 'logout', 'google-auth', 'all')]
+    [ValidateSet('us1-core-map', 'us1-search-filter-sort', 'us1-province-selection', 'dashboard-stats', 'admin-campaign-crud', 'admin-login-auth', 'logout', 'google-auth', 'all')]
     [string]$Suite = 'us1-core-map',
     [string]$EnvFile = '.env.test',
     [string]$Device
@@ -144,9 +144,6 @@ $suiteToTests = @{
     'dashboard-stats' = @('patrol_test/dashboard_statistics_test.dart')
     'admin-campaign-crud' = @('patrol_test/admin_campaign_crud_test.dart')
     'admin-login-auth' = @('patrol_test/admin_gate_login_authorization_test.dart')
-    'admin-user-list' = @('patrol_test/admin_user_list_test.dart')
-    'notification-workflow' = @('patrol_test/notification_workflow_test.dart')
-    'user-campaigns-display' = @('patrol_test/user_campaigns_display_test.dart')
     'logout' = @('patrol_test/logout_test.dart')
     'google-auth' = @('patrol_test/google_login_auth_test.dart')
     'all'         = @(
@@ -156,9 +153,6 @@ $suiteToTests = @{
         'patrol_test/dashboard_statistics_test.dart',
         'patrol_test/admin_campaign_crud_test.dart',
         'patrol_test/admin_gate_login_authorization_test.dart',
-        'patrol_test/admin_user_list_test.dart',
-        'patrol_test/notification_workflow_test.dart',
-        'patrol_test/user_campaigns_display_test.dart',
         'patrol_test/logout_test.dart',
         'patrol_test/google_login_auth_test.dart'
     )

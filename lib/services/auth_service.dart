@@ -14,6 +14,9 @@ import 'package:vietnam_map_flutter/firebase/analytics_service.dart';
 /// Role của user trong hệ thống
 enum UserRole { user, admin }
 
+const _kEmailAlreadyInUseCode = 'email-already-in-use';
+const _kEmailAlreadyInUseMessage = 'Email này đã tồn tại.';
+
 /// Interface để AuthController có thể test được mà không cần Firebase thật
 /// Chỉ khai báo những method mà AuthController cần gọi
 abstract class AuthServiceInterface {
@@ -64,6 +67,13 @@ class AuthService
   final _auth = FirebaseAuth.instance;
   final _db = FirebaseFirestore.instance;
 
+  FirebaseAuthException _emailAlreadyInUseException() {
+    return FirebaseAuthException(
+      code: _kEmailAlreadyInUseCode,
+      message: _kEmailAlreadyInUseMessage,
+    );
+  }
+
   /// Stream bool: true = đã đăng nhập, false = chưa
   @override
   Stream<bool> get isSignedIn => _auth.authStateChanges().map((u) => u != null);
@@ -71,230 +81,294 @@ class AuthService
   /// Đăng nhập bằng Google sử dụng phương pháp Loopback (mở trình duyệt mặc định bảo mật)
   @override
   Future<AppUser> signInWithGoogle() async {
-    // 0. Nếu chạy trên Android hoặc iOS, sử dụng SDK native của google_sign_in
-    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      try {
-        final googleSignIn = GoogleSignIn(
-          scopes: ['email', 'profile', 'openid'],
-        );
-        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-        if (googleUser == null) {
-          throw Exception('Đăng nhập bằng Google bị hủy.');
-        }
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        final userCredential = await _auth.signInWithCredential(credential);
-        final user = userCredential.user!;
-
-        // Đảm bảo document user tồn tại trong Firestore (giống desktop)
-        final userDoc = await _db.collection('users').doc(user.uid).get();
-        if (!userDoc.exists) {
-          await _db.collection('users').doc(user.uid).set({
-            'email': user.email ?? '',
-            'name': user.displayName ?? user.email?.split('@').first ?? 'User',
-            'role': 'user',
-            'photoUrl': user.photoURL ?? '',
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-        } else {
-          final data = userDoc.data();
-          if (data != null && (data['photoUrl'] == null || data['photoUrl'] == '')) {
-            await _db.collection('users').doc(user.uid).update({
-              'photoUrl': user.photoURL ?? '',
-            });
-          }
-        }
-        AnalyticsService.instance.logLogin('google');
-        return _toAppUser(user);
-      } on PlatformException catch (error) {
-        final details = '${error.code} ${error.message ?? ''}';
-        if (error.code == 'sign_in_failed' && details.contains('ApiException: 10')) {
-          throw Exception(
-            'Google Sign-In Android chưa được cấu hình đúng. '
-            'Kiểm tra package name và SHA-1 trong Firebase cho ứng dụng Android này.',
-          );
-        }
-        rethrow;
-      }
+    if (_usesNativeGoogleSignIn) {
+      return _signInWithGoogleNative();
     }
 
+    return _signInWithGoogleDesktop();
+  }
+
+  bool get _usesNativeGoogleSignIn =>
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
+  Future<AppUser> _signInWithGoogleNative() async {
+    try {
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile', 'openid'],
+      );
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Đăng nhập bằng Google bị hủy.');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final appUser = await _signInWithGoogleTokens(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      AnalyticsService.instance.logLogin('google');
+      return appUser;
+    } on PlatformException catch (error) {
+      _handleNativeGoogleSignInError(error);
+    }
+  }
+
+  Never _handleNativeGoogleSignInError(PlatformException error) {
+    final details = '${error.code} ${error.message ?? ''}';
+    if (error.code == 'sign_in_failed' && details.contains('ApiException: 10')) {
+      throw Exception(
+        'Google Sign-In Android chưa được cấu hình đúng. '
+        'Kiểm tra package name và SHA-1 trong Firebase cho ứng dụng Android này.',
+      );
+    }
+
+    throw error;
+  }
+
+  Future<AppUser> _signInWithGoogleDesktop() async {
+    final clientId = _requireGoogleClientId();
+    final session = await _createGoogleLoopbackSession();
+
+    try {
+      final authUri = _buildGoogleAuthUri(
+        clientId: clientId,
+        redirectUri: session.redirectUri,
+        codeVerifier: session.codeVerifier,
+      );
+      await _launchGoogleAuthUri(authUri);
+      final authCode = await _listenForGoogleAuthorizationCode(session.server);
+      final tokens = await _exchangeGoogleAuthCode(
+        clientId: clientId,
+        authCode: authCode,
+        codeVerifier: session.codeVerifier,
+        redirectUri: session.redirectUri,
+      );
+      return _signInWithGoogleTokens(
+        accessToken: tokens.accessToken,
+        idToken: tokens.idToken,
+      );
+    } finally {
+      await session.server.close();
+    }
+  }
+
+  String _requireGoogleClientId() {
     final clientId = DefaultFirebaseOptions.googleClientId;
-    if (clientId.isEmpty || 
-        clientId.contains('YOUR_CLIENT_ID_SUFFIX') || 
+    if (clientId.isEmpty ||
+        clientId.contains('YOUR_CLIENT_ID_SUFFIX') ||
         clientId == 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com') {
       throw Exception('Vui lòng cấu hình googleClientId trong lib/firebase_options.dart');
     }
 
-    // 1. Tạo local HTTP Server để hứng callback
+    return clientId;
+  }
 
+  Future<({HttpServer server, String redirectUri, String codeVerifier})>
+      _createGoogleLoopbackSession() async {
     final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-    final port = server.port;
-    final redirectUri = 'http://localhost:$port';
+    final redirectUri = 'http://localhost:${server.port}';
+    final codeVerifier = _generateGoogleCodeVerifier();
+    return (
+      server: server,
+      redirectUri: redirectUri,
+      codeVerifier: codeVerifier,
+    );
+  }
 
-    // 2. Tạo PKCE verifier và challenge
+  String _generateGoogleCodeVerifier() {
     final random = Random.secure();
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~';
-    final codeVerifier = List.generate(80, (index) => chars[random.nextInt(chars.length)]).join();
-    
-    final verifierBytes = utf8.encode(codeVerifier);
-    final verifierDigest = sha256.convert(verifierBytes);
-    final codeChallenge = base64Url.encode(verifierDigest.bytes).replaceAll('=', '');
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~';
+    return List.generate(
+      80,
+      (index) => chars[random.nextInt(chars.length)],
+    ).join();
+  }
 
-    // 3. Tạo Google OAuth URL
+  Uri _buildGoogleAuthUri({
+    required String clientId,
+    required String redirectUri,
+    required String codeVerifier,
+  }) {
     final scopes = ['openid', 'email', 'profile'];
-    final authUri = Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
+    return Uri.https('accounts.google.com', '/o/oauth2/v2/auth', {
       'client_id': clientId,
       'redirect_uri': redirectUri,
       'response_type': 'code',
       'scope': scopes.join(' '),
-      'code_challenge': codeChallenge,
+      'code_challenge': _buildGoogleCodeChallenge(codeVerifier),
       'code_challenge_method': 'S256',
     });
+  }
 
-    // 4. Mở trình duyệt mặc định của hệ thống
+  String _buildGoogleCodeChallenge(String codeVerifier) {
+    final verifierBytes = utf8.encode(codeVerifier);
+    final verifierDigest = sha256.convert(verifierBytes);
+    return base64Url.encode(verifierDigest.bytes).replaceAll('=', '');
+  }
+
+  Future<void> _launchGoogleAuthUri(Uri authUri) async {
     if (!await launchUrl(authUri, mode: LaunchMode.externalApplication)) {
-      await server.close();
       throw Exception('Không thể mở trình duyệt.');
     }
+  }
 
-    // 5. Lắng nghe Authorization Code từ trình duyệt
-    String? authCode;
-    try {
-      await for (final request in server) {
-        final code = request.uri.queryParameters['code'];
-        if (code != null) {
-          authCode = code;
-          
-          // Trả về trang HTML thông báo đăng nhập thành công
-          request.response.statusCode = 200;
-          request.response.headers.contentType = ContentType.html;
-          request.response.write('''
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Đăng nhập thành công</title>
-              <style>
-                body {
-                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                  display: flex;
-                  flex-direction: column;
-                  align-items: center;
-                  justify-content: center;
-                  height: 100vh;
-                  margin: 0;
-                  background-color: #f5f5f7;
-                }
-                .card {
-                  background: white;
-                  padding: 40px;
-                  border-radius: 12px;
-                  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                  text-align: center;
-                }
-                h1 { color: #34c759; margin-top: 0; }
-                p { color: #8e8e93; }
-                .timer { font-weight: bold; color: #0071e3; }
-                .btn {
-                  margin-top: 20px;
-                  padding: 10px 20px;
-                  background-color: #0071e3;
-                  color: white;
-                  border: none;
-                  border-radius: 8px;
-                  cursor: pointer;
-                  font-weight: 600;
-                  text-decoration: none;
-                  display: inline-block;
-                }
-                .btn:hover { background-color: #0077ed; }
-              </style>
-            </head>
-            <body>
-              <div class="card">
-                <h1>Đăng nhập thành công!</h1>
-                <p>Bạn có thể đóng trình duyệt này và quay lại ứng dụng Bản đồ Việt Nam.</p>
-                <p>Trình duyệt sẽ tự động đóng sau <span id="timer" class="timer">5</span> giây...</p>
-                <button onclick="window.close()" class="btn">Đóng trình duyệt ngay</button>
-              </div>
-              <script>
-                var sec = 5;
-                var timer = setInterval(function() {
-                  sec--;
-                  document.getElementById("timer").textContent = sec;
-                  if (sec <= 0) {
-                    clearInterval(timer);
-                    window.close();
-                  }
-                }, 1000);
-              </script>
-            </body>
-            </html>
-          ''');
-          await request.response.close();
-          break;
-        } else {
-          request.response.statusCode = 400;
-          request.response.headers.contentType = ContentType.html;
-          request.response.write('<h1>Lỗi đăng nhập</h1><p>Không nhận được mã xác thực.</p>');
-          await request.response.close();
-        }
+  Future<String> _listenForGoogleAuthorizationCode(HttpServer server) async {
+    await for (final request in server) {
+      final code = request.uri.queryParameters['code'];
+      if (code != null) {
+        await _writeGoogleAuthSuccessResponse(request);
+        return code;
       }
-    } finally {
-      await server.close();
+
+      await _writeGoogleAuthFailureResponse(request);
     }
 
-    if (authCode == null) {
-      throw Exception('Đăng nhập bằng Google bị hủy.');
-    }
+    throw Exception('Đăng nhập bằng Google bị hủy.');
+  }
 
-    // 6. Trao đổi authCode lấy tokens
+  Future<void> _writeGoogleAuthSuccessResponse(HttpRequest request) async {
+    request.response.statusCode = 200;
+    request.response.headers.contentType = ContentType.html;
+    request.response.write('''
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Đăng nhập thành công</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f7;
+          }
+          .card {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+          }
+          h1 { color: #34c759; margin-top: 0; }
+          p { color: #8e8e93; }
+          .timer { font-weight: bold; color: #0071e3; }
+          .btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+          }
+          .btn:hover { background-color: #0077ed; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>Đăng nhập thành công!</h1>
+          <p>Bạn có thể đóng trình duyệt này và quay lại ứng dụng Bản đồ Việt Nam.</p>
+          <p>Trình duyệt sẽ tự động đóng sau <span id="timer" class="timer">5</span> giây...</p>
+          <button onclick="window.close()" class="btn">Đóng trình duyệt ngay</button>
+        </div>
+        <script>
+          var sec = 5;
+          var timer = setInterval(function() {
+            sec--;
+            document.getElementById("timer").textContent = sec;
+            if (sec <= 0) {
+              clearInterval(timer);
+              window.close();
+            }
+          }, 1000);
+        </script>
+      </body>
+      </html>
+    ''');
+    await request.response.close();
+  }
+
+  Future<void> _writeGoogleAuthFailureResponse(HttpRequest request) async {
+    request.response.statusCode = 400;
+    request.response.headers.contentType = ContentType.html;
+    request.response.write(
+      '<h1>Lỗi đăng nhập</h1><p>Không nhận được mã xác thực.</p>',
+    );
+    await request.response.close();
+  }
+
+  Future<({String accessToken, String idToken})> _exchangeGoogleAuthCode({
+    required String clientId,
+    required String authCode,
+    required String codeVerifier,
+    required String redirectUri,
+  }) async {
     final httpClient = HttpClient();
-    final tokenRequest = await httpClient.postUrl(Uri.parse('https://oauth2.googleapis.com/token'));
-    tokenRequest.headers.contentType = ContentType.json;
-    final body = {
-      'client_id': clientId,
-      'code': authCode,
-      'code_verifier': codeVerifier,
-      'redirect_uri': redirectUri,
-      'grant_type': 'authorization_code',
-    };
+    try {
+      final tokenRequest =
+          await httpClient.postUrl(Uri.parse('https://oauth2.googleapis.com/token'));
+      tokenRequest.headers.contentType = ContentType.json;
 
-    if (DefaultFirebaseOptions.googleClientSecret.isNotEmpty) {
-      body['client_secret'] = DefaultFirebaseOptions.googleClientSecret;
+      final body = <String, String>{
+        'client_id': clientId,
+        'code': authCode,
+        'code_verifier': codeVerifier,
+        'redirect_uri': redirectUri,
+        'grant_type': 'authorization_code',
+      };
+
+      if (DefaultFirebaseOptions.googleClientSecret.isNotEmpty) {
+        body['client_secret'] = DefaultFirebaseOptions.googleClientSecret;
+      }
+
+      tokenRequest.write(jsonEncode(body));
+
+      final tokenResponse = await tokenRequest.close();
+      final responseBody = await tokenResponse.transform(utf8.decoder).join();
+      if (tokenResponse.statusCode != 200) {
+        throw Exception('Không thể trao đổi mã xác thực với Google: $responseBody');
+      }
+
+      final tokenData = jsonDecode(responseBody) as Map<String, dynamic>;
+      final accessToken = tokenData['access_token'] as String?;
+      final idToken = tokenData['id_token'] as String?;
+      if (accessToken == null || idToken == null) {
+        throw Exception('Không nhận được tokens từ Google.');
+      }
+
+      return (accessToken: accessToken, idToken: idToken);
+    } finally {
+      httpClient.close();
     }
+  }
 
-    tokenRequest.write(jsonEncode(body));
-
-    final tokenResponse = await tokenRequest.close();
-    final responseBody = await tokenResponse.transform(utf8.decoder).join();
-    httpClient.close();
-
-    if (tokenResponse.statusCode != 200) {
-      throw Exception('Không thể trao đổi mã xác thực với Google: $responseBody');
-    }
-
-    final tokenData = jsonDecode(responseBody) as Map<String, dynamic>;
-    final accessToken = tokenData['access_token'] as String?;
-    final idToken = tokenData['id_token'] as String?;
-
+  Future<AppUser> _signInWithGoogleTokens({
+    required String? accessToken,
+    required String? idToken,
+  }) async {
     if (accessToken == null || idToken == null) {
       throw Exception('Không nhận được tokens từ Google.');
     }
 
-    // 7. Đăng nhập vào Firebase Auth bằng credential
     final credential = GoogleAuthProvider.credential(
       accessToken: accessToken,
       idToken: idToken,
     );
-    
     final userCredential = await _auth.signInWithCredential(credential);
     final user = userCredential.user!;
+    await _ensureUserDocument(user);
+    return _toAppUser(user);
+  }
 
-    // 8. Đảm bảo document user tồn tại trong Firestore
+  Future<void> _ensureUserDocument(User user) async {
     final userDoc = await _db.collection('users').doc(user.uid).get();
     if (!userDoc.exists) {
       await _db.collection('users').doc(user.uid).set({
@@ -304,16 +378,15 @@ class AuthService
         'photoUrl': user.photoURL ?? '',
         'createdAt': FieldValue.serverTimestamp(),
       });
-    } else {
-      final data = userDoc.data();
-      if (data != null && (data['photoUrl'] == null || data['photoUrl'] == '')) {
-        await _db.collection('users').doc(user.uid).update({
-          'photoUrl': user.photoURL ?? '',
-        });
-      }
+      return;
     }
 
-    return _toAppUser(user);
+    final data = userDoc.data();
+    if (data != null && (data['photoUrl'] == null || data['photoUrl'] == '')) {
+      await _db.collection('users').doc(user.uid).update({
+        'photoUrl': user.photoURL ?? '',
+      });
+    }
   }
 
   /// Đăng nhập bằng email + password
@@ -348,7 +421,7 @@ class AuthService
 
       return _toAppUser(credential.user!);
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
+      if (e.code == _kEmailAlreadyInUseCode) {
         // Thay vì query Firestore trực tiếp (gây permission-denied khi chưa login),
         // Ta thử đăng nhập bằng email + password vừa điền.
         try {
@@ -381,18 +454,12 @@ class AuthService
             // Firestore doc có tồn tại (tài khoản bình thường đang hoạt động).
             // Đăng xuất và quăng lỗi email-already-in-use thông thường.
             await _auth.signOut();
-            throw FirebaseAuthException(
-              code: 'email-already-in-use',
-              message: 'Email này đã tồn tại.',
-            );
+            throw _emailAlreadyInUseException();
           }
         } catch (_) {
           // Nếu đăng nhập thất bại (hoặc bất kỳ lỗi nào như sai mật khẩu),
           // thì quăng lỗi email-already-in-use thông thường.
-          throw FirebaseAuthException(
-            code: 'email-already-in-use',
-            message: 'Email này đã tồn tại.',
-          );
+          throw _emailAlreadyInUseException();
         }
       }
       rethrow;

@@ -206,7 +206,7 @@ class VietnamMapController extends ChangeNotifier {
     }
   }
 
-  Future<void> selectCampaign(Campaign campaign) async {
+  void _prepareCampaignSelection(Campaign campaign) {
     _selectedCampaign = campaign;
     _selectedEvent = null;
     _selectedCampaignEvents = [];
@@ -220,6 +220,124 @@ class VietnamMapController extends ChangeNotifier {
     _interactionsSubscription?.cancel();
     _interactionsSubscription = null;
     _isLoadingEvents = true;
+  }
+
+  Future<Map<String, School>> _loadCampaignSchools(List<Event> events) async {
+    final schoolIds = <String>{};
+    for (final event in events) {
+      schoolIds.addAll(event.schoolIds);
+    }
+
+    final schools =
+        await CampaignRepository.instance.getSchoolsByIds(schoolIds.toList());
+    return {for (final school in schools) school.id: school};
+  }
+
+  Map<String, LatLng> _resolveCampaignEventCoordinates(
+    List<Event> events,
+    Map<String, School> schoolMap,
+  ) {
+    final resolvedCoords = <String, LatLng>{};
+    for (final event in events) {
+      final coordinate = _resolveEventCoordinate(event, schoolMap);
+      if (coordinate != null) {
+        resolvedCoords[event.id] = coordinate;
+      }
+    }
+    return resolvedCoords;
+  }
+
+  LatLng? _resolveEventCoordinate(
+    Event event,
+    Map<String, School> schoolMap,
+  ) {
+    if (event.schoolIds.isEmpty) {
+      return null;
+    }
+
+    final school = schoolMap[event.schoolIds.first];
+    if (school == null) {
+      return null;
+    }
+
+    return _resolveSchoolCoordinate(school);
+  }
+
+  LatLng? _resolveSchoolCoordinate(School school) {
+    final communeCoordinate = _findCommuneCoordinate(school.communeCode);
+    if (communeCoordinate != null) {
+      return communeCoordinate;
+    }
+
+    return _findProvinceCenter(school.provinceCode);
+  }
+
+  LatLng? _findCommuneCoordinate(String communeCode) {
+    final targetCodeValue = int.tryParse(communeCode);
+    final place = _boundaryData.lowerLevelPlaces.where((p) {
+      return p.code == communeCode ||
+          (targetCodeValue != null && int.tryParse(p.code) == targetCodeValue);
+    }).firstOrNull;
+    return place?.coordinate;
+  }
+
+  LatLng? _findProvinceCenter(String provinceCode) {
+    final provinceTargetValue = int.tryParse(provinceCode);
+    final provinceBoundary = _boundaryData.provinceBoundaries
+        .where((boundary) =>
+            boundary.provinceCode == provinceCode ||
+            (provinceTargetValue != null &&
+                int.tryParse(boundary.provinceCode) == provinceTargetValue))
+        .firstOrNull;
+
+    if (provinceBoundary == null || provinceBoundary.polygons.isEmpty) {
+      return null;
+    }
+
+    return provinceBoundary.polygons.first.outerRing.bounds.center;
+  }
+
+  Future<({Map<String, String> names, Map<String, String> emails})>
+      _loadCampaignEmployeeDetails(List<Event> events) async {
+    final employeeIds = <String>{};
+    for (final event in events) {
+      employeeIds.addAll(event.assignedEmployeeIds);
+    }
+
+    final employeeDetails = await CampaignRepository.instance
+        .getUserDetailsByIds(employeeIds.toList());
+    final employeeNames = <String, String>{};
+    final employeeEmails = <String, String>{};
+
+    for (final entry in employeeDetails.entries) {
+      employeeNames[entry.key] = entry.value['name'] ?? 'Unknown';
+      employeeEmails[entry.key] = entry.value['email'] ?? '';
+    }
+
+    return (names: employeeNames, emails: employeeEmails);
+  }
+
+  void _fitCameraToCampaignEvents(Map<String, LatLng> resolvedCoords) {
+    if (resolvedCoords.isEmpty) {
+      return;
+    }
+
+    final bounds = LatLngBounds.fromPoints(resolvedCoords.values.toList());
+    final targetCamera = CameraFit.bounds(
+      bounds: bounds,
+      padding: const EdgeInsets.all(56.0),
+      maxZoom: 9.5,
+      minZoom: viewport.minZoom,
+    ).fit(mapController.camera);
+
+    _animateCameraTo(
+      center: targetCamera.center,
+      zoom: targetCamera.zoom,
+    );
+  }
+
+  Future<void> selectCampaign(Campaign campaign) async {
+    _prepareCampaignSelection(campaign);
     notifyListeners();
 
     try {
@@ -227,93 +345,20 @@ class VietnamMapController extends ChangeNotifier {
           await CampaignRepository.instance.getEventsForCampaign(campaign.id);
       _selectedCampaignEvents = events;
 
-      // Ensure lowerLevelPlaces are loaded so we can resolve commune coordinates
       if (_lowerLevelPlacesStatus != MapLoadStatus.ready) {
         await _ensureLowerLevelPlacesLoaded();
       }
 
-      // Resolve coordinates
-      final Map<String, LatLng> resolvedCoords = {};
-
-      // Extract all unique school IDs
-      final Set<String> schoolIdsToFetch = {};
-      for (final event in events) {
-        schoolIdsToFetch.addAll(event.schoolIds);
-      }
-
-      // Fetch schools
-      final schools = await CampaignRepository.instance
-          .getSchoolsByIds(schoolIdsToFetch.toList());
-      final Map<String, School> schoolMap = {for (var s in schools) s.id: s};
-
-      // Map event ID to first available school's commune coordinate
-      for (final event in events) {
-        if (event.schoolIds.isNotEmpty) {
-          final firstSchoolId = event.schoolIds.first;
-          final school = schoolMap[firstSchoolId];
-          if (school != null) {
-            final communeCode = school.communeCode;
-            final targetCodeValue = int.tryParse(communeCode);
-            // Find coordinate from lowerLevelPlaces
-            final place = _boundaryData.lowerLevelPlaces.where((p) {
-              return p.code == communeCode ||
-                  (targetCodeValue != null &&
-                      int.tryParse(p.code) == targetCodeValue);
-            }).firstOrNull;
-            if (place != null) {
-              resolvedCoords[event.id] = place.coordinate;
-            } else {
-              // Fallback: If not found, use province center
-              final provCode = school.provinceCode;
-              final provTargetValue = int.tryParse(provCode);
-              final provPlace = _boundaryData.provinceBoundaries
-                  .where((p) =>
-                      p.provinceCode == provCode ||
-                      (provTargetValue != null &&
-                          int.tryParse(p.provinceCode) == provTargetValue))
-                  .firstOrNull;
-              if (provPlace != null && provPlace.polygons.isNotEmpty) {
-                resolvedCoords[event.id] =
-                    provPlace.polygons.first.outerRing.bounds.center;
-              }
-            }
-          }
-        }
-      }
-
-      // Fetch employee names & emails
-      final Set<String> employeeIdsToFetch = {};
-      for (final event in events) {
-        employeeIdsToFetch.addAll(event.assignedEmployeeIds);
-      }
-      final employeeDetails = await CampaignRepository.instance
-          .getUserDetailsByIds(employeeIdsToFetch.toList());
-      final Map<String, String> employeeNames = {};
-      final Map<String, String> employeeEmails = {};
-      for (var entry in employeeDetails.entries) {
-        employeeNames[entry.key] = entry.value['name'] ?? 'Unknown';
-        employeeEmails[entry.key] = entry.value['email'] ?? '';
-      }
+      final schoolMap = await _loadCampaignSchools(events);
+      final resolvedCoords = _resolveCampaignEventCoordinates(events, schoolMap);
+      final employeeDetails = await _loadCampaignEmployeeDetails(events);
 
       _eventCoordinates = resolvedCoords;
       _eventSchools = schoolMap;
-      _employeeNames = employeeNames;
-      _employeeEmails = employeeEmails;
+      _employeeNames = employeeDetails.names;
+      _employeeEmails = employeeDetails.emails;
 
-      if (resolvedCoords.isNotEmpty) {
-        final bounds = LatLngBounds.fromPoints(resolvedCoords.values.toList());
-        final targetCamera = CameraFit.bounds(
-          bounds: bounds,
-          padding: const EdgeInsets.all(56.0),
-          maxZoom: 9.5,
-          minZoom: viewport.minZoom,
-        ).fit(mapController.camera);
-
-        _animateCameraTo(
-          center: targetCamera.center,
-          zoom: targetCamera.zoom,
-        );
-      }
+      _fitCameraToCampaignEvents(resolvedCoords);
     } catch (e) {
       debugPrint('Load events error: $e');
     } finally {

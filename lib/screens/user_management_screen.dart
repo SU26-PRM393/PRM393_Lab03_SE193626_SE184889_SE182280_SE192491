@@ -5,6 +5,17 @@ import 'package:vietnam_map_flutter/services/auth_service.dart';
 enum _SortField { name, email, role, status }
 
 const _kDisabled = 'Đã tắt';
+const _kAllUsersLabel = 'Tất cả';
+const _kRoleFilterOptions = {
+  'all': _kAllUsersLabel,
+  'admin': 'Admin',
+  'user': 'User',
+};
+const _kStatusFilterOptions = {
+  'all': _kAllUsersLabel,
+  'active': 'Hoạt động',
+  'disabled': _kDisabled,
+};
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({
@@ -284,11 +295,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6))),
                     const SizedBox(width: 12),
                     ..._buildFilterChips(
-                      options: const {
-                        'all': 'Tất cả',
-                        'admin': 'Admin',
-                        'user': 'User'
-                      },
+                      options: _kRoleFilterOptions,
                       current: _roleFilter,
                       onSelect: (v) => setState(() => _roleFilter = v),
                     ),
@@ -302,11 +309,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6))),
                     const SizedBox(width: 12),
                     ..._buildFilterChips(
-                      options: const {
-                        'all': 'Tất cả',
-                        'active': 'Hoạt động',
-                        'disabled': _kDisabled,
-                      },
+                      options: _kStatusFilterOptions,
                       current: _statusFilter,
                       onSelect: (v) => setState(() => _statusFilter = v),
                     ),
@@ -322,11 +325,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         style: TextStyle(
                             fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                     ..._buildFilterChips(
-                      options: const {
-                        'all': 'Tất cả',
-                        'admin': 'Admin',
-                        'user': 'User'
-                      },
+                      options: _kRoleFilterOptions,
                       current: _roleFilter,
                       onSelect: (v) => setState(() => _roleFilter = v),
                     ),
@@ -335,11 +334,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         style: TextStyle(
                             fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                     ..._buildFilterChips(
-                      options: const {
-                        'all': 'Tất cả',
-                        'active': 'Hoạt động',
-                        'disabled': _kDisabled,
-                      },
+                      options: _kStatusFilterOptions,
                       current: _statusFilter,
                       onSelect: (v) => setState(() => _statusFilter = v),
                     ),

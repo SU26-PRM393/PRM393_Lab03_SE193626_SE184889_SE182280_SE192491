@@ -29,6 +29,207 @@ class _UserShellState extends State<UserShell> {
     _user = widget.user;
   }
 
+  void _setCurrentTab(_UserTab tab) {
+    setState(() => _tab = tab);
+  }
+
+  void _handleBottomNavTap(int index) {
+    _setCurrentTab(index == 0 ? _UserTab.dashboard : _UserTab.vietmap);
+  }
+
+  void _handleProfileUpdated(AppUser updated) {
+    setState(() => _user = updated);
+  }
+
+  void _handleAccountAction(String value) {
+    if (value == 'logout') {
+      widget.onLogout();
+      return;
+    }
+
+    if (value == 'profile') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(
+            user: _user,
+            onProfileUpdated: _handleProfileUpdated,
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildDesktopTitle(ColorScheme cs) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          Icon(Icons.map, color: cs.onPrimary, size: 22),
+          const SizedBox(width: 8),
+          Text(
+            'VietNam Map',
+            style: TextStyle(
+              color: cs.onPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(width: 24),
+          _TabButton(
+            label: 'Thống Kê',
+            icon: Icons.dashboard_outlined,
+            selected: _tab == _UserTab.dashboard,
+            onTap: () => _setCurrentTab(_UserTab.dashboard),
+          ),
+          const SizedBox(width: 4),
+          _TabButton(
+            label: 'VietMap',
+            icon: Icons.map_outlined,
+            selected: _tab == _UserTab.vietmap,
+            onTap: () => _setCurrentTab(_UserTab.vietmap),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAccountMenuChild(ColorScheme cs) {
+    final hasPhoto = _user.photoUrl != null && _user.photoUrl!.trim().isNotEmpty;
+    final displayName = _user.name.isNotEmpty ? _user.name : _user.email;
+    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+
+    return _ProfileHoverWrapper(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 12,
+              backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+              backgroundImage: hasPhoto ? NetworkImage(_user.photoUrl!) : null,
+              onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+              child: hasPhoto
+                  ? null
+                  : Text(
+                      firstLetter,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: cs.onPrimary,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              displayName,
+              style: TextStyle(
+                color: cs.onPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildAppBarActions(ColorScheme cs) {
+    return [
+      PopupMenuButton<String>(
+        offset: const Offset(0, 48),
+        tooltip: 'Tài khoản',
+        onSelected: _handleAccountAction,
+        itemBuilder: (context) => [
+          const PopupMenuItem<String>(
+            value: 'profile',
+            child: Row(
+              children: [
+                Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                SizedBox(width: 8),
+                Text('Hồ sơ cá nhân'),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'logout',
+            child: Row(
+              children: [
+                Icon(Icons.logout, color: Colors.red, size: 18),
+                SizedBox(width: 8),
+                Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+          ),
+        ],
+        child: _buildAccountMenuChild(cs),
+      ),
+      const SizedBox(width: 8),
+    ];
+  }
+
+  PreferredSizeWidget? _buildAppBar(ColorScheme cs, bool isMobile, bool showOuterAppBar) {
+    if (!showOuterAppBar) {
+      return null;
+    }
+
+    return AppBar(
+      backgroundColor: cs.primary,
+      foregroundColor: cs.onPrimary,
+      titleSpacing: 16,
+      title: isMobile
+          ? const Text(
+              'VietMap',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            )
+          : _buildDesktopTitle(cs),
+      actions: _buildAppBarActions(cs),
+    );
+  }
+
+  Widget? _buildBottomNavigationBar(ColorScheme cs, bool isMobile) {
+    if (!isMobile) {
+      return null;
+    }
+
+    return BottomNavigationBar(
+      currentIndex: _tab == _UserTab.dashboard ? 0 : 1,
+      selectedItemColor: cs.primary,
+      unselectedItemColor: cs.onSurface.withValues(alpha: 0.6),
+      onTap: _handleBottomNavTap,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.dashboard_outlined),
+          activeIcon: Icon(Icons.dashboard),
+          label: 'Thống Kê',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map_outlined),
+          activeIcon: Icon(Icons.map),
+          label: 'VietMap',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    if (_tab == _UserTab.dashboard) {
+      return UserDashboard(
+        user: _user,
+        onLogout: widget.onLogout,
+        onProfileUpdated: _handleProfileUpdated,
+      );
+    }
+
+    return const VietnamMapScreen();
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -39,171 +240,9 @@ class _UserShellState extends State<UserShell> {
 
     return Scaffold(
       key: const ValueKey('patrolAuthenticatedShell'),
-      appBar: showOuterAppBar
-          ? AppBar(
-              backgroundColor: cs.primary,
-              foregroundColor: cs.onPrimary,
-              titleSpacing: 16,
-              title: isMobile
-                  ? const Text(
-                      'VietMap',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          Icon(Icons.map, color: cs.onPrimary, size: 22),
-                          const SizedBox(width: 8),
-                          Text(
-                            'VietNam Map',
-                            style: TextStyle(
-                              color: cs.onPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                          _TabButton(
-                            label: 'Thống Kê',
-                            icon: Icons.dashboard_outlined,
-                            selected: _tab == _UserTab.dashboard,
-                            onTap: () => setState(() => _tab = _UserTab.dashboard),
-                          ),
-                          const SizedBox(width: 4),
-                          _TabButton(
-                            label: 'VietMap',
-                            icon: Icons.map_outlined,
-                            selected: _tab == _UserTab.vietmap,
-                            onTap: () => setState(() => _tab = _UserTab.vietmap),
-                          ),
-                        ],
-                      ),
-                    ),
-              actions: [
-                PopupMenuButton<String>(
-                  offset: const Offset(0, 48),
-                  tooltip: 'Tài khoản',
-                  onSelected: (val) {
-                    if (val == 'logout') {
-                      widget.onLogout();
-                    } else if (val == 'profile') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileScreen(
-                            user: _user,
-                            onProfileUpdated: (updated) {
-                              setState(() => _user = updated);
-                            },
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem<String>(
-                      value: 'profile',
-                      child: Row(
-                        children: [
-                          Icon(Icons.person_outline, color: Colors.black87, size: 18),
-                          SizedBox(width: 8),
-                          Text('Hồ sơ cá nhân'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem<String>(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout, color: Colors.red, size: 18),
-                          SizedBox(width: 8),
-                          Text('Đăng xuất', style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                    ),
-                  ],
-                  child: Builder(
-                    builder: (context) {
-                      final hasPhoto = _user.photoUrl != null && _user.photoUrl!.trim().isNotEmpty;
-                      final displayName = _user.name.isNotEmpty ? _user.name : _user.email;
-                      final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
-
-                      return _ProfileHoverWrapper(
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              CircleAvatar(
-                                radius: 12,
-                                backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
-                                backgroundImage: hasPhoto ? NetworkImage(_user.photoUrl!) : null,
-                                onBackgroundImageError: hasPhoto ? (_, __) {} : null,
-                                child: hasPhoto
-                                    ? null
-                                    : Text(
-                                        firstLetter,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: cs.onPrimary,
-                                        ),
-                                      ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                displayName,
-                                style: TextStyle(color: cs.onPrimary, fontSize: 12, fontWeight: FontWeight.w500),
-                              ),
-                              const SizedBox(width: 4),
-                              Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            )
-          : null,
-      bottomNavigationBar: isMobile
-          ? BottomNavigationBar(
-              currentIndex: _tab == _UserTab.dashboard ? 0 : 1,
-              selectedItemColor: cs.primary,
-              unselectedItemColor: cs.onSurface.withValues(alpha: 0.6),
-              onTap: (index) {
-                setState(() {
-                  _tab = index == 0 ? _UserTab.dashboard : _UserTab.vietmap;
-                });
-              },
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.dashboard_outlined),
-                  activeIcon: Icon(Icons.dashboard),
-                  label: 'Thống Kê',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.map_outlined),
-                  activeIcon: Icon(Icons.map),
-                  label: 'VietMap',
-                ),
-              ],
-            )
-          : null,
-      body: _tab == _UserTab.dashboard
-          ? UserDashboard(
-              user: _user,
-              onLogout: widget.onLogout,
-              onProfileUpdated: (updated) {
-                setState(() => _user = updated);
-              },
-            )
-          : const VietnamMapScreen(),
+      appBar: _buildAppBar(cs, isMobile, showOuterAppBar),
+      bottomNavigationBar: _buildBottomNavigationBar(cs, isMobile),
+      body: _buildBody(),
     );
   }
 }

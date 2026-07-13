@@ -32,6 +32,177 @@ class _UserDashboardState extends State<UserDashboard> {
 
   static const _expandedWidth = 210.0;
 
+  void _handleSectionSelected(_UserSection section) {
+    setState(() => _section = section);
+  }
+
+  void _handleAccountAction(String value) {
+    if (value == 'logout') {
+      widget.onLogout();
+      return;
+    }
+
+    if (value == 'profile') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(
+            user: widget.user,
+            onProfileUpdated: widget.onProfileUpdated,
+          ),
+        ),
+      );
+    }
+  }
+
+  String _currentSectionTitle() {
+    return switch (_section) {
+      _UserSection.overview => 'Thống Kê',
+      _UserSection.campaigns => 'Chiến dịch',
+      _UserSection.notifications => 'Thông báo',
+    };
+  }
+
+  Widget _buildNotificationButton(ColorScheme cs, int unread) {
+    return Stack(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          color: cs.onPrimary,
+          tooltip: 'Thông báo',
+          onPressed: () => setState(() => _section = _UserSection.notifications),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  unread > 99 ? '99+' : '$unread',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAccountMenuChild(ColorScheme cs, String displayName) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: cs.onPrimary.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircleAvatar(
+            radius: 10,
+            child: SizedBox.shrink(),
+          ),
+          const SizedBox(width: 6),
+          Text(displayName, style: TextStyle(color: cs.onPrimary, fontSize: 12)),
+          const SizedBox(width: 4),
+          Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildMobileActions(ColorScheme cs, int unread, String displayName) {
+    return [
+      _buildNotificationButton(cs, unread),
+      PopupMenuButton<String>(
+        offset: const Offset(0, 48),
+        tooltip: 'Tài khoản',
+        onSelected: _handleAccountAction,
+        itemBuilder: (context) => [
+          const PopupMenuItem<String>(
+            value: 'profile',
+            child: Row(
+              children: [
+                Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                SizedBox(width: 8),
+                Text('Hồ sơ cá nhân'),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'logout',
+            child: Row(
+              children: [
+                Icon(Icons.logout, color: Colors.red, size: 18),
+                SizedBox(width: 8),
+                Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+          ),
+        ],
+        child: _buildAccountMenuChild(cs, displayName),
+      ),
+      const SizedBox(width: 8),
+    ];
+  }
+
+  Widget _buildMobileScaffold(BuildContext context, ColorScheme cs, int unread, String displayName) {
+    return Scaffold(
+      drawer: Drawer(
+        child: _Sidebar(
+          section: _section,
+          unread: unread,
+          onSelect: (section) {
+            _handleSectionSelected(section);
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      appBar: AppBar(
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+        title: Text(
+          _currentSectionTitle(),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        actions: _buildMobileActions(cs, unread, displayName),
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildDesktopLayout(int unread) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: _expandedWidth,
+          child: _Sidebar(
+            section: _section,
+            unread: unread,
+            onSelect: _handleSectionSelected,
+          ),
+        ),
+        const VerticalDivider(width: 1, thickness: 1),
+        Expanded(child: _buildBody()),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
@@ -44,174 +215,15 @@ class _UserDashboardState extends State<UserDashboard> {
     final vm = context.watch<NotificationViewModel>();
     final cs = Theme.of(context).colorScheme;
     final isMobile = MediaQuery.of(context).size.width < 700;
-
-    final hasPhoto = widget.user.photoUrl != null && widget.user.photoUrl!.trim().isNotEmpty;
-    final displayName = widget.user.name.isNotEmpty ? widget.user.name : widget.user.email;
-    final firstLetter = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+    final displayName =
+        widget.user.name.isNotEmpty ? widget.user.name : widget.user.email;
     final unread = vm.unreadCount;
 
-    Widget bellButton() => Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              color: cs.onPrimary,
-              tooltip: 'Thông báo',
-              onPressed: () =>
-                  setState(() => _section = _UserSection.notifications),
-            ),
-            if (unread > 0)
-              Positioned(
-                right: 6,
-                top: 6,
-                child: IgnorePointer(
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints:
-                        const BoxConstraints(minWidth: 16, minHeight: 16),
-                    child: Text(
-                      unread > 99 ? '99+' : '$unread',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        );
-
     if (isMobile) {
-      return Scaffold(
-        drawer: Drawer(
-          child: _Sidebar(
-            section: _section,
-            unread: unread,
-            onSelect: (s) {
-              setState(() => _section = s);
-              Navigator.pop(context); // Đóng drawer
-            },
-          ),
-        ),
-        appBar: AppBar(
-          backgroundColor: cs.primary,
-          foregroundColor: cs.onPrimary,
-          title: Text(
-            switch (_section) {
-              _UserSection.overview => 'Thống Kê',
-              _UserSection.campaigns => 'Chiến dịch',
-              _UserSection.notifications => 'Thông báo',
-            },
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          actions: [
-            bellButton(),
-            PopupMenuButton<String>(
-              offset: const Offset(0, 48),
-              tooltip: 'Tài khoản',
-              onSelected: (val) {
-                if (val == 'logout') {
-                  widget.onLogout();
-                } else if (val == 'profile') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfileScreen(
-                        user: widget.user,
-                        onProfileUpdated: widget.onProfileUpdated,
-                      ),
-                    ),
-                  );
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem<String>(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline, color: Colors.black87, size: 18),
-                      SizedBox(width: 8),
-                      Text('Hồ sơ cá nhân'),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.red, size: 18),
-                      SizedBox(width: 8),
-                      Text('Đăng xuất', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
-                ),
-              ],
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cs.onPrimary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      radius: 10,
-                      backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
-                      backgroundImage: hasPhoto ? NetworkImage(widget.user.photoUrl!) : null,
-                      onBackgroundImageError: hasPhoto ? (_, __) {} : null,
-                      child: hasPhoto
-                          ? null
-                          : Text(
-                              firstLetter,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: cs.onPrimary,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      displayName,
-                      style: TextStyle(color: cs.onPrimary, fontSize: 12),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: _buildBody(),
-      );
+      return _buildMobileScaffold(context, cs, unread, displayName);
     }
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          width: _expandedWidth,
-          child: _Sidebar(
-            section: _section,
-            unread: unread,
-            onSelect: (s) => setState(() => _section = s),
-          ),
-        ),
-        const VerticalDivider(width: 1, thickness: 1),
-        Expanded(child: _buildBody()),
-      ],
-    );
+    return _buildDesktopLayout(unread);
   }
 
   Widget _buildBody() {

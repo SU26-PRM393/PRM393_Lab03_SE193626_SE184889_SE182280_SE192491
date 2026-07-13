@@ -1,23 +1,39 @@
 import 'dart:io';
 
+String? _stripWrappedQuotes(String value) {
+  if ((value.startsWith("'") && value.endsWith("'")) ||
+      (value.startsWith('"') && value.endsWith('"'))) {
+    return value.substring(1, value.length - 1);
+  }
+  return value;
+}
+
+String? _parseEnvLine(String line, String key) {
+  final trimmedLine = line.trim();
+  if (trimmedLine.startsWith('#') || !trimmedLine.contains('=')) {
+    return null;
+  }
+
+  final parts = trimmedLine.split('=');
+  if (parts.first.trim() != key) {
+    return null;
+  }
+
+  return _stripWrappedQuotes(parts.sublist(1).join('=').trim());
+}
+
 String? getEnvValue(String key) {
   try {
     final file = File('.env');
-    if (file.existsSync()) {
-      final lines = file.readAsLinesSync();
-      for (var line in lines) {
-        line = line.trim();
-        if (line.startsWith('#') || !line.contains('=')) continue;
-        final parts = line.split('=');
-        final currentKey = parts[0].trim();
-        if (currentKey == key) {
-          final value = parts.sublist(1).join('=').trim();
-          if ((value.startsWith("'") && value.endsWith("'")) ||
-              (value.startsWith('"') && value.endsWith('"'))) {
-            return value.substring(1, value.length - 1);
-          }
-          return value;
-        }
+    if (!file.existsSync()) {
+      return null;
+    }
+
+    final lines = file.readAsLinesSync();
+    for (final line in lines) {
+      final value = _parseEnvLine(line, key);
+      if (value != null) {
+        return value;
       }
     }
   } catch (_) {

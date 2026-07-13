@@ -2,35 +2,551 @@
     "issues":  [
                    {
                        "primaryLocation":  {
-                                               "message":  "The private field _activeFilterChips could be \u0027final\u0027.",
-                                               "filePath":  "lib\\features\\vietnam_map\\presentation\\vietnam_map_controller.dart",
+                                               "message":  "Undefined name \u0027displayName\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
                                                "textRange":  {
-                                                                 "startLine":  49,
-                                                                 "endLine":  49
+                                                                 "startLine":  221,
+                                                                 "endLine":  221
                                                              }
                                            },
-                       "ruleId":  "prefer_final_fields",
+                       "ruleId":  "undefined_identifier",
                        "engineId":  "dart-analyzer"
                    },
                    {
                        "primaryLocation":  {
-                                               "message":  "\u0027withOpacity\u0027 is deprecated and shouldn\u0027t be used. Use .withValues() to avoid precision loss.",
-                                               "filePath":  "lib\\features\\vietnam_map\\presentation\\widgets\\map_control_panel.dart",
+                                               "message":  "Undefined name \u0027displayName\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
                                                "textRange":  {
-                                                                 "startLine":  170,
-                                                                 "endLine":  170
+                                                                 "startLine":  221,
+                                                                 "endLine":  221
                                                              }
                                            },
-                       "ruleId":  "deprecated_member_use",
+                       "ruleId":  "undefined_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected to find \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  221,
+                                                                 "endLine":  221
+                                                             }
+                                           },
+                       "ruleId":  "expected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected an identifier.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  222,
+                                                                 "endLine":  222
+                                                             }
+                                           },
+                       "ruleId":  "missing_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unexpected text \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  222,
+                                                                 "endLine":  222
+                                                             }
+                                           },
+                       "ruleId":  "unexpected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Undefined name \u0027unread\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  224,
+                                                                 "endLine":  224
+                                                             }
+                                           },
+                       "ruleId":  "undefined_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Undefined name \u0027displayName\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  224,
+                                                                 "endLine":  224
+                                                             }
+                                           },
+                       "ruleId":  "undefined_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected to find \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  225,
+                                                                 "endLine":  225
+                                                             }
+                                           },
+                       "ruleId":  "expected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected an identifier.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  225,
+                                                                 "endLine":  225
+                                                             }
+                                           },
+                       "ruleId":  "missing_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected to find \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  225,
+                                                                 "endLine":  225
+                                                             }
+                                           },
+                       "ruleId":  "expected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unexpected text \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  225,
+                                                                 "endLine":  225
+                                                             }
+                                           },
+                       "ruleId":  "unexpected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected an identifier.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  226,
+                                                                 "endLine":  226
+                                                             }
+                                           },
+                       "ruleId":  "missing_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected to find \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  226,
+                                                                 "endLine":  226
+                                                             }
+                                           },
+                       "ruleId":  "expected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unexpected text \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  226,
+                                                                 "endLine":  226
+                                                             }
+                                           },
+                       "ruleId":  "unexpected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected an identifier.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  226,
+                                                                 "endLine":  226
+                                                             }
+                                           },
+                       "ruleId":  "missing_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unexpected text \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  226,
+                                                                 "endLine":  226
+                                                             }
+                                           },
+                       "ruleId":  "unexpected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Undefined name \u0027unread\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  227,
+                                                                 "endLine":  227
+                                                             }
+                                           },
+                       "ruleId":  "undefined_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Undefined name \u0027unread\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  233,
+                                                                 "endLine":  233
+                                                             }
+                                           },
+                       "ruleId":  "undefined_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected to find \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  239,
+                                                                 "endLine":  239
+                                                             }
+                                           },
+                       "ruleId":  "expected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected an identifier.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  239,
+                                                                 "endLine":  239
+                                                             }
+                                           },
+                       "ruleId":  "missing_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected to find \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  239,
+                                                                 "endLine":  239
+                                                             }
+                                           },
+                       "ruleId":  "expected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unexpected text \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  239,
+                                                                 "endLine":  239
+                                                             }
+                                           },
+                       "ruleId":  "unexpected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Expected an identifier.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  240,
+                                                                 "endLine":  240
+                                                             }
+                                           },
+                       "ruleId":  "missing_identifier",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unexpected text \u0027;\u0027.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  240,
+                                                                 "endLine":  240
+                                                             }
+                                           },
+                       "ruleId":  "unexpected_token",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The value of the local variable \u0027vm\u0027 isn\u0027t used.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  216,
+                                                                 "endLine":  216
+                                                             }
+                                           },
+                       "ruleId":  "unused_local_variable",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The value of the local variable \u0027isMobile\u0027 isn\u0027t used.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  218,
+                                                                 "endLine":  218
+                                                             }
+                                           },
+                       "ruleId":  "unused_local_variable",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The value of the local variable \u0027hasPhoto\u0027 isn\u0027t used.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  220,
+                                                                 "endLine":  220
+                                                             }
+                                           },
+                       "ruleId":  "unused_local_variable",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The value of the local variable \u0027firstLetter\u0027 isn\u0027t used.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  221,
+                                                                 "endLine":  221
+                                                             }
+                                           },
+                       "ruleId":  "unused_local_variable",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Dead code.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  225,
+                                                                 "endLine":  225
+                                                             }
+                                           },
+                       "ruleId":  "dead_code",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The label \u0027style\u0027 isn\u0027t used.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  225,
+                                                                 "endLine":  225
+                                                             }
+                                           },
+                       "ruleId":  "unused_label",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The label \u0027children\u0027 isn\u0027t used.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  228,
+                                                                 "endLine":  228
+                                                             }
+                                           },
+                       "ruleId":  "unused_label",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unused import: \u0027package:vietnam_map_flutter/screens/admin_shell.dart\u0027.",
+                                               "filePath":  "test\\auth_gate_test.dart",
+                                               "textRange":  {
+                                                                 "startLine":  6,
+                                                                 "endLine":  6
+                                                             }
+                                           },
+                       "ruleId":  "unused_import",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unused import: \u0027package:vietnam_map_flutter/screens/user_shell.dart\u0027.",
+                                               "filePath":  "test\\auth_gate_test.dart",
+                                               "textRange":  {
+                                                                 "startLine":  8,
+                                                                 "endLine":  8
+                                                             }
+                                           },
+                       "ruleId":  "unused_import",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Use \u0027const\u0027 with the constructor to improve performance.",
+                                               "filePath":  "lib\\screens\\campaign_management_screen.dart",
+                                               "textRange":  {
+                                                                 "startLine":  3105,
+                                                                 "endLine":  3105
+                                                             }
+                                           },
+                       "ruleId":  "prefer_const_constructors",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Use \u0027const\u0027 with the constructor to improve performance.",
+                                               "filePath":  "lib\\screens\\campaign_management_screen.dart",
+                                               "textRange":  {
+                                                                 "startLine":  3107,
+                                                                 "endLine":  3107
+                                                             }
+                                           },
+                       "ruleId":  "prefer_const_constructors",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Use \u0027const\u0027 with the constructor to improve performance.",
+                                               "filePath":  "lib\\screens\\campaign_management_screen.dart",
+                                               "textRange":  {
+                                                                 "startLine":  3418,
+                                                                 "endLine":  3418
+                                                             }
+                                           },
+                       "ruleId":  "prefer_const_constructors",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Use \u0027const\u0027 with the constructor to improve performance.",
+                                               "filePath":  "lib\\screens\\campaign_management_screen.dart",
+                                               "textRange":  {
+                                                                 "startLine":  3418,
+                                                                 "endLine":  3418
+                                                             }
+                                           },
+                       "ruleId":  "prefer_const_constructors",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Use interpolation to compose strings and values.",
+                                               "filePath":  "lib\\screens\\campaign_management_screen.dart",
+                                               "textRange":  {
+                                                                 "startLine":  5135,
+                                                                 "endLine":  5135
+                                                             }
+                                           },
+                       "ruleId":  "prefer_interpolation_to_compose_strings",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unnecessary empty statement.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  222,
+                                                                 "endLine":  222
+                                                             }
+                                           },
+                       "ruleId":  "empty_statements",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Unnecessary empty statement.",
+                                               "filePath":  "lib\\screens\\user_dashboard.dart",
+                                               "textRange":  {
+                                                                 "startLine":  240,
+                                                                 "endLine":  240
+                                                             }
+                                           },
+                       "ruleId":  "empty_statements",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Don\u0027t invoke \u0027print\u0027 in production code.",
+                                               "filePath":  "lib\\seed\\read_excel.dart",
+                                               "textRange":  {
+                                                                 "startLine":  11,
+                                                                 "endLine":  11
+                                                             }
+                                           },
+                       "ruleId":  "avoid_print",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Don\u0027t invoke \u0027print\u0027 in production code.",
+                                               "filePath":  "lib\\seed\\read_excel.dart",
+                                               "textRange":  {
+                                                                 "startLine":  12,
+                                                                 "endLine":  12
+                                                             }
+                                           },
+                       "ruleId":  "avoid_print",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Don\u0027t invoke \u0027print\u0027 in production code.",
+                                               "filePath":  "lib\\seed\\read_excel.dart",
+                                               "textRange":  {
+                                                                 "startLine":  13,
+                                                                 "endLine":  13
+                                                             }
+                                           },
+                       "ruleId":  "avoid_print",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "Don\u0027t invoke \u0027print\u0027 in production code.",
+                                               "filePath":  "lib\\seed\\read_excel.dart",
+                                               "textRange":  {
+                                                                 "startLine":  18,
+                                                                 "endLine":  18
+                                                             }
+                                           },
+                       "ruleId":  "avoid_print",
+                       "engineId":  "dart-analyzer"
+                   },
+                   {
+                       "primaryLocation":  {
+                                               "message":  "The imported package \u0027firebase_core_platform_interface\u0027 isn\u0027t a dependency of the importing package.",
+                                               "filePath":  "test\\widget_test.dart",
+                                               "textRange":  {
+                                                                 "startLine":  3,
+                                                                 "endLine":  3
+                                                             }
+                                           },
+                       "ruleId":  "depend_on_referenced_packages",
                        "engineId":  "dart-analyzer"
                    }
                ],
     "rules":  [
                   {
-                      "id":  "prefer_final_fields",
-                      "name":  "prefer_final_fields",
+                      "id":  "undefined_identifier",
+                      "name":  "undefined_identifier",
                       "severity":  "MINOR",
-                      "description":  "The private field _activeFilterChips could be \u0027final\u0027.",
+                      "description":  "Undefined name \u0027displayName\u0027.",
                       "type":  "CODE_SMELL",
                       "impacts":  [
                                       {
@@ -41,10 +557,164 @@
                       "engineId":  "dart-analyzer"
                   },
                   {
-                      "id":  "deprecated_member_use",
-                      "name":  "deprecated_member_use",
+                      "id":  "expected_token",
+                      "name":  "expected_token",
                       "severity":  "MINOR",
-                      "description":  "\u0027withOpacity\u0027 is deprecated and shouldn\u0027t be used. Use .withValues() to avoid precision loss.",
+                      "description":  "Expected to find \u0027;\u0027.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "missing_identifier",
+                      "name":  "missing_identifier",
+                      "severity":  "MINOR",
+                      "description":  "Expected an identifier.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "unexpected_token",
+                      "name":  "unexpected_token",
+                      "severity":  "MINOR",
+                      "description":  "Unexpected text \u0027;\u0027.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "unused_local_variable",
+                      "name":  "unused_local_variable",
+                      "severity":  "MINOR",
+                      "description":  "The value of the local variable \u0027vm\u0027 isn\u0027t used.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "dead_code",
+                      "name":  "dead_code",
+                      "severity":  "MINOR",
+                      "description":  "Dead code.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "unused_label",
+                      "name":  "unused_label",
+                      "severity":  "MINOR",
+                      "description":  "The label \u0027style\u0027 isn\u0027t used.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "unused_import",
+                      "name":  "unused_import",
+                      "severity":  "MINOR",
+                      "description":  "Unused import: \u0027package:vietnam_map_flutter/screens/admin_shell.dart\u0027.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "prefer_const_constructors",
+                      "name":  "prefer_const_constructors",
+                      "severity":  "MINOR",
+                      "description":  "Use \u0027const\u0027 with the constructor to improve performance.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "prefer_interpolation_to_compose_strings",
+                      "name":  "prefer_interpolation_to_compose_strings",
+                      "severity":  "MINOR",
+                      "description":  "Use interpolation to compose strings and values.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "empty_statements",
+                      "name":  "empty_statements",
+                      "severity":  "MINOR",
+                      "description":  "Unnecessary empty statement.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "avoid_print",
+                      "name":  "avoid_print",
+                      "severity":  "MINOR",
+                      "description":  "Don\u0027t invoke \u0027print\u0027 in production code.",
+                      "type":  "CODE_SMELL",
+                      "impacts":  [
+                                      {
+                                          "softwareQuality":  "MAINTAINABILITY",
+                                          "severity":  "LOW"
+                                      }
+                                  ],
+                      "engineId":  "dart-analyzer"
+                  },
+                  {
+                      "id":  "depend_on_referenced_packages",
+                      "name":  "depend_on_referenced_packages",
+                      "severity":  "MINOR",
+                      "description":  "The imported package \u0027firebase_core_platform_interface\u0027 isn\u0027t a dependency of the importing package.",
                       "type":  "CODE_SMELL",
                       "impacts":  [
                                       {

@@ -7,6 +7,8 @@ import 'package:printing/printing.dart';
 
 import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
 
+const _kProvinceHeaderLabel = 'Tỉnh/Thành';
+
 /// Tạo báo cáo PDF từ dữ liệu thống kê và upload lên Firebase Storage.
 /// Trả về download URL để người dùng tải về hoặc chia sẻ.
 class PdfExportService {
@@ -49,7 +51,7 @@ class PdfExportService {
           _sectionTitle('Top ${vm.top10Population.length} Tỉnh/Thành Theo Dân Số'),
           pw.SizedBox(height: 8),
           _provincesTable(
-            headers: ['#', 'Tỉnh/Thành', 'Dân số'],
+            headers: ['#', _kProvinceHeaderLabel, 'Dân số'],
             rows: vm.top10Population.asMap().entries.map((e) => [
               '${e.key + 1}',
               e.value.ten,
@@ -60,7 +62,7 @@ class PdfExportService {
           _sectionTitle('Top ${vm.top10Area.length} Tỉnh/Thành Theo Diện Tích'),
           pw.SizedBox(height: 8),
           _provincesTable(
-            headers: ['#', 'Tỉnh/Thành', 'Diện tích (km²)'],
+            headers: ['#', _kProvinceHeaderLabel, 'Diện tích (km²)'],
             rows: vm.top10Area.asMap().entries.map((e) => [
               '${e.key + 1}',
               e.value.ten,
@@ -71,7 +73,7 @@ class PdfExportService {
           _sectionTitle('Top ${vm.top10Density.length} Tỉnh/Thành Theo Mật Độ Dân Số'),
           pw.SizedBox(height: 8),
           _provincesTable(
-            headers: ['#', 'Tỉnh/Thành', 'Mật độ (ng/km²)'],
+            headers: ['#', _kProvinceHeaderLabel, 'Mật độ (ng/km²)'],
             rows: vm.top10Density.asMap().entries.map((e) => [
               '${e.key + 1}',
               e.value.ten,

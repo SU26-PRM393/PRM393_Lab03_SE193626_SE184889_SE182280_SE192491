@@ -26,6 +26,21 @@ const _kTealLight = Color(0xFFD0EDEC);
 const _kCardBg = Colors.white;
 const _kRadius = 14.0;
 const _kBorderRadius = 12.0;
+const _kConfirmLabel = 'Xác nhận';
+const _kBackLabel = 'Quay lại';
+const _kCompletedLabel = 'Hoàn thành';
+const _kEmployeeLabel = 'Nhân viên';
+const _kUnknownLabel = 'Không rõ';
+const _kUnknownDateLabel = 'Chưa xác định';
+const _kUnknownTimeLabel = 'Chưa xác định thời gian';
+const _kInProgressStatus = 'in-progress';
+const _kStudentLabel = 'Học sinh';
+const _kRelativeLabel = 'Phụ huynh';
+const _kSchoolPersonLabel = 'Cán bộ trường';
+const _kTeacherLabel = 'Giáo viên';
+const _kPrincipalLabel = 'Hiệu trưởng';
+const _kSchoolLabel = 'Trường học';
+const _kPhoneLabel = 'Số điện thoại';
 
 InputDecoration _dialogInputDecoration(String labelText) {
   return InputDecoration(
@@ -171,7 +186,7 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
                   IconButton(
                     tooltip: 'Tạo chiến dịch mới',
                     style: IconButton.styleFrom(
-                      backgroundColor: cs.primary.withOpacity(0.1),
+                      backgroundColor: cs.primary.withValues(alpha: 0.1),
                       foregroundColor: cs.primary,
                     ),
                     icon: const Icon(Icons.add, size: 20),
@@ -511,7 +526,7 @@ class _EventPaneState extends State<_EventPane> {
                           ),
                           FilledButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Xác nhận'),
+                            child: const Text(_kConfirmLabel),
                           ),
                         ],
                       ),
@@ -594,7 +609,7 @@ class _EventPaneState extends State<_EventPane> {
                           ),
                           FilledButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Xác nhận'),
+                            child: const Text(_kConfirmLabel),
                           ),
                         ],
                       ),
@@ -893,7 +908,7 @@ class _EventPaneState extends State<_EventPane> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: color),
@@ -1024,34 +1039,34 @@ class _CampaignTileState extends State<_CampaignTile> {
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        transform: Matrix4.identity()..translate(0.0, _isHovered ? -2.0 : 0.0),
+        transform: Matrix4.translationValues(0.0, _isHovered ? -2.0 : 0.0, 0.0),
         decoration: BoxDecoration(
           color: widget.selected 
-              ? cs.primary.withOpacity(0.12) 
+              ? cs.primary.withValues(alpha: 0.12) 
               : (_isHovered ? cs.surfaceContainerHigh : cs.surface),
           borderRadius: BorderRadius.circular(_kBorderRadius),
           border: Border.all(
             color: widget.selected 
                 ? cs.primary 
-                : (_isHovered ? cs.primary.withOpacity(0.3) : cs.outlineVariant),
+                : (_isHovered ? cs.primary.withValues(alpha: 0.3) : cs.outlineVariant),
             width: widget.selected ? 1.5 : 1.0,
           ),
           boxShadow: [
             if (widget.selected)
               BoxShadow(
-                color: cs.primary.withOpacity(0.08),
+                color: cs.primary.withValues(alpha: 0.08),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               )
             else if (_isHovered)
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               )
             else
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -1081,7 +1096,7 @@ class _CampaignTileState extends State<_CampaignTile> {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: (widget.selected ? cs.primary : Colors.grey).withOpacity(0.08),
+                                  color: (widget.selected ? cs.primary : Colors.grey).withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -1225,7 +1240,7 @@ class _EventTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: cs.primary.withOpacity(0.08),
+                  color: cs.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.event_available_outlined, color: cs.primary, size: 22),
@@ -1395,7 +1410,7 @@ class _ActionButton extends StatelessWidget {
       child: OutlinedButton.icon(
         style: OutlinedButton.styleFrom(
           foregroundColor: color,
-          side: BorderSide(color: color.withOpacity(0.3)),
+          side: BorderSide(color: color.withValues(alpha: 0.3)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -1592,12 +1607,14 @@ class _EventFormDialogState extends State<_EventFormDialog> {
     _status = event?.status ?? 'preparing';
     _date = event?.date;
     _hostId = event?.hostId;
+    final defaultSchoolId =
+      widget.schools.isNotEmpty ? widget.schools.first.id : null;
     final candidateSchoolId = event?.schoolIds.isNotEmpty == true
-        ? event!.schoolIds.first
-        : (widget.schools.isNotEmpty ? widget.schools.first.id : null);
+      ? event!.schoolIds.first
+      : defaultSchoolId;
     final schoolExists = candidateSchoolId != null &&
         widget.schools.any((s) => s.id == candidateSchoolId);
-    _schoolId = schoolExists ? candidateSchoolId : (widget.schools.isNotEmpty ? widget.schools.first.id : null);
+    _schoolId = schoolExists ? candidateSchoolId : defaultSchoolId;
     _employeeIds = {...?event?.assignedEmployeeIds};
   }
 
@@ -1881,7 +1898,7 @@ class _MobileBackBar extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: onBack,
-            tooltip: 'Quay lại',
+            tooltip: _kBackLabel,
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -1956,7 +1973,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, icon) = switch (status) {
-      'active' || 'in-progress' => (const Color(0xFF16A34A), Icons.play_circle_filled_outlined),
+      'active' || _kInProgressStatus => (const Color(0xFF16A34A), Icons.play_circle_filled_outlined),
       'completed' => (const Color(0xFF2563EB), Icons.check_circle_outlined),
       'canceled' => (const Color(0xFFDC2626), Icons.cancel_outlined),
       'preparing' => (const Color(0xFFF59E0B), Icons.schedule_outlined),
@@ -1965,9 +1982,9 @@ class _StatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2041,20 +2058,20 @@ class _EventFormOptions {
 }
 
 String _formatDate(DateTime? date) {
-  if (date == null) return 'Chưa xác định';
+  if (date == null) return _kUnknownDateLabel;
   return '${date.day}/${date.month}/${date.year}';
 }
 
 String _formatRange(DateTime? start, DateTime? end) {
-  if (start == null && end == null) return 'Chưa xác định thời gian';
+  if (start == null && end == null) return _kUnknownTimeLabel;
   if (end == null) return _formatDate(start);
   return '${_formatDate(start)} - ${_formatDate(end)}';
 }
 
 String _statusLabel(String status) => switch (status) {
       'active' => 'Hoạt động',
-      'in-progress' => 'Đang diễn ra',
-      'completed' => 'Hoàn thành',
+      _kInProgressStatus => 'Đang diễn ra',
+      'completed' => _kCompletedLabel,
       'canceled' => 'Đã hủy',
       'preparing' => 'Chuẩn bị',
       _ => status,
@@ -2107,7 +2124,7 @@ class _DateRow extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              backgroundColor: _kTeal.withOpacity(0.04),
+              backgroundColor: _kTeal.withValues(alpha: 0.04),
             ),
             icon: const Icon(Icons.calendar_today_outlined, size: 14),
             label: const Text('Chọn', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
@@ -2266,7 +2283,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     }
 
     return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
     ).timeout(const Duration(seconds: 7));
   }
 
@@ -2435,7 +2454,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
             borderRadius: BorderRadius.circular(_kRadius),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
@@ -2483,7 +2502,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                 _buildDetailRow(
                   Icons.person_pin_circle_outlined,
                   'Người chủ trì (Host)',
-                  employeeNameMap[event.hostId] ?? 'Không rõ',
+                  employeeNameMap[event.hostId] ?? _kUnknownLabel,
                 ),
               ],
               if (isHostOrAdmin) ...[
@@ -2509,7 +2528,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                     const SizedBox(width: 8),
                     IconButton(
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.red.withOpacity(0.08),
+                        backgroundColor: Colors.red.withValues(alpha: 0.08),
                         foregroundColor: Colors.red,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -2638,7 +2657,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                   ),
                                   FilledButton(
                                     onPressed: () => Navigator.pop(context, true),
-                                    child: const Text('Xác nhận'),
+                                    child: const Text(_kConfirmLabel),
                                   ),
                                 ],
                               ),
@@ -2745,7 +2764,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                               ),
                               FilledButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Xác nhận'),
+                                child: const Text(_kConfirmLabel),
                               ),
                             ],
                           ),
@@ -2851,7 +2870,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           const SizedBox(height: 12),
           Builder(
             builder: (context) {
-              final hostName = employeeNameMap[event.hostId] ?? 'Không rõ';
+              final hostName = employeeNameMap[event.hostId] ?? _kUnknownLabel;
               final hostMap = widget.employees.firstWhere((e) => e['id'] == event.hostId, orElse: () => <String, String>{});
               final hostEmail = hostMap['email'] ?? '';
               final isSelected = _selectedEmployeeFilterId == event.hostId;
@@ -2920,7 +2939,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
         else
           Column(
             children: event.assignedEmployeeIds.map((empId) {
-              final name = employeeNameMap[empId] ?? 'Không rõ';
+              final name = employeeNameMap[empId] ?? _kUnknownLabel;
               final employeeMap = widget.employees.firstWhere((e) => e['id'] == empId, orElse: () => <String, String>{});
               final email = employeeMap['email'] ?? '';
               final isSelected = _selectedEmployeeFilterId == empId;
@@ -2958,7 +2977,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
         border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -2973,7 +2992,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.08),
+                  color: color.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Icon(icon, size: 16, color: color),
@@ -3054,7 +3073,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
         borderRadius: BorderRadius.circular(_kRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -3078,7 +3097,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
               if (event.status != 'completed')
                 TextButton.icon(
                   style: TextButton.styleFrom(
-                    backgroundColor: _kTeal.withOpacity(0.08),
+                    backgroundColor: _kTeal.withValues(alpha: 0.08),
                     foregroundColor: _kTeal,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -3099,8 +3118,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           const Divider(height: 1),
           const SizedBox(height: 8),
           if (list.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
               child: _EmptyPanel(
                 icon: Icons.chat_bubble_outline,
                 title: 'Không tìm thấy tương tác',
@@ -3139,8 +3158,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                         final interaction = groupList[idx];
                         final tName = interaction.targetName.isNotEmpty
                             ? interaction.targetName
-                            : (_targetNames[interaction.targetId] ?? 'Không rõ');
-                        final eName = employeeNameMap[interaction.employeeId] ?? 'Không rõ';
+                            : (_targetNames[interaction.targetId] ?? _kUnknownLabel);
+                          final eName = employeeNameMap[interaction.employeeId] ?? _kUnknownLabel;
                         final isLast = gIdx == grouped.length - 1 && idx == groupList.length - 1;
                         final canDelete = widget.currentUser.isAdmin || interaction.employeeId == widget.currentUser.uid;
                         return _TimelineItem(
@@ -3217,7 +3236,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           .get();
       studentsList = studentsSnap.docs.map((doc) => {
         'id': doc.id,
-        'name': doc.data()['name'] ?? 'Không rõ',
+        'name': doc.data()['name'] ?? _kUnknownLabel,
         'className': doc.data()['className'] ?? '',
         'studentCode': doc.data()['studentCode'] ?? '',
         'schoolId': doc.data()['schoolId'] ?? '',
@@ -3229,7 +3248,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           .get();
       personsList = pSnap.docs.map((doc) => {
         'id': doc.id,
-        'name': doc.data()['name'] ?? 'Không rõ',
+        'name': doc.data()['name'] ?? _kUnknownLabel,
         'email': doc.data()['email'] ?? '',
         'phone': doc.data()['phone'] ?? '',
         'roleType': doc.data()['roleType'] ?? '',
@@ -3256,7 +3275,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           .get();
       relativesList = rSnap.docs.map((doc) => {
         'id': doc.id,
-        'name': doc.data()['name'] ?? 'Không rõ',
+        'name': doc.data()['name'] ?? _kUnknownLabel,
         'phone': doc.data()['phone'] ?? '',
         'relationship': doc.data()['relationship'] ?? '',
         'studentId': doc.data()['studentId'] ?? '',
@@ -3325,7 +3344,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
       context: context,
       barrierDismissible: false,
       barrierLabel: 'Dismiss',
-      barrierColor: Colors.black.withOpacity(0.4),
+      barrierColor: Colors.black.withValues(alpha: 0.4),
       transitionDuration: const Duration(milliseconds: 250),
       pageBuilder: (context, anim1, anim2) {
         return StatefulBuilder(
@@ -3412,7 +3431,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                     ),
                     if (isRequired) ...[
                       const SizedBox(width: 4),
-                      Text('*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      const Text('*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ],
                   ],
                 ),
@@ -3457,7 +3476,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: Colors.black.withValues(alpha: 0.12),
                       blurRadius: 60,
                       offset: const Offset(0, 20),
                     ),
@@ -3477,7 +3496,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                             Container(
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: _kTeal.withOpacity(0.1),
+                                color: _kTeal.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.chat_bubble_outline, color: _kTeal, size: 28),
@@ -3537,12 +3556,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                               const SizedBox(height: 12),
                               buildFieldLabel('Chọn loại đối tượng'),
                               DropdownButtonFormField<String>(
-                                value: targetType,
+                                initialValue: targetType,
                                 decoration: premiumInputDecoration(hintText: 'Chọn đối tượng'),
                                 items: const [
-                                  DropdownMenuItem(value: 'student', child: Text('Học sinh')),
-                                  DropdownMenuItem(value: 'relative', child: Text('Phụ huynh')),
-                                  DropdownMenuItem(value: 'person', child: Text('Cán bộ trường')),
+                                  DropdownMenuItem(value: 'student', child: Text(_kStudentLabel)),
+                                  DropdownMenuItem(value: 'relative', child: Text(_kRelativeLabel)),
+                                  DropdownMenuItem(value: 'person', child: Text(_kSchoolPersonLabel)),
                                 ],
                                 onChanged: (val) {
                                   if (val != null) {
@@ -3568,7 +3587,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: Colors.teal.shade50.withOpacity(0.6),
+                                    color: Colors.teal.shade50.withValues(alpha: 0.6),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(color: Colors.teal.shade200),
                                   ),
@@ -3679,7 +3698,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.04),
+                                          color: Colors.black.withValues(alpha: 0.04),
                                           blurRadius: 10,
                                           offset: const Offset(0, 4),
                                         ),
@@ -3720,12 +3739,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                               (sch) => sch.id == p['schoolId'],
                                               orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: '', address: '', region: ''),
                                             );
+                                            final roleLabel = switch (p['roleType']) {
+                                              'teacher' => 'Giáo viên',
+                                              'principal' => 'Hiệu trưởng',
+                                              _ => 'Nhân viên',
+                                            };
                                             final schoolInfo = school.schoolName.isNotEmpty ? ' • ${school.schoolName}' : '';
                                             return ListTile(
                                               dense: true,
                                               leading: const Icon(Icons.badge, color: Colors.orange),
                                               title: Text(p['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
-                                              subtitle: Text('Cán bộ • ${p['roleType'] == 'teacher' ? 'Giáo viên' : p['roleType'] == 'principal' ? 'Hiệu trưởng' : 'Nhân viên'}$schoolInfo'),
+                                              subtitle: Text('Cán bộ • $roleLabel$schoolInfo'),
                                               onTap: () {
                                                 setDialogState(() {
                                                   selectedTargetId = p['id'];
@@ -3751,8 +3775,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                                     orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: '', address: '', region: ''),
                                                   )
                                                 : null;
+                                            final schoolLabel = school != null && school.schoolName.isNotEmpty
+                                              ? ', Trường: ${school.schoolName}'
+                                              : '';
                                             final studentInfo = relatedStudent.isNotEmpty
-                                                ? ' • Con: ${relatedStudent['name']} (Mã: ${relatedStudent['studentCode']}, Lớp: ${relatedStudent['className']}${school != null && school.schoolName.isNotEmpty ? ', Trường: ${school.schoolName}' : ''})'
+                                              ? ' • Con: ${relatedStudent['name']} (Mã: ${relatedStudent['studentCode']}, Lớp: ${relatedStudent['className']}$schoolLabel)'
                                                 : '';
                                             return ListTile(
                                               dense: true,
@@ -3875,17 +3902,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                   ],
                                 ),
                                 const SizedBox(height: 14),
-                                buildFieldLabel('Trường học', isRequired: true),
+                                buildFieldLabel(_kSchoolLabel, isRequired: true),
                                 if (selectedSchoolId != null) ...[
                                   (() {
                                     final sch = _cachedSchools.firstWhere(
                                       (s) => s.id == selectedSchoolId,
-                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: 'Không rõ', address: '', region: ''),
+                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: _kUnknownLabel, address: '', region: ''),
                                     );
                                     return Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: Colors.blue.shade50.withOpacity(0.6),
+                                        color: Colors.blue.shade50.withValues(alpha: 0.6),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(color: Colors.blue.shade200),
                                       ),
@@ -3990,7 +4017,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.04),
+                                            color: Colors.black.withValues(alpha: 0.04),
                                             blurRadius: 10,
                                             offset: const Offset(0, 4),
                                           ),
@@ -4058,7 +4085,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          buildFieldLabel('Số điện thoại', isRequired: true),
+                                          buildFieldLabel(_kPhoneLabel, isRequired: true),
                                           TextFormField(
                                             controller: personPhoneController,
                                             enabled: !isExisting,
@@ -4077,12 +4104,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                         children: [
                                           buildFieldLabel('Vai trò', isRequired: true),
                                           DropdownButtonFormField<String>(
-                                            value: roleType,
+                                            initialValue: roleType,
                                             decoration: premiumInputDecoration(hintText: 'Chọn vai trò'),
                                             items: const [
-                                              DropdownMenuItem(value: 'principal', child: Text('Hiệu trưởng')),
-                                              DropdownMenuItem(value: 'teacher', child: Text('Giáo viên')),
-                                              DropdownMenuItem(value: 'staff', child: Text('Nhân viên')),
+                                              DropdownMenuItem(value: 'principal', child: Text(_kPrincipalLabel)),
+                                              DropdownMenuItem(value: 'teacher', child: Text(_kTeacherLabel)),
+                                              DropdownMenuItem(value: 'staff', child: Text(_kEmployeeLabel)),
                                               DropdownMenuItem(value: 'other', child: Text('Khác')),
                                             ],
                                             onChanged: !isExisting
@@ -4113,17 +4140,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                   onChanged: (_) => setDialogState(() {}),
                                 ),
                                 const SizedBox(height: 14),
-                                buildFieldLabel('Trường học', isRequired: true),
+                                buildFieldLabel(_kSchoolLabel, isRequired: true),
                                 if (selectedSchoolId != null) ...[
                                   (() {
                                     final sch = _cachedSchools.firstWhere(
                                       (s) => s.id == selectedSchoolId,
-                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: 'Không rõ', address: '', region: ''),
+                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: _kUnknownLabel, address: '', region: ''),
                                     );
                                     return Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: Colors.blue.shade50.withOpacity(0.6),
+                                        color: Colors.blue.shade50.withValues(alpha: 0.6),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(color: Colors.blue.shade200),
                                       ),
@@ -4228,7 +4255,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.04),
+                                            color: Colors.black.withValues(alpha: 0.04),
                                             blurRadius: 10,
                                             offset: const Offset(0, 4),
                                           ),
@@ -4292,7 +4319,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          buildFieldLabel('Số điện thoại', isRequired: true),
+                                          buildFieldLabel(_kPhoneLabel, isRequired: true),
                                           TextFormField(
                                             controller: phoneController,
                                             enabled: !isExisting,
@@ -4311,7 +4338,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                         children: [
                                           buildFieldLabel('Mối quan hệ', isRequired: true),
                                           DropdownButtonFormField<String>(
-                                            value: relationship,
+                                            initialValue: relationship,
                                             decoration: premiumInputDecoration(hintText: 'Chọn mối quan hệ'),
                                             items: const [
                                               DropdownMenuItem(value: 'mother', child: Text('Mẹ')),
@@ -4344,7 +4371,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                     return Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: Colors.blue.shade50.withOpacity(0.6),
+                                        color: Colors.blue.shade50.withValues(alpha: 0.6),
                                         borderRadius: BorderRadius.circular(16),
                                         border: Border.all(color: Colors.blue.shade200),
                                       ),
@@ -4441,7 +4468,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                         borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withOpacity(0.04),
+                                            color: Colors.black.withValues(alpha: 0.04),
                                             blurRadius: 10,
                                             offset: const Offset(0, 4),
                                           ),
@@ -4728,10 +4755,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: hasCheckedIn ? _kTeal.withOpacity(0.5) : Colors.grey.shade200),
+        border: Border.all(color: hasCheckedIn ? _kTeal.withValues(alpha: 0.5) : Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -4981,7 +5008,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                               right: 4,
                               child: CircleAvatar(
                                 radius: 14,
-                                backgroundColor: Colors.black.withOpacity(0.5),
+                                backgroundColor: Colors.black.withValues(alpha: 0.5),
                                 child: IconButton(
                                   padding: EdgeInsets.zero,
                                   icon: const Icon(Icons.close, size: 16, color: Colors.white),
@@ -5129,7 +5156,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                               } catch (compErr) {
                                 debugPrint('Dart image compression failed: $compErr');
                               }
-                              photoUrl = 'data:image/jpeg;base64,' + base64Encode(bytes);
+                              photoUrl = 'data:image/jpeg;base64,${base64Encode(bytes)}';
                             }
                           } catch (e) {
                             // Fallback to high quality mock URL if conversion fails
@@ -5299,7 +5326,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -5680,14 +5707,13 @@ class _TimelineItemState extends State<_TimelineItem> {
     }
 
     try {
+      final targetCollection = switch (interaction.targetType) {
+        'student' => 'students',
+        'relative' => 'relatives',
+        _ => 'persons',
+      };
       final doc = await FirebaseFirestore.instance
-          .collection(
-            interaction.targetType == 'student'
-                ? 'students'
-                : interaction.targetType == 'relative'
-                    ? 'relatives'
-                    : 'persons'
-          )
+          .collection(targetCollection)
           .doc(interaction.targetId)
           .get();
 
@@ -5717,7 +5743,7 @@ class _TimelineItemState extends State<_TimelineItem> {
               .doc(studentId)
               .get();
           if (studentDoc.exists && studentDoc.data() != null) {
-            details['studentName'] = studentDoc.data()!['name'] ?? 'Không rõ';
+            details['studentName'] = studentDoc.data()!['name'] ?? _kUnknownLabel;
             details['studentClass'] = studentDoc.data()!['className'] ?? '';
             details['studentCode'] = studentDoc.data()!['studentCode'] ?? '';
             
@@ -5775,7 +5801,7 @@ class _TimelineItemState extends State<_TimelineItem> {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Dismiss',
-      barrierColor: Colors.black.withOpacity(0.4),
+      barrierColor: Colors.black.withValues(alpha: 0.4),
       transitionDuration: const Duration(milliseconds: 250),
       pageBuilder: (context, anim1, anim2) {
         return Dialog(
@@ -5788,7 +5814,7 @@ class _TimelineItemState extends State<_TimelineItem> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.12),
+                  color: Colors.black.withValues(alpha: 0.12),
                   blurRadius: 60,
                   offset: const Offset(0, 20),
                 ),
@@ -5813,7 +5839,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: typeColor.withOpacity(0.1),
+                              color: typeColor.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -6222,7 +6248,7 @@ class _TimelineItemState extends State<_TimelineItem> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.shade50.withOpacity(0.6),
+        color: Colors.blue.shade50.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.blue.shade200),
       ),
@@ -6287,7 +6313,7 @@ class _TimelineItemState extends State<_TimelineItem> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.purple.shade50.withOpacity(0.6),
+        color: Colors.purple.shade50.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.purple.shade200),
       ),
@@ -6409,7 +6435,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                         border: Border.all(color: Colors.white, width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: typeColor.withOpacity(0.3),
+                            color: typeColor.withValues(alpha: 0.3),
                             blurRadius: 4,
                             offset: const Offset(0, 1),
                           )
@@ -6437,19 +6463,19 @@ class _TimelineItemState extends State<_TimelineItem> {
                     color: _isHovered ? Colors.grey.shade50 : _kCardBg,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: _isHovered ? typeColor.withOpacity(0.3) : Colors.grey.shade200,
+                      color: _isHovered ? typeColor.withValues(alpha: 0.3) : Colors.grey.shade200,
                       width: 1,
                     ),
                     boxShadow: [
                       if (_isHovered)
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
+                          color: Colors.black.withValues(alpha: 0.04),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         )
                       else
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.01),
+                          color: Colors.black.withValues(alpha: 0.01),
                           blurRadius: 4,
                           offset: const Offset(0, 1),
                         ),
@@ -6596,25 +6622,25 @@ class _DetailEmployeeCardState extends State<_DetailEmployeeCard> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: active
-                  ? _kTeal.withOpacity(0.12)
-                  : (_hovered ? _kTealLight.withOpacity(0.8) : Colors.white),
+                  ? _kTeal.withValues(alpha: 0.12)
+                  : (_hovered ? _kTealLight.withValues(alpha: 0.8) : Colors.white),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: active
                     ? _kTeal
-                    : (_hovered ? _kTeal.withOpacity(0.5) : Colors.grey.shade200),
+                    : (_hovered ? _kTeal.withValues(alpha: 0.5) : Colors.grey.shade200),
                 width: active ? 1.5 : 1,
               ),
               boxShadow: [
                 if (active || _hovered)
                   BoxShadow(
-                    color: _kTeal.withOpacity(0.05),
+                    color: _kTeal.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   )
                 else
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.01),
+                    color: Colors.black.withValues(alpha: 0.01),
                     blurRadius: 4,
                     offset: const Offset(0, 1),
                   ),

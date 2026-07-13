@@ -21,6 +21,8 @@ enum AdminSection {
   notifications,
 }
 
+const _kUserManagementLabel = 'Người dùng';
+
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({
@@ -75,6 +77,209 @@ class AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  void _handleSectionSelected(AdminSection section) {
+    setState(() {
+      _section = section;
+      if (section != AdminSection.userManagement) {
+        _searchEmail = null;
+      }
+    });
+  }
+
+  void _handleMobileDrawerSelection(BuildContext context, AdminSection section) {
+    _handleSectionSelected(section);
+    Navigator.pop(context);
+  }
+
+  void _handleProfileUpdated(AppUser updated) {
+    widget.onProfileUpdated(updated);
+  }
+
+  void _handleAccountAction(String value) {
+    if (value == 'logout') {
+      widget.onLogout();
+      return;
+    }
+
+    if (value == 'profile') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(
+            user: widget.admin,
+            onProfileUpdated: _handleProfileUpdated,
+          ),
+        ),
+      );
+    }
+  }
+
+  String _currentSectionTitle() {
+    return switch (_section) {
+      AdminSection.overview => 'Thống Kê',
+      AdminSection.campaigns => 'Chiến dịch',
+      AdminSection.userManagement => _kUserManagementLabel,
+      AdminSection.firebaseDemo => 'Firebase Demo',
+      AdminSection.notifications => 'Thông báo',
+    };
+  }
+
+  Widget _buildNotificationButton(ColorScheme cs, int unread) {
+    return Stack(
+      children: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          color: cs.onPrimary,
+          tooltip: 'Thông báo',
+          onPressed: () => setState(() => _section = AdminSection.notifications),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  unread > 99 ? '99+' : '$unread',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildAccountMenuChild(ColorScheme cs, bool hasPhoto, String displayName, String firstLetter) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: cs.onPrimary.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 10,
+            backgroundColor: cs.onPrimary.withValues(alpha: 0.2),
+            backgroundImage: hasPhoto ? NetworkImage(widget.admin.photoUrl!) : null,
+            onBackgroundImageError: hasPhoto ? (_, __) {} : null,
+            child: hasPhoto
+                ? null
+                : Text(
+                    firstLetter,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onPrimary,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 6),
+          Text(displayName, style: TextStyle(color: cs.onPrimary, fontSize: 12)),
+          const SizedBox(width: 4),
+          Icon(Icons.arrow_drop_down, size: 14, color: cs.onPrimary),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildMobileActions(ColorScheme cs, int unread, bool hasPhoto, String displayName, String firstLetter) {
+    return [
+      _buildNotificationButton(cs, unread),
+      PopupMenuButton<String>(
+        offset: const Offset(0, 48),
+        tooltip: 'Tài khoản',
+        onSelected: _handleAccountAction,
+        itemBuilder: (context) => [
+          const PopupMenuItem<String>(
+            value: 'profile',
+            child: Row(
+              children: [
+                Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                SizedBox(width: 8),
+                Text('Hồ sơ cá nhân'),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'logout',
+            child: Row(
+              children: [
+                Icon(Icons.logout, color: Colors.red, size: 18),
+                SizedBox(width: 8),
+                Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+          ),
+        ],
+        child: _buildAccountMenuChild(cs, hasPhoto, displayName, firstLetter),
+      ),
+      const SizedBox(width: 8),
+    ];
+  }
+
+  Widget _buildMobileScaffold(
+    BuildContext context,
+    ColorScheme cs,
+    int unread,
+    bool hasPhoto,
+    String displayName,
+    String firstLetter,
+  ) {
+    return Scaffold(
+      drawer: Drawer(
+        child: _Sidebar(
+          section: _section,
+          unread: unread,
+          onSelect: (section) => _handleMobileDrawerSelection(context, section),
+        ),
+      ),
+      appBar: AppBar(
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+        title: Text(
+          _currentSectionTitle(),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        actions: _buildMobileActions(cs, unread, hasPhoto, displayName, firstLetter),
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildDesktopLayout(int unread) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          width: _expandedWidth,
+          child: _Sidebar(
+            section: _section,
+            unread: unread,
+            onSelect: _handleSectionSelected,
+          ),
+        ),
+        const VerticalDivider(width: 1, thickness: 1),
+        Expanded(child: _buildBody()),
+      ],
+    );
+  }
+
   Widget _buildBody() {
     switch (_section) {
       case AdminSection.overview:
@@ -117,189 +322,18 @@ class AdminDashboardState extends State<AdminDashboard> {
             displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
         final unread = vm.unreadCount;
 
-        Widget bellButton() => Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  color: cs.onPrimary,
-                  tooltip: 'Thông báo',
-                  onPressed: () =>
-                      setState(() => _section = AdminSection.notifications),
-                ),
-                if (unread > 0)
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: IgnorePointer(
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints:
-                            const BoxConstraints(minWidth: 16, minHeight: 16),
-                        child: Text(
-                          unread > 99 ? '99+' : '$unread',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            );
-
         if (isMobile) {
-          return Scaffold(
-            drawer: Drawer(
-              child: _Sidebar(
-                section: _section,
-                unread: unread,
-                onSelect: (s) {
-                  setState(() {
-                    _section = s;
-                    if (s != AdminSection.userManagement) {
-                      _searchEmail = null;
-                    }
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            appBar: AppBar(
-              backgroundColor: cs.primary,
-              foregroundColor: cs.onPrimary,
-              title: Text(
-                switch (_section) {
-                  AdminSection.overview => 'Thống Kê',
-                  AdminSection.campaigns => 'Chiến dịch',
-                  AdminSection.userManagement => 'Người dùng',
-                  AdminSection.firebaseDemo => 'Firebase Demo',
-                  AdminSection.notifications => 'Thông báo',
-                },
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              actions: [
-                bellButton(),
-                PopupMenuButton<String>(
-                  offset: const Offset(0, 48),
-                  tooltip: 'Tài khoản',
-                  onSelected: (val) {
-                    if (val == 'logout') {
-                      widget.onLogout();
-                    } else if (val == 'profile') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ProfileScreen(
-                            user: widget.admin,
-                            onProfileUpdated: widget.onProfileUpdated,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem<String>(
-                      value: 'profile',
-                      child: Row(
-                        children: [
-                          Icon(Icons.person_outline,
-                              color: Colors.black87, size: 18),
-                          SizedBox(width: 8),
-                          Text('Hồ sơ cá nhân'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem<String>(
-                      value: 'logout',
-                      child: Row(
-                        children: [
-                          Icon(Icons.logout, color: Colors.red, size: 18),
-                          SizedBox(width: 8),
-                          Text('Đăng xuất',
-                              style: TextStyle(color: Colors.red)),
-                        ],
-                      ),
-                    ),
-                  ],
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(
-                        vertical: 8, horizontal: 4),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: cs.onPrimary.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: 10,
-                          backgroundColor:
-                              cs.onPrimary.withValues(alpha: 0.2),
-                          backgroundImage: hasPhoto
-                              ? NetworkImage(widget.admin.photoUrl!)
-                              : null,
-                          onBackgroundImageError:
-                              hasPhoto ? (_, __) {} : null,
-                          child: hasPhoto
-                              ? null
-                              : Text(
-                                  firstLetter,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: cs.onPrimary,
-                                  ),
-                                ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(displayName,
-                            style:
-                                TextStyle(color: cs.onPrimary, fontSize: 12)),
-                        const SizedBox(width: 4),
-                        Icon(Icons.arrow_drop_down,
-                            size: 14, color: cs.onPrimary),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-            body: _buildBody(),
+          return _buildMobileScaffold(
+            context,
+            cs,
+            unread,
+            hasPhoto,
+            displayName,
+            firstLetter,
           );
         }
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              width: _expandedWidth,
-              child: _Sidebar(
-                section: _section,
-                unread: unread,
-                onSelect: (s) => setState(() {
-                  _section = s;
-                  if (s != AdminSection.userManagement) {
-                    _searchEmail = null;
-                  }
-                }),
-              ),
-            ),
-            const VerticalDivider(width: 1, thickness: 1),
-            Expanded(child: _buildBody()),
-          ],
-        );
+        return _buildDesktopLayout(unread);
       }),
     );
   }
@@ -345,7 +379,7 @@ class _Sidebar extends StatelessWidget {
           ),
           _SidebarItem(
             icon: Icons.group_outlined,
-            label: 'Người dùng',
+            label: _kUserManagementLabel,
             selected: section == AdminSection.userManagement,
             expanded: true,
             onTap: () => onSelect(AdminSection.userManagement),
