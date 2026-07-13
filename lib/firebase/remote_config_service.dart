@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 
@@ -6,8 +7,6 @@ import 'package:flutter/foundation.dart';
 class RemoteConfigService {
   RemoteConfigService._();
   static final instance = RemoteConfigService._();
-
-  final _rc = FirebaseRemoteConfig.instance;
 
   // ── Tên các key phải khớp chính xác với Firebase Console ──────────────────
   static const _keyProvinceCount = 'default_chart_province_count';
@@ -26,18 +25,25 @@ class RemoteConfigService {
 
   /// Gọi 1 lần trong main() sau Firebase.initializeApp()
   Future<void> init() async {
+    if (Firebase.apps.isEmpty) {
+      debugPrint('[RemoteConfig] Firebase chưa khởi tạo, dùng defaults cục bộ.');
+      return;
+    }
+
+    final rc = FirebaseRemoteConfig.instance;
+
     try {
-      await _rc.setConfigSettings(RemoteConfigSettings(
+      await rc.setConfigSettings(RemoteConfigSettings(
         fetchTimeout: const Duration(seconds: 10),
         // debug: luôn fetch mới; release: cache 1 giờ để tiết kiệm quota
         minimumFetchInterval:
             kDebugMode ? Duration.zero : const Duration(hours: 1),
       ));
 
-      await _rc.setDefaults(_defaults);
+      await rc.setDefaults(_defaults);
 
       // Fetch + activate ngay khi khởi động
-      await _rc.fetchAndActivate();
+      await rc.fetchAndActivate();
 
       debugPrint('[RemoteConfig] fetch thành công — '
           'province_count=$provinceCount, '
@@ -51,15 +57,31 @@ class RemoteConfigService {
 
   // ── Getters — đọc giá trị sau khi fetch ───────────────────────────────────
 
+  FirebaseRemoteConfig? get _remoteConfigOrNull {
+    if (Firebase.apps.isEmpty) {
+      return null;
+    }
+
+    return FirebaseRemoteConfig.instance;
+  }
+
   /// Số tỉnh hiển thị mặc định trên biểu đồ (default: 10)
-  int get provinceCount => _rc.getInt(_keyProvinceCount);
+  int get provinceCount =>
+      _remoteConfigOrNull?.getInt(_keyProvinceCount) ??
+      _defaults[_keyProvinceCount]! as int;
 
   /// Khoảng cách tối đa để check-in hợp lệ tính bằng mét (default: 500)
-  double get checkinDistanceMeters => _rc.getDouble(_keyCheckinDistance);
+  double get checkinDistanceMeters =>
+      _remoteConfigOrNull?.getDouble(_keyCheckinDistance) ??
+      _defaults[_keyCheckinDistance]! as double;
 
   /// Có bật tính năng export PDF không (default: false)
-  bool get isPdfExportEnabled => _rc.getBool(_keyEnablePdf);
+  bool get isPdfExportEnabled =>
+      _remoteConfigOrNull?.getBool(_keyEnablePdf) ??
+      _defaults[_keyEnablePdf]! as bool;
 
   /// ID của campaign được ghim lên đầu (default: rỗng)
-  String get featuredCampaignId => _rc.getString(_keyFeaturedCampaign);
+  String get featuredCampaignId =>
+      _remoteConfigOrNull?.getString(_keyFeaturedCampaign) ??
+      _defaults[_keyFeaturedCampaign]! as String;
 }

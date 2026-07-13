@@ -6,6 +6,18 @@ import 'package:vietnam_map_flutter/viewmodels/auth_controller.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'login_screen.dart';
 
+typedef UserShellBuilder = Widget Function(
+  BuildContext context,
+  AppUser user,
+  VoidCallback onLogout,
+);
+
+typedef AdminShellBuilder = Widget Function(
+  BuildContext context,
+  AppUser admin,
+  VoidCallback onLogout,
+);
+
 /// "Cổng bảo vệ" — quyết định user thấy màn hình nào dựa trên trạng thái auth
 /// Tương tự SecurityFilterChain trong Spring Security
 ///
@@ -14,10 +26,17 @@ import 'login_screen.dart';
 ///   unauthenticated → LoginScreen
 ///   authenticated   → VietnamMapScreen (truyền AppUser vào để biết role)
 class AuthGate extends StatefulWidget {
-  const AuthGate({super.key, this.controller});
+  const AuthGate({
+    super.key,
+    this.controller,
+    this.userShellBuilder,
+    this.adminShellBuilder,
+  });
 
   /// Injection point để test — production để null (tự tạo)
   final AuthController? controller;
+  final UserShellBuilder? userShellBuilder;
+  final AdminShellBuilder? adminShellBuilder;
 
   @override
   State<AuthGate> createState() => _AuthGateState();
@@ -60,15 +79,19 @@ class _AuthGateState extends State<AuthGate> {
           case AuthStatus.authenticated:
             final user = _authController.user;
             if (user != null && user.isAdmin) {
-              return AdminShell(
-                admin: user,
-                onLogout: _authController.signOut,
-              );
+              final builder = widget.adminShellBuilder;
+              if (builder != null) {
+                return builder(context, user, _authController.signOut);
+              }
+              return AdminShell(admin: user, onLogout: _authController.signOut);
             }
-            return UserShell(
-              user: user ?? const AppUser(uid: '', email: '', role: UserRole.user, name: ''),
-              onLogout: _authController.signOut,
-            );
+            final resolvedUser =
+                user ?? const AppUser(uid: '', email: '', role: UserRole.user, name: '');
+            final builder = widget.userShellBuilder;
+            if (builder != null) {
+              return builder(context, resolvedUser, _authController.signOut);
+            }
+            return UserShell(user: resolvedUser, onLogout: _authController.signOut);
         }
       },
     );

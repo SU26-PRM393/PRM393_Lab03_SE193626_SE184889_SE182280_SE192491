@@ -81,28 +81,25 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print("========== SIGN IN START ==========");
+      debugPrint('========== SIGN IN START ==========');
 
       _user = await _service.signIn(
         email,
         password,
       );
 
-      print("========== SIGN IN SUCCESS ==========");
+      debugPrint('========== SIGN IN SUCCESS ==========');
 
       _status = AuthStatus.authenticated;
       _errorMessage = null;
     } on Exception catch (e, s) {
-      print("========== SIGN IN ERROR ==========");
-      print(e.runtimeType);
-      print(e);
-      print(s);
-      print("===================================");
+      debugPrint('========== SIGN IN ERROR ==========');
+      debugPrint('$e');
+      debugPrint('$s');
+      debugPrint('===================================');
 
       _status = AuthStatus.unauthenticated;
       _errorMessage = _friendlyError(e.toString());
-
-      rethrow;
     }
 
     notifyListeners();
@@ -118,7 +115,7 @@ class AuthController extends ChangeNotifier {
       _status = AuthStatus.authenticated;
       _errorMessage = null;
     } on Exception catch (e) {
-      print('Google Sign-In Error details: $e');
+      debugPrint('Google Sign-In Error details: $e');
       _status = AuthStatus.unauthenticated;
       _errorMessage = _friendlyError(e.toString());
     }

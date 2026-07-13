@@ -73,10 +73,10 @@ Future<void> diversifyEvents() async {
       });
       interactionsUpdated++;
     }
-    debugPrint('Đã cập nhật \$interactionsUpdated tương tác với nhân viên ngẫu nhiên.');
+    debugPrint('Đã cập nhật $interactionsUpdated tương tác với nhân viên ngẫu nhiên.');
 
   } catch (e) {
-    debugPrint('Lỗi: \$e');
+    debugPrint('Lỗi: $e');
   }
 
   debugPrint('--- HOÀN TẤT DIVERSIFY ---');

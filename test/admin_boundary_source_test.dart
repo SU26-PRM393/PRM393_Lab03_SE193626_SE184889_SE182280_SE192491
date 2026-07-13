@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/data/admin_boundary_source.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_scope.dart';
+import 'package:vietnam_map_flutter/models/map_scope.dart';
+import 'package:vietnam_map_flutter/services/admin_boundary_source.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

@@ -579,7 +579,6 @@ class VietnamMapController extends ChangeNotifier {
     MapStartupTrace.instant('app.firstFrame');
     loadBoundaryData();
     bootstrapAdministrativeData();
-    requestCurrentLocation();
   }
 
   Future<void> bootstrapAdministrativeData() async {

@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vietnam_map_flutter/features/auth/data/auth_controller.dart';
-import 'package:vietnam_map_flutter/features/auth/data/auth_service.dart';
-import 'package:vietnam_map_flutter/features/auth/presentation/login_screen.dart';
+import 'package:vietnam_map_flutter/screens/login_screen.dart';
+import 'package:vietnam_map_flutter/services/auth_service.dart';
+import 'package:vietnam_map_flutter/viewmodels/auth_controller.dart';
 
 // ---------------------------------------------------------------------------
 // Mock (không cần Firebase)

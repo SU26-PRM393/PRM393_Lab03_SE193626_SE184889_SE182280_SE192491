@@ -1,166 +1,187 @@
-# Run Patrol E2E Tests for Vietnam Map Flutter
-# Supports local development and CI execution
-
 param(
-    [string]$Target = "android",
-    [string]$Suite = "all",
-    [int]$Reruns = 1,
-    [switch]$Verbose,
-    [switch]$Evidence
+    [ValidateSet('us1-core-map', 'us1-search-filter-sort', 'us1-province-selection', 'dashboard-stats', 'admin-campaign-crud', 'admin-login-auth', 'admin-user-list', 'notification-workflow', 'user-campaigns-display', 'logout', 'google-auth', 'all')]
+    [string]$Suite = 'us1-core-map',
+    [string]$EnvFile = '.env.test',
+    [string]$Device
 )
 
-$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
-# Configuration
-$projectRoot = Split-Path -Parent $PSScriptRoot
-$patrolTestsDir = Join-Path $projectRoot "patrol_tests"
-$evidenceDir = Join-Path $patrolTestsDir "evidence"
-$summaryFile = Join-Path $evidenceDir "results-summary.md"
-
-# Color output helpers
-function Write-Header {
-    param([string]$Message)
-    Write-Host "===============================================" -ForegroundColor Cyan
-    Write-Host $Message -ForegroundColor Cyan
-    Write-Host "===============================================" -ForegroundColor Cyan
-}
-
-function Write-Status {
-    param([string]$Message, [string]$Status = "INFO")
-    $color = @{
-        "INFO" = "Green"
-        "WARN" = "Yellow"
-        "FAIL" = "Red"
-    }[$Status]
-    Write-Host "[$Status] $Message" -ForegroundColor $color
-}
-
-# Verify prerequisites
-function Verify-Prerequisites {
-    Write-Header "Verifying Prerequisites"
-    
-    # Check Flutter
-    if (-not (Get-Command flutter -ErrorAction SilentlyContinue)) {
-        Write-Status "Flutter not found in PATH" "FAIL"
-        exit 1
+function Ensure-AndroidPlatformToolsOnPath {
+    if (Get-Command adb -ErrorAction SilentlyContinue) {
+        return
     }
-    Write-Status "Flutter found: $(flutter --version)" "INFO"
-    
-    # Check Patrol
-    $pubspec = Get-Content (Join-Path $projectRoot "pubspec.yaml")
-    if ($pubspec -notmatch "patrol:") {
-        Write-Status "Patrol not configured in pubspec.yaml" "FAIL"
-        exit 1
-    }
-    Write-Status "Patrol configured in pubspec.yaml" "INFO"
-    
-    # Check test files exist
-    $testFiles = @(
-        "authentication_test.dart",
-        "publication_test.dart",
-        "journal_test.dart",
-        "keyword_test.dart",
-        "profile_test.dart",
-        "export_test.dart",
-        "remote_config_test.dart"
-    )
-    
-    foreach ($file in $testFiles) {
-        $filePath = Join-Path $patrolTestsDir $file
-        if (-not (Test-Path $filePath)) {
-            Write-Status "Test file not found: $file" "WARN"
+
+    $repoRoot = Split-Path -Parent $PSScriptRoot
+    $localPropertiesPath = Join-Path $repoRoot 'android/local.properties'
+    $sdkDir = $null
+
+    if (Test-Path -LiteralPath $localPropertiesPath) {
+        foreach ($line in Get-Content -LiteralPath $localPropertiesPath) {
+            if ($line -match '^\s*sdk\.dir\s*=\s*(.+)\s*$') {
+                $sdkDir = $Matches[1].Trim()
+                $sdkDir = $sdkDir -replace '\\\\', '\'
+                break
+            }
         }
     }
-    
-    Write-Status "Prerequisites verified" "INFO"
+
+    if (-not $sdkDir -and $env:ANDROID_SDK_ROOT) {
+        $sdkDir = $env:ANDROID_SDK_ROOT
+    }
+    if (-not $sdkDir -and $env:ANDROID_HOME) {
+        $sdkDir = $env:ANDROID_HOME
+    }
+
+    if (-not $sdkDir) {
+        return
+    }
+
+    $platformTools = Join-Path $sdkDir 'platform-tools'
+    if (-not (Test-Path -LiteralPath $platformTools)) {
+        return
+    }
+
+    if ($env:PATH -notlike "*$platformTools*") {
+        $env:PATH = "$platformTools;$env:PATH"
+    }
 }
 
-# Build app for testing
-function Build-App {
-    Write-Header "Building Flutter App for Testing"
-    
-    Set-Location $projectRoot
-    
-    # Get dependencies
-    Write-Status "Getting dependencies..." "INFO"
-    flutter pub get
-    if ($LASTEXITCODE -ne 0) {
-        Write-Status "Failed to get dependencies" "FAIL"
-        exit 1
+function Get-PatrolCommandSpec {
+    $patrolCmd = Get-Command patrol -ErrorAction SilentlyContinue
+    if ($patrolCmd) {
+        return @{
+            FilePath = $patrolCmd.Source
+            PrefixArgs = @()
+        }
     }
-    
-    # Build debug APK if needed
-    Write-Status "Building debug APK..." "INFO"
-    flutter build apk --debug
-    if ($LASTEXITCODE -ne 0) {
-        Write-Status "Failed to build app" "FAIL"
-        exit 1
+
+    return @{
+        FilePath = 'dart'
+        PrefixArgs = @('pub', 'global', 'run', 'patrol_cli:main')
     }
-    
-    Write-Status "App built successfully" "INFO"
 }
 
-# Run Patrol tests
-function Run-Patrol-Tests {
+function Get-EnvFileValues {
+    param([string]$Path)
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "Environment file not found: $Path"
+    }
+
+    $values = @{}
+
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        $trimmed = $line.Trim()
+
+        if (-not $trimmed -or $trimmed.StartsWith('#')) {
+            continue
+        }
+
+        $separatorIndex = $trimmed.IndexOf('=')
+        if ($separatorIndex -lt 1) {
+            continue
+        }
+
+        $key = $trimmed.Substring(0, $separatorIndex).Trim()
+        $value = $trimmed.Substring($separatorIndex + 1).Trim()
+
+        if (
+            ($value.StartsWith('"') -and $value.EndsWith('"')) -or
+            ($value.StartsWith("'") -and $value.EndsWith("'"))
+        ) {
+            $value = $value.Substring(1, $value.Length - 2)
+        }
+
+        $values[$key] = $value
+    }
+
+    return $values
+}
+
+function Invoke-PatrolTest {
     param(
-        [string]$Suite = "all",
-        [int]$Reruns = 1
+        [string]$TestFile,
+        [hashtable]$EnvValues,
+        [string]$DeviceId
     )
-    
-    Write-Header "Running Patrol E2E Tests"
-    
-    Set-Location $projectRoot
-    
-    $testCmd = "patrol test"
-    
-    if ($Suite -ne "all") {
-        $testCmd += " patrol_tests/${Suite}_test.dart"
-    } else {
-        $testCmd += " patrol_tests/"
-    }
-    
-    if ($Reruns -gt 1) {
-        $testCmd += " --allow-reruns=$Reruns"
-    }
-    
-    if ($Verbose) {
-        $testCmd += " --verbose"
-    }
-    
-    Write-Status "Executing: $testCmd" "INFO"
-    Invoke-Expression $testCmd
-    
-    $exitCode = $LASTEXITCODE
-    
-    if ($exitCode -eq 0) {
-        Write-Status "All tests passed" "INFO"
-    } else {
-        Write-Status "Tests failed with exit code $exitCode" "FAIL"
-    }
-    
-    return $exitCode
-}
 
-# Main execution
-try {
-    Verify-Prerequisites
-    Build-App
-    
-    $exitCode = Run-Patrol-Tests -Suite $Suite -Reruns $Reruns
-    
-    if ($Evidence) {
-        Write-Header "Evidence Collection"
-        Write-Status "Evidence files should be in: $evidenceDir" "INFO"
-        if (Test-Path $summaryFile) {
-            Write-Status "Summary report found" "INFO"
-        } else {
-            Write-Status "Summary report not yet generated" "WARN"
+    $dartDefineKeys = @(
+        'PATROL_GOOGLE_TEST_EMAIL',
+        'PATROL_GOOGLE_TEST_PASSWORD',
+        'TEST_USER_EMAIL',
+        'TEST_USER_PASSWORD',
+        'TEST_ADMIN_EMAIL',
+        'TEST_ADMIN_PASSWORD'
+    )
+
+    $patrolCommand = Get-PatrolCommandSpec
+    $cmdArgs = @($patrolCommand.PrefixArgs + @('test', '-t', $TestFile))
+
+    if ($DeviceId) {
+        $cmdArgs += @('-d', $DeviceId)
+    }
+
+    foreach ($key in $dartDefineKeys) {
+        if ($EnvValues.ContainsKey($key) -and -not [string]::IsNullOrWhiteSpace($EnvValues[$key])) {
+            $cmdArgs += @('--dart-define', "$key=$($EnvValues[$key])")
         }
     }
-    
-    exit $exitCode
+
+    Write-Host "Running Patrol test: $TestFile" -ForegroundColor Cyan
+    Ensure-AndroidPlatformToolsOnPath
+    & $patrolCommand.FilePath @cmdArgs
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
 }
-catch {
-    Write-Status "Error: $_" "FAIL"
-    exit 1
+
+$suiteToTests = @{
+    'us1-core-map' = @('patrol_test/core_map_viewport_controls_test.dart')
+    'us1-search-filter-sort' = @('patrol_test/map_search_filter_sort_test.dart')
+    'us1-province-selection' = @('patrol_test/province_selection_lower_level_reveal_test.dart')
+    'dashboard-stats' = @('patrol_test/dashboard_statistics_test.dart')
+    'admin-campaign-crud' = @('patrol_test/admin_campaign_crud_test.dart')
+    'admin-login-auth' = @('patrol_test/admin_gate_login_authorization_test.dart')
+    'admin-user-list' = @('patrol_test/admin_user_list_test.dart')
+    'notification-workflow' = @('patrol_test/notification_workflow_test.dart')
+    'user-campaigns-display' = @('patrol_test/user_campaigns_display_test.dart')
+    'logout' = @('patrol_test/logout_test.dart')
+    'google-auth' = @('patrol_test/google_login_auth_test.dart')
+    'all'         = @(
+        'patrol_test/core_map_viewport_controls_test.dart',
+        'patrol_test/map_search_filter_sort_test.dart',
+        'patrol_test/province_selection_lower_level_reveal_test.dart',
+        'patrol_test/dashboard_statistics_test.dart',
+        'patrol_test/admin_campaign_crud_test.dart',
+        'patrol_test/admin_gate_login_authorization_test.dart',
+        'patrol_test/admin_user_list_test.dart',
+        'patrol_test/notification_workflow_test.dart',
+        'patrol_test/user_campaigns_display_test.dart',
+        'patrol_test/logout_test.dart',
+        'patrol_test/google_login_auth_test.dart'
+    )
+}
+
+$repoRoot = Split-Path -Parent $PSScriptRoot
+Push-Location $repoRoot
+
+try {
+    $envPath = if ([System.IO.Path]::IsPathRooted($EnvFile)) {
+        $EnvFile
+    }
+    else {
+        Join-Path $repoRoot $EnvFile
+    }
+
+    $envValues = Get-EnvFileValues -Path $envPath
+    $tests = $suiteToTests[$Suite]
+
+    foreach ($test in $tests) {
+        Invoke-PatrolTest -TestFile $test -EnvValues $envValues -DeviceId $Device
+    }
+}
+finally {
+    Pop-Location
 }

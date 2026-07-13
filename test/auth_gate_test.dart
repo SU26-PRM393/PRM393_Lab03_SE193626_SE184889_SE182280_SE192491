@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vietnam_map_flutter/features/admin/presentation/admin_shell.dart';
-import 'package:vietnam_map_flutter/features/auth/data/auth_controller.dart';
-import 'package:vietnam_map_flutter/features/auth/data/auth_service.dart';
-import 'package:vietnam_map_flutter/features/auth/presentation/auth_gate.dart';
-import 'package:vietnam_map_flutter/features/user/presentation/user_shell.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/presentation/vietnam_map_screen.dart';
+import 'package:vietnam_map_flutter/screens/admin_shell.dart';
+import 'package:vietnam_map_flutter/screens/auth_gate.dart';
+import 'package:vietnam_map_flutter/screens/user_shell.dart';
+import 'package:vietnam_map_flutter/screens/vietnam_map_screen.dart';
+import 'package:vietnam_map_flutter/services/auth_service.dart';
+import 'package:vietnam_map_flutter/viewmodels/auth_controller.dart';
 
 // ---------------------------------------------------------------------------
 // Mock
@@ -61,7 +61,11 @@ class _MockAuthService implements AuthServiceInterface {
 // Helper
 // ---------------------------------------------------------------------------
 Widget _buildGate(AuthController ctrl) => MaterialApp(
-      home: AuthGate(controller: ctrl),
+      home: AuthGate(
+        controller: ctrl,
+        userShellBuilder: (context, user, onLogout) => _TestUserShell(user: user),
+        adminShellBuilder: (context, admin, onLogout) => _TestAdminShell(admin: admin),
+      ),
     );
 
 const _fakeUser = AppUser(
@@ -70,6 +74,28 @@ const _fakeUser = AppUser(
   role: UserRole.user,
   name: 'Fake User',
 );
+
+class _TestUserShell extends StatelessWidget {
+  const _TestUserShell({required this.user});
+
+  final AppUser user;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('user:${user.uid}', textDirection: TextDirection.ltr);
+  }
+}
+
+class _TestAdminShell extends StatelessWidget {
+  const _TestAdminShell({required this.admin});
+
+  final AppUser admin;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text('admin:${admin.uid}', textDirection: TextDirection.ltr);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -141,7 +167,7 @@ void main() {
       });
       await tester.pump();
 
-      expect(find.byType(UserShell), findsOneWidget);
+      expect(find.byType(_TestUserShell), findsOneWidget);
       expect(find.text('Đăng nhập để tiếp tục'), findsNothing);
     });
 
@@ -157,7 +183,7 @@ void main() {
       });
       await tester.pump();
 
-      final shell = tester.widget<UserShell>(find.byType(UserShell));
+      final shell = tester.widget<_TestUserShell>(find.byType(_TestUserShell));
       expect(shell.user.uid, 'uid-1');
       expect(shell.user.isAdmin, isFalse);
     });
@@ -181,7 +207,7 @@ void main() {
       });
       await tester.pump();
 
-      expect(find.byType(AdminShell), findsOneWidget);
+      expect(find.byType(_TestAdminShell), findsOneWidget);
       expect(find.byType(VietnamMapScreen), findsNothing);
     });
   });

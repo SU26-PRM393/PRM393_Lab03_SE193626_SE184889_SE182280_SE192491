@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "327780601219-ceab0ut0gng8233t39rsfoc62n45t4je.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vietnam_map_flutter",
+            "certificate_hash": "089bd0b53d40a584278fd089d14d17c7c6cc599f"
+          }
+        },
+        {
           "client_id": "327780601219-5isnjnlnl25gvtcuqubhpmhks9s9r1pm.apps.googleusercontent.com",
           "client_type": 3
         }

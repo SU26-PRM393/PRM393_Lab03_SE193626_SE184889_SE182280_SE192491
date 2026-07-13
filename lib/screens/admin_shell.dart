@@ -56,6 +56,7 @@ class AdminShellState extends State<AdminShell> {
     final showOuterAppBar = !isMobile || _tab == AdminTab.vietmap;
 
     return Scaffold(
+      key: const ValueKey('patrolAuthenticatedShell'),
       appBar: showOuterAppBar
           ? AppBar(
               backgroundColor: cs.primary,

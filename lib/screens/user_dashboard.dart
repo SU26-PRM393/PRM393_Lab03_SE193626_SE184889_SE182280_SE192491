@@ -288,7 +288,6 @@ class _SidebarItem extends StatefulWidget {
     required this.selected,
     required this.expanded,
     required this.onTap,
-    this.disabled = false,
     this.badge,
   });
 
@@ -297,7 +296,6 @@ class _SidebarItem extends StatefulWidget {
   final bool selected;
   final bool expanded;
   final VoidCallback? onTap;
-  final bool disabled;
   final int? badge;
 
   @override
@@ -313,8 +311,7 @@ class _SidebarItemState extends State<_SidebarItem> {
     final defaultColor = widget.selected
         ? cs.primary
         : (_hovered ? cs.primary : cs.onSurfaceVariant);
-    final effectiveColor =
-        widget.disabled ? cs.onSurface.withValues(alpha: 0.35) : defaultColor;
+    final effectiveColor = defaultColor;
 
     BoxDecoration? decoration;
     if (widget.selected) {
@@ -332,14 +329,12 @@ class _SidebarItemState extends State<_SidebarItem> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      cursor: widget.disabled
-          ? SystemMouseCursors.forbidden
-          : SystemMouseCursors.click,
+      cursor: SystemMouseCursors.click,
       child: Tooltip(
         message: widget.expanded ? '' : widget.label,
         preferBelow: false,
         child: InkWell(
-          onTap: widget.disabled ? null : widget.onTap,
+          onTap: widget.onTap,
           borderRadius: BorderRadius.circular(8),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),

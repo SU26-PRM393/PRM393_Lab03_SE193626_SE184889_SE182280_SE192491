@@ -81,7 +81,7 @@ function Start-SonarQubeDocker {
 function Generate-DartAnalysisReport {
     Write-Output "Generating Dart analysis report..."
 
-    dart analyze lib/ --format=json > analysis.json
+    dart analyze lib test --format=json > analysis.json
 
     if ($LASTEXITCODE -eq 0) {
         Write-Output "Dart analysis report generated: analysis.json"
@@ -132,9 +132,6 @@ function Run-SonarAnalysis {
 
     # Run analysis
     Sonar-Scanner `
-        -Dsonar.projectKey=vietnam-map-flutter `
-        -Dsonar.sources=lib `
-        -Dsonar.tests=test `
         -Dsonar.host.url=$Host `
         -Dsonar.login=$Token
 
@@ -180,7 +177,7 @@ if ($analysisCompleted) {
     Write-Output ""
     Write-Output "View your analysis results:"
     Write-Output "  URL: $SonarHost"
-    Write-Output "  Project Key: vietnam-map-flutter"
+    Write-Output "  Project Key: SU26-PRM393_VietNam-Map-Flutter"
     Write-Output ""
 }
 else {

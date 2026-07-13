@@ -38,6 +38,7 @@ class _UserShellState extends State<UserShell> {
     final showOuterAppBar = !isMobile || _tab == _UserTab.vietmap;
 
     return Scaffold(
+      key: const ValueKey('patrolAuthenticatedShell'),
       appBar: showOuterAppBar
           ? AppBar(
               backgroundColor: cs.primary,

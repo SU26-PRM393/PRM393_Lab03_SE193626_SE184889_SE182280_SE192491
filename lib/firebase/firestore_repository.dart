@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
@@ -14,20 +13,9 @@ import 'package:vietnam_map_flutter/models/province.dart';
 /// Firestore offline persistence cũng cache ở tầng SDK nên khi
 /// mở app lần 2 không cần mạng.
 class FirestoreRepository {
-  FirestoreRepository._() {
-    try {
-      _db.settings = const Settings(
-        persistenceEnabled: true,
-        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-      );
-    } catch (e) {
-      debugPrint('Error enabling Firestore persistence: $e');
-    }
-  }
+  FirestoreRepository._();
   
   static final instance = FirestoreRepository._();
-
-  final _db = FirebaseFirestore.instance;
 
   List<Province>? _provincesCache;
   List<Commune>? _communesCache;

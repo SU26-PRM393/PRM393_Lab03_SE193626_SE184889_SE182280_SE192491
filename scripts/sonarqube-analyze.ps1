@@ -14,7 +14,7 @@ Write-Output ""
 
 # Step 1: Flutter analyze
 Write-Output "Step 1: Running Flutter analysis..."
-flutter analyze lib/
+flutter analyze lib test
 if ($LASTEXITCODE -ne 0) {
     Write-Output "Warning: Flutter analysis found issues"
 }
@@ -22,7 +22,7 @@ Write-Output ""
 
 # Step 2: Dart analysis (JSON)
 Write-Output "Step 2: Generating Dart analysis report..."
-dart analyze lib/ --format=json > analysis.json
+dart analyze lib test --format=json > analysis.json
 Write-Output "Analysis report saved to: analysis.json"
 
 # Convert Dart analysis to SonarQube Generic Issue Report format
@@ -117,13 +117,6 @@ if (-not $sonarScannerPath) {
 
 # Build base command arguments
 $cmdArgs = @(
-    "-D", "sonar.projectKey=vietnam-map-flutter",
-    "-D", "sonar.sources=lib",
-    "-D", "sonar.tests=test",
-    "-D", "sonar.exclusions=**/*.g.dart,**/*.freezed.dart,**/generated/**,build/**,.dart_tool/**",
-    "-D", "sonar.test.inclusions=**/*_test.dart",
-    "-D", "sonar.dart.lcov.reportPaths=coverage/lcov.info",
-    "-D", "sonar.coverage.exclusions=lib/main.dart,lib/features/vietnam_map/model/**,lib/features/vietnam_map/presentation/**,lib/features/vietnam_map/database/isar_service.dart,lib/features/vietnam_map/data/location_repository.dart",
     "-D", "sonar.host.url=$SonarHost"
 )
 
@@ -139,5 +132,5 @@ if ($SonarToken) {
 
 Write-Output ""
 Write-Output "=== Analysis Complete ==="
-Write-Output "View results at: $SonarHost/dashboard?id=vietnam-map-flutter"
+Write-Output "View results at: $SonarHost/dashboard?id=SU26-PRM393_VietNam-Map-Flutter"
 

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/administrative_area.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/lower_level_place.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_boundary.dart';
+import 'package:vietnam_map_flutter/models/administrative_area.dart';
+import 'package:vietnam_map_flutter/models/lower_level_place.dart';
+import 'package:vietnam_map_flutter/models/map_boundary.dart';
 
 void main() {
   group('AdministrativeAreaSearchEngine', () {

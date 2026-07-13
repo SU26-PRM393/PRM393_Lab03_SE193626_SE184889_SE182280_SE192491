@@ -29,10 +29,10 @@ Future<void> updateStatuses() async {
         eventsUpdated++;
       }
     }
-    debugPrint('Đã cập nhật status cho \$eventsUpdated sự kiện cũ.');
+    debugPrint('Đã cập nhật status cho $eventsUpdated sự kiện cũ.');
 
   } catch (e) {
-    debugPrint('Lỗi: \$e');
+    debugPrint('Lỗi: $e');
   }
 
   debugPrint('--- HOÀN TẤT CẬP NHẬT STATUS ---');

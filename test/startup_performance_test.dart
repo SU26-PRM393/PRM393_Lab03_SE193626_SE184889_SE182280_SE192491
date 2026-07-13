@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/island_label_override.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_boundary.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_scope.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/presentation/vietnam_map_controller.dart';
+import 'package:vietnam_map_flutter/models/island_label_override.dart';
+import 'package:vietnam_map_flutter/models/map_boundary.dart';
+import 'package:vietnam_map_flutter/models/map_scope.dart';
+import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
 
 void main() {
   group('VietnamMapController performance paths', () {

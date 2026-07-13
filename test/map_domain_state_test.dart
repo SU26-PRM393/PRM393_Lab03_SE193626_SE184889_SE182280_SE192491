@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/data/map_tile_source.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/current_location_state.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/island_label_override.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_boundary.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_scope.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_tile_source.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/map_view_state.dart';
-import 'package:vietnam_map_flutter/features/vietnam_map/domain/province_hover_state.dart';
+import 'package:vietnam_map_flutter/models/current_location_state.dart';
+import 'package:vietnam_map_flutter/models/island_label_override.dart';
+import 'package:vietnam_map_flutter/models/map_boundary.dart';
+import 'package:vietnam_map_flutter/models/map_scope.dart';
+import 'package:vietnam_map_flutter/models/map_tile_source.dart';
+import 'package:vietnam_map_flutter/models/map_view_state.dart';
+import 'package:vietnam_map_flutter/models/province_hover_state.dart';
+import 'package:vietnam_map_flutter/services/map_tile_source.dart';
 
 void main() {
   group('Boundary geometry', () {

@@ -215,6 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Google sign-in button
                   OutlinedButton(
+                    key: const ValueKey('patrolGoogleSignInButton'),
                     onPressed: isLoading
                         ? null
                         : () => widget.controller.signInWithGoogle(),

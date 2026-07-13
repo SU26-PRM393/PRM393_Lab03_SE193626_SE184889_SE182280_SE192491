@@ -1,16 +1,14 @@
-import 'dart:io' show File, Platform, HttpException;
-import 'dart:convert' show jsonDecode, base64Encode, base64Decode;
+import 'dart:io' show File, Platform;
+import 'dart:convert' show base64Encode, base64Decode;
 import 'dart:ui' show ImageFilter;
 import 'package:image/image.dart' as img_pkg;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
 import 'package:collection/collection.dart';
 
 import 'package:vietnam_map_flutter/services/campaign_repository.dart';
@@ -26,7 +24,6 @@ import 'package:vietnam_map_flutter/models/checkin.dart';
 // ── Design Tokens & Palette ──────────────────────────────────────────
 const _kTeal = Color(0xFF1B6C6A);
 const _kTealLight = Color(0xFFD0EDEC);
-const _kBg = Color(0xFFF4FAFA);
 const _kCardBg = Colors.white;
 const _kRadius = 14.0;
 const _kBorderRadius = 12.0;
@@ -2416,7 +2413,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     List<Interaction> interactions,
     Map<String, String> employeeNameMap,
   ) {
-    final cs = Theme.of(context).colorScheme;
     final totalInteractions = interactions.length;
     final studentsCount = interactions.where((i) => i.targetType == 'student').length;
     final isHostOrAdmin = widget.currentUser.isAdmin || event.hostId == widget.currentUser.uid;
@@ -5177,35 +5173,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     );
   }
 
-  Future<String> _uploadToFirebaseStorageRest(File file, String remotePath) async {
-    final bucket = Firebase.app().options.storageBucket;
-    final encodedPath = Uri.encodeComponent(remotePath);
-    final url = Uri.parse('https://firebasestorage.googleapis.com/v0/b/$bucket/o?uploadType=media&name=$encodedPath');
-
-    // Get Firebase Auth ID token
-    final token = await FirebaseAuth.instance.currentUser?.getIdToken();
-
-    final bytes = await file.readAsBytes();
-    final headers = {
-      'Content-Type': 'image/jpeg',
-    };
-    if (token != null) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-
-    final response = await http.post(url, headers: headers, body: bytes).timeout(const Duration(seconds: 12));
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final data = jsonDecode(response.body);
-      final downloadTokens = data['downloadTokens'];
-      if (downloadTokens != null) {
-        return 'https://firebasestorage.googleapis.com/v0/b/$bucket/o/$encodedPath?alt=media&token=$downloadTokens';
-      }
-      return 'https://firebasestorage.googleapis.com/v0/b/$bucket/o/$encodedPath?alt=media';
-    } else {
-      throw HttpException('REST upload failed: ${response.statusCode} ${response.body}');
-    }
-  }
-
   Widget _buildCheckInImage(String photoUrl, {double? height, double? width, BoxFit fit = BoxFit.cover, bool interactive = false}) {
     Widget img;
     if (photoUrl.startsWith('data:image') || !photoUrl.startsWith('http')) {
@@ -5672,14 +5639,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     Navigator.pop(context); // Pop back to CampaignManagementScreen
   }
 
-  void _exportReport(BuildContext context, Event event) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Chức năng xuất báo cáo đang được phát triển.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 }
 
 class _TimelineItem extends StatefulWidget {

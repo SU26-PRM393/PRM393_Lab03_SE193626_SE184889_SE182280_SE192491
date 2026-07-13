@@ -23,6 +23,26 @@ flutter pub get
 flutter run -d windows
 ```
 
+## Test Environment
+
+Shared non-secret test configuration should live in `.env.test.example`.
+Local secret values should live in `.env.test`, which is intentionally ignored by git.
+
+Typical usage for Patrol and other integration tests:
+
+```powershell
+Copy-Item .env.test.example .env.test
+```
+
+To run the Google Patrol auth flow using values from `.env.test`:
+
+```powershell
+.\scripts\run_patrol_google_auth.ps1
+```
+
+Keep identifiers such as test emails in the shared example file when useful.
+Keep passwords, tokens, and other secrets only in `.env.test` or your CI secret store.
+
 The current feature is UI-first:
 
 - The Viet Nam map is interactive through pan and zoom.

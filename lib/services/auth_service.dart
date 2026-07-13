@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:vietnam_map_flutter/firebase/firebase_options.dart';
@@ -72,41 +73,52 @@ class AuthService
   Future<AppUser> signInWithGoogle() async {
     // 0. Nếu chạy trên Android hoặc iOS, sử dụng SDK native của google_sign_in
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      final googleSignIn = GoogleSignIn(
-        scopes: ['email', 'profile', 'openid'],
-      );
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        throw Exception('Đăng nhập bằng Google bị hủy.');
-      }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      final userCredential = await _auth.signInWithCredential(credential);
-      final user = userCredential.user!;
-
-      // Đảm bảo document user tồn tại trong Firestore (giống desktop)
-      final userDoc = await _db.collection('users').doc(user.uid).get();
-      if (!userDoc.exists) {
-        await _db.collection('users').doc(user.uid).set({
-          'email': user.email ?? '',
-          'name': user.displayName ?? user.email?.split('@').first ?? 'User',
-          'role': 'user',
-          'photoUrl': user.photoURL ?? '',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-      } else {
-        final data = userDoc.data();
-        if (data != null && (data['photoUrl'] == null || data['photoUrl'] == '')) {
-          await _db.collection('users').doc(user.uid).update({
-            'photoUrl': user.photoURL ?? '',
-          });
+      try {
+        final googleSignIn = GoogleSignIn(
+          scopes: ['email', 'profile', 'openid'],
+        );
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          throw Exception('Đăng nhập bằng Google bị hủy.');
         }
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        final userCredential = await _auth.signInWithCredential(credential);
+        final user = userCredential.user!;
+
+        // Đảm bảo document user tồn tại trong Firestore (giống desktop)
+        final userDoc = await _db.collection('users').doc(user.uid).get();
+        if (!userDoc.exists) {
+          await _db.collection('users').doc(user.uid).set({
+            'email': user.email ?? '',
+            'name': user.displayName ?? user.email?.split('@').first ?? 'User',
+            'role': 'user',
+            'photoUrl': user.photoURL ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          final data = userDoc.data();
+          if (data != null && (data['photoUrl'] == null || data['photoUrl'] == '')) {
+            await _db.collection('users').doc(user.uid).update({
+              'photoUrl': user.photoURL ?? '',
+            });
+          }
+        }
+        AnalyticsService.instance.logLogin('google');
+        return _toAppUser(user);
+      } on PlatformException catch (error) {
+        final details = '${error.code} ${error.message ?? ''}';
+        if (error.code == 'sign_in_failed' && details.contains('ApiException: 10')) {
+          throw Exception(
+            'Google Sign-In Android chưa được cấu hình đúng. '
+            'Kiểm tra package name và SHA-1 trong Firebase cho ứng dụng Android này.',
+          );
+        }
+        rethrow;
       }
-      AnalyticsService.instance.logLogin('google');
-      return _toAppUser(user);
     }
 
     final clientId = DefaultFirebaseOptions.googleClientId;
