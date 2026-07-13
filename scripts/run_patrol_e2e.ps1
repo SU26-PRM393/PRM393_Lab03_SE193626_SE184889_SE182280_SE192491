@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('us1-core-map', 'us1-search-filter-sort', 'us1-province-selection', 'dashboard-stats', 'admin-campaign-crud', 'admin-login-auth', 'logout', 'google-auth', 'all')]
+    [ValidateSet('us1-core-map', 'us1-search-filter-sort', 'us1-province-selection', 'dashboard-stats', 'admin-campaign-crud', 'admin-login-auth', 'host-complete-event-campaign', 'logout', 'google-auth', 'staff-checkin-interaction', 'all')]
     [string]$Suite = 'us1-core-map',
     [string]$EnvFile = '.env.test',
     [string]$Device
@@ -110,6 +110,7 @@ function Invoke-PatrolTest {
     $dartDefineKeys = @(
         'PATROL_GOOGLE_TEST_EMAIL',
         'PATROL_GOOGLE_TEST_PASSWORD',
+        'PATROL_ENABLE_TEST_CHECKIN',
         'TEST_USER_EMAIL',
         'TEST_USER_PASSWORD',
         'TEST_ADMIN_EMAIL',
@@ -144,8 +145,10 @@ $suiteToTests = @{
     'dashboard-stats' = @('patrol_test/dashboard_statistics_test.dart')
     'admin-campaign-crud' = @('patrol_test/admin_campaign_crud_test.dart')
     'admin-login-auth' = @('patrol_test/admin_gate_login_authorization_test.dart')
+    'host-complete-event-campaign' = @('patrol_test/host_complete_event_campaign_test.dart')
     'logout' = @('patrol_test/logout_test.dart')
     'google-auth' = @('patrol_test/google_login_auth_test.dart')
+    'staff-checkin-interaction' = @('patrol_test/staff_checkin_interaction_test.dart')
     'all'         = @(
         'patrol_test/core_map_viewport_controls_test.dart',
         'patrol_test/map_search_filter_sort_test.dart',
@@ -153,8 +156,10 @@ $suiteToTests = @{
         'patrol_test/dashboard_statistics_test.dart',
         'patrol_test/admin_campaign_crud_test.dart',
         'patrol_test/admin_gate_login_authorization_test.dart',
+        'patrol_test/host_complete_event_campaign_test.dart',
         'patrol_test/logout_test.dart',
-        'patrol_test/google_login_auth_test.dart'
+        'patrol_test/google_login_auth_test.dart',
+        'patrol_test/staff_checkin_interaction_test.dart'
     )
 }
 
@@ -170,6 +175,9 @@ try {
     }
 
     $envValues = Get-EnvFileValues -Path $envPath
+    if (($Suite -eq 'staff-checkin-interaction' -or $Suite -eq 'all') -and -not $envValues.ContainsKey('PATROL_ENABLE_TEST_CHECKIN')) {
+        $envValues['PATROL_ENABLE_TEST_CHECKIN'] = 'true'
+    }
     $tests = $suiteToTests[$Suite]
 
     foreach ($test in $tests) {

@@ -9,7 +9,7 @@ import 'package:patrol/src/platform/contracts/contracts.dart';
 import 'package:test_api/src/backend/invoker.dart';
 
 // START: GENERATED TEST IMPORTS
-import 'dashboard_statistics_test.dart' as __dashboard_statistics_test;
+import 'host_complete_event_campaign_test.dart' as __host_complete_event_campaign_test;
 // END: GENERATED TEST IMPORTS
 
 Future<void> main() async {
@@ -72,7 +72,7 @@ Future<void> main() async {
   });
 
 // START: GENERATED TEST GROUPS
-  group('.dashboard_statistics_test', __dashboard_statistics_test.main);
+  group('.host_complete_event_campaign_test', __host_complete_event_campaign_test.main);
 // END: GENERATED TEST GROUPS
 
   final dartTestGroup = await testExplorationCompleter.future;

@@ -10,6 +10,11 @@ import 'package:vietnam_map_flutter/firebase/notification_service.dart';
 import 'package:vietnam_map_flutter/firebase/remote_config_service.dart';
 import 'package:vietnam_map_flutter/screens/map_app.dart';
 
+const _isFlutterTest = bool.fromEnvironment('FLUTTER_TEST');
+const _isPatrolTest =
+  bool.fromEnvironment('PATROL_TEST') ||
+  bool.fromEnvironment('PATROL_ENABLE_TEST_CHECKIN');
+
 // Phải đăng ký trước runApp() — Firebase gọi handler này trong isolate riêng
 // khi app ở background và nhận FCM message
 Future<void> main() async {
@@ -33,7 +38,10 @@ Future<void> main() async {
   await NotificationService.instance.init();
 
   // Crashlytics: chỉ bật trên mobile (Android/iOS) — không hỗ trợ Windows/Web
-  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android ||
+    if (!_isFlutterTest &&
+      !_isPatrolTest &&
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS)) {
     // Bật collection kể cả trong debug để có thể test
     await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);

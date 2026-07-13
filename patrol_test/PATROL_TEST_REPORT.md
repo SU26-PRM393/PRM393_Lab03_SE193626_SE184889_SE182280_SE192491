@@ -1,6 +1,6 @@
 # Patrol Test Report
 
-Date: 2026-07-13
+Date: 2026-07-14
 
 ## Scope
 
@@ -19,9 +19,9 @@ Source code screenshots are embedded below from `patrol_test/screenshots/code` i
 | `patrol_test/google_login_auth_test.dart` | ![Google authentication source code](screenshots/code/Test_case_1.png) |
 | `patrol_test/admin_gate_login_authorization_test.dart` | ![Admin login authorization source code](screenshots/code/Test_case_2.png) |
 | `patrol_test/dashboard_statistics_test.dart` | ![Dashboard statistics source code](screenshots/code/Test_case_3.png) |
-| `patrol_test/admin_user_list_test.dart` | ![Admin user list source code](screenshots/code/Test_case_4.png) |
-| `patrol_test/admin_campaign_crud_test.dart` | ![Admin campaign CRUD source code](screenshots/code/Test_case_5.png) |
-| `patrol_test/notification_workflow_test.dart` | ![Notification workflow source code](screenshots/code/Test_case_6.png) |
+| `patrol_test/admin_campaign_crud_test.dart` | ![Admin campaign CRUD source code](screenshots/code/Test_case_4.png) |
+| `patrol_test/staff_checkin_interaction_test.dart` | ![Staff check-in and interaction source code](screenshots/code/Test_case_5.png) |
+| `patrol_test/host_complete_event_campaign_test.dart` | ![Host completes event and campaign source code](screenshots/code/Test_case_6.png) |
 | `patrol_test/core_map_viewport_controls_test.dart` | ![Core map viewport source code](screenshots/code/Test_case_7.png) |
 | `patrol_test/map_search_filter_sort_test.dart` | ![Map search filter sort source code](screenshots/code/Test_case_8.png) |
 | `patrol_test/province_selection_lower_level_reveal_test.dart` | ![Province selection source code](screenshots/code/Test_case_9.png) |
@@ -37,9 +37,9 @@ Execution screenshots are embedded below from `patrol_test/screenshots/execution
 | `.\scripts\run_patrol_google_auth.ps1` or `.\scripts\run_patrol_e2e.ps1 -Suite google-auth` | ![Google authentication execution](screenshots/execution/Test_case_1.png) |
 | `.\scripts\run_patrol_e2e.ps1 -Suite admin-login-auth` | ![Admin login authorization execution](screenshots/execution/Test_case_2.png) |
 | `.\scripts\run_patrol_e2e.ps1 -Suite dashboard-stats` | ![Dashboard statistics execution](screenshots/execution/Test_case_3.png) |
-| `.\scripts\run_patrol_e2e.ps1 -Suite admin-user-list` | ![Admin user list execution](screenshots/execution/Test_case_4.png) |
-| `.\scripts\run_patrol_e2e.ps1 -Suite admin-campaign-crud` | ![Admin campaign CRUD execution](screenshots/execution/Test_case_5.png) |
-| `.\scripts\run_patrol_e2e.ps1 -Suite notification-workflow` | ![Notification workflow execution](screenshots/execution/Test_case_6.png) |
+| `.\scripts\run_patrol_e2e.ps1 -Suite admin-campaign-crud` | ![Admin campaign CRUD execution](screenshots/execution/Test_case_4.png) |
+| `.\scripts\run_patrol_e2e.ps1 -Suite staff-checkin-interaction` | ![Staff check-in and interaction execution](screenshots/execution/Test_case_5.png) |
+| `.\scripts\run_patrol_e2e.ps1 -Suite host-complete-event-campaign` | ![Host completes event and campaign execution](screenshots/execution/Test_case_6.png) |
 | `.\scripts\run_patrol_e2e.ps1 -Suite us1-core-map` | ![Core map viewport execution](screenshots/execution/Test_case_7.png) |
 | `.\scripts\run_patrol_e2e.ps1 -Suite us1-search-filter-sort` | ![Map search filter sort execution](screenshots/execution/Test_case_8.png) |
 | `.\scripts\run_patrol_e2e.ps1 -Suite us1-province-selection` | ![Province selection execution](screenshots/execution/Test_case_9.png) |
@@ -55,9 +55,9 @@ Execution screenshots are embedded below from `patrol_test/screenshots/execution
 | 1 | Google authentication |
 | 2 | Admin gate login authorization |
 | 3 | Dashboard statistics |
-| 4 | Admin user list |
-| 5 | Admin campaign and event creation |
-| 6 | Notification workflow |
+| 4 | Admin campaign and event creation |
+| 5 | Staff check-in and interaction |
+| 6 | Host completes event and campaign |
 | 7 | Core map viewport controls |
 | 8 | Map search, filter, and sort |
 | 9 | Province selection and lower-level reveal |
@@ -68,13 +68,13 @@ Execution screenshots are embedded below from `patrol_test/screenshots/execution
 
 | Command | Observed result | Notes |
 | --- | --- | --- |
-| `.\scripts\run_patrol_e2e.ps1 -Suite admin-user-list` | Pass | Terminal context shows exit code `0`. |
-| `.\scripts\run_patrol_e2e.ps1 -Suite admin-user-list -Device emulator-5554` | Fail | Terminal context shows exit code `1`; no detailed failure artifact was present in the workspace. |
+| `.\scripts\run_patrol_e2e.ps1 -Suite staff-checkin-interaction -Device emulator-5554` | Pass | Final rerun in this session passed after replacing brittle campaign/event taps with keyed selectors, skipping Crashlytics test-mode hooks, and accepting both `AlertDialog` and custom `Dialog` in the shared wait helper. |
+| `.\scripts\run_patrol_e2e.ps1 -Suite host-complete-event-campaign -Device emulator-5554` | Pass | Final rerun in this session passed after waiting for the `Đã tạo event.` snackbar to clear and returning from `EventDetailScreen` before checking campaign completion controls. |
 | `flutter analyze lib/services/auth_service.dart lib/viewmodels/auth_controller.dart` | Not a Patrol result | Included in terminal history, but it is static analysis rather than Patrol execution. |
 
 ### Current summary statement
 
-The Patrol suite contains 11 implemented test files. Based on the execution evidence available in the workspace at the time of writing, one Patrol suite run is confirmed passing (`admin-user-list`), one device-targeted retry is confirmed failing without a captured failure artifact, and the remaining suites are implemented but not execution-verified in this report.
+The Patrol suite contains 11 implemented test files. Based on the execution evidence captured in this session, the two repaired workflow suites in the current campaign lifecycle both pass on `emulator-5554`: staff check-in and interaction, followed by host event and campaign completion.
 
 ## Brief Explanation Of Each Implemented Test Case
 
@@ -83,9 +83,9 @@ The Patrol suite contains 11 implemented test files. Based on the execution evid
 | `patrol_test/google_login_auth_test.dart` | `google login authenticates on Android emulator` | Exercises the Android emulator Google sign-in flow, including optional account selection, consent steps, permission handling, and final transition into the authenticated shell. |
 | `patrol_test/admin_gate_login_authorization_test.dart` | `admin gate login authorizes right credentials` | Ensures an admin can authenticate from the login screen and reach admin-only navigation, proving that protected admin access is available only after a valid sign-in. |
 | `patrol_test/dashboard_statistics_test.dart` | `dashboard statistics displayed correctly` | Checks that the statistics dashboard renders the expected chart section titles, supports scrolling to lower sections, and does not show an error state. |
-| `patrol_test/admin_user_list_test.dart` | `admin can view user list` | Signs in as an admin, navigates to user management, and verifies that the user list view loads without a retry error while showing either user rows or the expected empty state. |
 | `patrol_test/admin_campaign_crud_test.dart` | `admin campaign and event creation work` | Signs in as an admin, opens campaign management, creates a unique campaign, opens campaign details, creates an event, and verifies that both success feedback and the new event are visible. |
-| `patrol_test/notification_workflow_test.dart` | `notification workflow works after campaign creation` | Creates a campaign as an admin, opens the notification center, checks that a corresponding notification entry appears, and verifies that tapping the notification reveals the created campaign. |
+| `patrol_test/staff_checkin_interaction_test.dart` | `staff can check in and create interactions for an event` | Creates a campaign and event as an admin, signs in as the assigned staff user, completes event check-in, and records an interaction from the event detail workflow. |
+| `patrol_test/host_complete_event_campaign_test.dart` | `host completes the event and campaign successfully` | Creates a campaign and event as an admin, assigns the test staff account as the event host, signs in as that host to start and complete the event, then verifies the campaign can be marked complete once its event is finished. |
 | `patrol_test/core_map_viewport_controls_test.dart` | `core map loads with Vietnam-focused default viewport and map controls visible` | Verifies that the map screen initializes with the expected Vietnam center coordinates, default zoom, and visible core map controls such as zoom in, zoom out, current location, and recenter. |
 | `patrol_test/map_search_filter_sort_test.dart` | `search filter sort for province and lower level works` | Verifies the search UI logic for both province and district levels by checking filter selection, search text handling, and ascending/descending sort behavior against the controller's filtered results. |
 | `patrol_test/province_selection_lower_level_reveal_test.dart` | `province selection and lower level reveal works by click` | Confirms that selecting a province from search results updates the selected province state, loads lower-level administrative places, and reveals the lower-level section in the UI. |

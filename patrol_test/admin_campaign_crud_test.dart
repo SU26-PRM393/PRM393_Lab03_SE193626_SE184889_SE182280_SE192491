@@ -74,6 +74,12 @@ void main() {
         () => find.text(eventName).evaluate().isNotEmpty,
         timeout: const Duration(seconds: 30),
       );
+
+      await _waitForCondition(
+        $.tester,
+        () => find.text('Số nhân viên phụ trách: 1').evaluate().isNotEmpty,
+        timeout: const Duration(seconds: 30),
+      );
     },
   );
 }
@@ -237,11 +243,31 @@ Future<void> _saveEventFromDialog(
   await $.tester.enterText(nameField.first, name);
   await _pumpUi($.tester);
 
+  await _assignFirstStaffMemberFromDialog($, dialog);
+
   final saveButton = find.descendant(
     of: dialog,
     matching: find.widgetWithText(FilledButton, 'Lưu'),
   );
   await _tapVisible(saveButton.first, $.tester);
+}
+
+Future<void> _assignFirstStaffMemberFromDialog(
+  PatrolIntegrationTester $,
+  Finder dialog,
+) async {
+  final staffOption = find.descendant(
+    of: dialog,
+    matching: find.byType(CheckboxListTile),
+  );
+
+  await _waitForCondition(
+    $.tester,
+    () => staffOption.evaluate().isNotEmpty,
+    timeout: const Duration(seconds: 15),
+  );
+
+  await _tapVisible(staffOption.first, $.tester);
 }
 
 Future<void> _waitForCampaignDialog(

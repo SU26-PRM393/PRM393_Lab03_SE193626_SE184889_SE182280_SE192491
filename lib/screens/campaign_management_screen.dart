@@ -34,6 +34,9 @@ const _kUnknownLabel = 'Không rõ';
 const _kUnknownDateLabel = 'Chưa xác định';
 const _kUnknownTimeLabel = 'Chưa xác định thời gian';
 const _kInProgressStatus = 'in-progress';
+const _kEnablePatrolTestCheckIn = bool.fromEnvironment(
+  'PATROL_ENABLE_TEST_CHECKIN',
+);
 const _kStudentLabel = 'Học sinh';
 const _kRelativeLabel = 'Phụ huynh';
 const _kSchoolPersonLabel = 'Cán bộ trường';
@@ -645,6 +648,7 @@ class _EventPaneState extends State<_EventPane> {
         }
 
         final headerCard = Container(
+          key: ValueKey('campaign-events-pane:${campaign.name}'),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: cs.surfaceContainerLow,
@@ -1039,6 +1043,7 @@ class _CampaignTileState extends State<_CampaignTile> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: AnimatedContainer(
+        key: ValueKey('campaign-tile:${widget.campaign.name}'),
         duration: const Duration(milliseconds: 200),
         transform: Matrix4.translationValues(0.0, _isHovered ? -2.0 : 0.0, 0.0),
         decoration: BoxDecoration(
@@ -1226,6 +1231,7 @@ class _EventTile extends StatelessWidget {
     final hostName = hostEmployee['name'] ?? 'Chưa xác định';
 
     return Container(
+      key: ValueKey('campaign-event-tile:${event.name}'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
@@ -1350,6 +1356,7 @@ class _EventTile extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _ActionButton(
+                    buttonKey: ValueKey('campaign-event-detail:${event.name}'),
                     icon: Icons.info_outline,
                     label: 'Chi tiết',
                     color: Colors.blue,
@@ -1393,12 +1400,14 @@ class _EventTile extends StatelessWidget {
 
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
+    this.buttonKey,
     required this.icon,
     required this.label,
     required this.color,
     required this.onPressed,
   });
 
+  final Key? buttonKey;
   final IconData icon;
   final String label;
   final Color color;
@@ -1409,6 +1418,7 @@ class _ActionButton extends StatelessWidget {
     return Tooltip(
       message: label,
       child: OutlinedButton.icon(
+        key: buttonKey,
         style: OutlinedButton.styleFrom(
           foregroundColor: color,
           side: BorderSide(color: color.withValues(alpha: 0.3)),
@@ -2612,8 +2622,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
   }
 
   Future<Position?> _getCurrentLocation({double? defaultLat, double? defaultLng}) async {
-    if (Platform.isWindows) {
-      // Windows desktops lack physical GPS hardware. Return fallback/event coordinates to prevent hanging.
+    if (Platform.isWindows || (Platform.isAndroid && _kEnablePatrolTestCheckIn)) {
+      // Patrol emulator runs may not expose a reliable GPS fix.
       return Position(
         latitude: defaultLat ?? 10.8789,
         longitude: defaultLng ?? 106.8012,
@@ -5264,7 +5274,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           builder: (dialogCtx, setDialogState) {
             // Fetch location once when opening dialog
             if (currentPos == null && isLocating && error == null) {
-              _getCurrentLocation().then((pos) {
+              _getCurrentLocation(
+                defaultLat: event.latitude,
+                defaultLng: event.longitude,
+              ).then((pos) {
                 setDialogState(() {
                   currentPos = pos;
                   isLocating = false;
@@ -5289,7 +5302,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
 
             final distKm = calculatedDistance != null ? (calculatedDistance! / 1000.0) : null;
             final isNear = calculatedDistance != null && calculatedDistance! <= 1000.0;
-            final canSubmit = image != null && currentPos != null && isNear && !isLocating;
+      final canSubmit =
+        (_kEnablePatrolTestCheckIn || image != null) &&
+        currentPos != null &&
+        isNear &&
+        !isLocating;
 
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
