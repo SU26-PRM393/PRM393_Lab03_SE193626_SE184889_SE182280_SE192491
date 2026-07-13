@@ -16,20 +16,28 @@ class FcmAdminService {
   static const _fcmScope =
       'https://www.googleapis.com/auth/firebase.messaging';
 
-  // SECURITY FIX: Private key must be loaded from environment variables or secure storage
-  // DO NOT commit hardcoded private keys to version control
-  // TODO: Load from environment variable or Firebase App Check
-  static String? get _privateKey => const String.fromEnvironment(
-        'FCM_PRIVATE_KEY',
-        defaultValue: '', // Empty string will cause authentication to fail
-      ).isEmpty
-          ? null
-          : const String.fromEnvironment('FCM_PRIVATE_KEY');
+  // SECURITY: Private key must NEVER be hardcoded in source code.
+  // Load from environment variables, secure storage, or configuration management system.
+  // For production: Use Firebase Admin SDK with service account JSON file or Google Cloud Secret Manager.
+  static String? get _privateKey {
+    const key = String.fromEnvironment('FCM_PRIVATE_KEY');
+    return key.isEmpty ? null : key;
+  }
 
   String? _cachedToken;
   DateTime? _tokenExpiry;
 
   Future<String> _getAccessToken() async {
+    // Validate that private key is configured before proceeding
+    final privateKey = _privateKey;
+    if (privateKey == null) {
+      throw StateError(
+        'FCM private key not configured. '
+        'Set FCM_PRIVATE_KEY environment variable or use alternative authentication method. '
+        'For production, use Firebase Admin SDK with service account JSON or Google Cloud Secret Manager.',
+      );
+    }
+
     if (_cachedToken != null &&
         _tokenExpiry != null &&
         DateTime.now()
@@ -50,7 +58,7 @@ class FcmAdminService {
       'scope': _fcmScope,
     });
 
-    final signed = jwt.sign(RSAPrivateKey(_privateKey), algorithm: JWTAlgorithm.RS256);
+    final signed = jwt.sign(RSAPrivateKey(privateKey), algorithm: JWTAlgorithm.RS256);
 
     final response = await http.post(
       Uri.parse(_tokenUri),
