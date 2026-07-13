@@ -41,6 +41,7 @@ const _kTeacherLabel = 'Giáo viên';
 const _kPrincipalLabel = 'Hiệu trưởng';
 const _kSchoolLabel = 'Trường học';
 const _kPhoneLabel = 'Số điện thoại';
+const _kNotUpdatedLabel = '(Chưa cập nhật)';
 
 InputDecoration _dialogInputDecoration(String labelText) {
   return InputDecoration(
@@ -5958,7 +5959,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Lớp học',
                                         value: data['className']?.toString().isNotEmpty == true
                                             ? data['className']
-                                            : '(Chưa cập nhật)',
+                                            : _kNotUpdatedLabel,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -5968,7 +5969,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Mã học sinh',
                                         value: data['studentCode']?.toString().isNotEmpty == true
                                             ? data['studentCode']
-                                            : '(Chưa cập nhật)',
+                                            : _kNotUpdatedLabel,
                                       ),
                                     ),
                                   ],
@@ -5998,7 +5999,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                                     : data['roleType'] == 'staff'
                                                         ? 'Nhân viên'
                                                         : data['roleType'])
-                                            : '(Chưa cập nhật)',
+                                            : _kNotUpdatedLabel,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -6008,7 +6009,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Số điện thoại',
                                         value: data['phone']?.toString().isNotEmpty == true
                                             ? data['phone']
-                                            : '(Chưa cập nhật)',
+                                            : _kNotUpdatedLabel,
                                       ),
                                     ),
                                   ],
@@ -6019,7 +6020,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                   label: 'Email liên hệ',
                                   value: data['email']?.toString().isNotEmpty == true
                                       ? data['email']
-                                      : '(Chưa cập nhật)',
+                                      : _kNotUpdatedLabel,
                                 ),
                                 if (data['schoolName']?.toString().isNotEmpty == true) ...[
                                   const SizedBox(height: 14),
@@ -6044,7 +6045,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                                 : data['relationship'] == 'father'
                                                     ? 'Bố'
                                                     : data['relationship'])
-                                            : '(Chưa cập nhật)',
+                                            : _kNotUpdatedLabel,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -6054,7 +6055,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Số điện thoại',
                                         value: data['phone']?.toString().isNotEmpty == true
                                             ? data['phone']
-                                            : '(Chưa cập nhật)',
+                                            : _kNotUpdatedLabel,
                                       ),
                                     ),
                                   ],

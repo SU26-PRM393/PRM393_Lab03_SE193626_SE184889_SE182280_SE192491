@@ -10,6 +10,9 @@ import 'package:vietnam_map_flutter/viewmodels/notification_viewmodel.dart';
 
 enum _UserSection { overview, campaigns, notifications }
 
+const _kOverviewLabel = 'Thống Kê';
+const _kNotificationsLabel = 'Thông báo';
+
 /// Dashboard layout cho user thường: sidebar có thể thu gọn + vùng nội dung
 class UserDashboard extends StatefulWidget {
   const UserDashboard({
@@ -57,9 +60,9 @@ class _UserDashboardState extends State<UserDashboard> {
 
   String _currentSectionTitle() {
     return switch (_section) {
-      _UserSection.overview => 'Thống Kê',
+      _UserSection.overview => _kOverviewLabel,
       _UserSection.campaigns => 'Chiến dịch',
-      _UserSection.notifications => 'Thông báo',
+      _UserSection.notifications => _kNotificationsLabel,
     };
   }
 
@@ -69,7 +72,7 @@ class _UserDashboardState extends State<UserDashboard> {
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           color: cs.onPrimary,
-          tooltip: 'Thông báo',
+          tooltip: _kNotificationsLabel,
           onPressed: () => setState(() => _section = _UserSection.notifications),
         ),
         if (unread > 0)
@@ -265,7 +268,7 @@ class _Sidebar extends StatelessWidget {
 
           _SidebarItem(
             icon: Icons.dashboard_outlined,
-            label: 'Thống Kê',
+            label: _kOverviewLabel,
             selected: section == _UserSection.overview,
             expanded: true,
             onTap: () => onSelect(_UserSection.overview),
@@ -279,7 +282,7 @@ class _Sidebar extends StatelessWidget {
           ),
           _SidebarItem(
             icon: Icons.notifications_outlined,
-            label: 'Thông báo',
+            label: _kNotificationsLabel,
             selected: section == _UserSection.notifications,
             expanded: true,
             badge: unread > 0 ? unread : null,

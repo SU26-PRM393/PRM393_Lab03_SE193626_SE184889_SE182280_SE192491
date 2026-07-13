@@ -19,6 +19,7 @@ const _kStatusCanceled = 'canceled';
 const _kStatusDoneLabel = 'Hoàn thành';
 const _kStatusCanceledLabel = 'Đã hủy';
 const _kAllFilterLabel = 'Tất cả';
+const _kUnknownLabel = 'Không rõ';
 
 Color _statusColor(String s) => switch (s) {
       'active' || _kStatusInProgress => const Color(0xFF16A34A),
@@ -1029,7 +1030,7 @@ class _EventDetailViewState extends State<_EventDetailView> {
             subtitle: 'Không có nhân viên nào được phân công cho sự kiện này.')
       else
         ...event.assignedEmployeeIds.map((id) {
-          final name = controller.employeeNames[id] ?? 'Không rõ';
+          final name = controller.employeeNames[id] ?? _kUnknownLabel;
           final email = controller.employeeEmails[id] ?? '';
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -1070,8 +1071,8 @@ class _EventDetailViewState extends State<_EventDetailView> {
         ...filteredInteractions.map((i) {
           final targetName = i.targetName.isNotEmpty
               ? i.targetName
-              : (controller.interactionTargetNames[i.targetId] ?? 'Không rõ');
-          final employeeName = controller.employeeNames[i.employeeId] ?? 'Không rõ';
+              : (controller.interactionTargetNames[i.targetId] ?? _kUnknownLabel);
+          final employeeName = controller.employeeNames[i.employeeId] ?? _kUnknownLabel;
           return _InteractionCard(
             interaction: i,
             targetName: targetName,

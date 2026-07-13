@@ -22,6 +22,8 @@ enum AdminSection {
 }
 
 const _kUserManagementLabel = 'Người dùng';
+const _kOverviewLabel = 'Thống Kê';
+const _kNotificationsLabel = 'Thông báo';
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
 class AdminDashboard extends StatefulWidget {
@@ -116,11 +118,11 @@ class AdminDashboardState extends State<AdminDashboard> {
 
   String _currentSectionTitle() {
     return switch (_section) {
-      AdminSection.overview => 'Thống Kê',
+      AdminSection.overview => _kOverviewLabel,
       AdminSection.campaigns => 'Chiến dịch',
       AdminSection.userManagement => _kUserManagementLabel,
       AdminSection.firebaseDemo => 'Firebase Demo',
-      AdminSection.notifications => 'Thông báo',
+      AdminSection.notifications => _kNotificationsLabel,
     };
   }
 
@@ -130,7 +132,7 @@ class AdminDashboardState extends State<AdminDashboard> {
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           color: cs.onPrimary,
-          tooltip: 'Thông báo',
+          tooltip: _kNotificationsLabel,
           onPressed: () => setState(() => _section = AdminSection.notifications),
         ),
         if (unread > 0)
@@ -365,7 +367,7 @@ class _Sidebar extends StatelessWidget {
 
           _SidebarItem(
             icon: Icons.dashboard_outlined,
-            label: 'Thống Kê',
+            label: _kOverviewLabel,
             selected: section == AdminSection.overview,
             expanded: true,
             onTap: () => onSelect(AdminSection.overview),
@@ -393,7 +395,7 @@ class _Sidebar extends StatelessWidget {
           ),
           _SidebarItem(
             icon: Icons.notifications_outlined,
-            label: 'Thông báo',
+            label: _kNotificationsLabel,
             selected: section == AdminSection.notifications,
             expanded: true,
             badge: unread > 0 ? unread : null,
