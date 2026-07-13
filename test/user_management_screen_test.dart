@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vietnam_map_flutter/features/auth/data/auth_service.dart';
-import 'package:vietnam_map_flutter/features/admin/presentation/user_management_screen.dart';
+import 'package:vietnam_map_flutter/screens/user_management_screen.dart';
+import 'package:vietnam_map_flutter/services/auth_service.dart';
 
 // ---------------------------------------------------------------------------
 // Mock

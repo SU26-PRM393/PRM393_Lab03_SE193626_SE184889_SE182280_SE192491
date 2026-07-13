@@ -8,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:collection/collection.dart';
 
 import 'package:vietnam_map_flutter/services/campaign_repository.dart';
@@ -451,7 +450,7 @@ class _EventPaneState extends State<_EventPane> {
         }
         final totalEvents = events.length;
         final completedEvents = events.where((e) => e.status == 'completed').length;
-        final participants = events.fold<int>(0, (sum, e) => sum + e.totalInteractions);
+        final participants = events.fold<int>(0, (total, e) => total + e.totalInteractions);
         final staffCount = events.expand((e) => e.assignedEmployeeIds).toSet().length;
 
         final allEventsCompletedOrCanceled = events.isNotEmpty &&
@@ -460,7 +459,7 @@ class _EventPaneState extends State<_EventPane> {
             campaign.status != 'canceled' &&
             allEventsCompletedOrCanceled;
 
-        Widget _buildCampaignActions() {
+        Widget buildCampaignActions() {
           if (!widget.currentUser.isAdmin) return const SizedBox.shrink();
 
           return Wrap(
@@ -477,11 +476,12 @@ class _EventPaneState extends State<_EventPane> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     final updated = campaign.copyWith(status: 'active');
                     await _repo.saveCampaign(updated);
                     widget.onCampaignChanged(updated);
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         const SnackBar(content: Text('Đã bắt đầu chiến dịch.')),
                       );
                     }
@@ -498,6 +498,7 @@ class _EventPaneState extends State<_EventPane> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -520,7 +521,7 @@ class _EventPaneState extends State<_EventPane> {
                       await _repo.saveCampaign(updated);
                       widget.onCampaignChanged(updated);
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(content: Text('Chiến dịch đã hoàn thành.')),
                         );
                       }
@@ -538,6 +539,7 @@ class _EventPaneState extends State<_EventPane> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -561,7 +563,7 @@ class _EventPaneState extends State<_EventPane> {
                       await _repo.saveCampaign(updated);
                       widget.onCampaignChanged(updated);
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(content: Text('Chiến dịch và các sự kiện đã bị hủy.')),
                         );
                       }
@@ -579,6 +581,7 @@ class _EventPaneState extends State<_EventPane> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
@@ -601,7 +604,7 @@ class _EventPaneState extends State<_EventPane> {
                       await _repo.saveCampaign(updated);
                       widget.onCampaignChanged(updated);
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.showSnackBar(
                           const SnackBar(content: Text('Chiến dịch đã được đưa về trạng thái hoạt động.')),
                         );
                       }
@@ -695,7 +698,7 @@ class _EventPaneState extends State<_EventPane> {
                       children: [
                         headerContent,
                         const SizedBox(height: 16),
-                        _buildCampaignActions(),
+                        buildCampaignActions(),
                       ],
                     );
                   }
@@ -705,7 +708,7 @@ class _EventPaneState extends State<_EventPane> {
                     children: [
                       Expanded(child: headerContent),
                       const SizedBox(width: 16),
-                      _buildCampaignActions(),
+                      buildCampaignActions(),
                     ],
                   );
                 },
@@ -1646,7 +1649,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                 ),
                 const SizedBox(height: 10),
                 DropdownButtonFormField<String>(
-                  value: _schoolId,
+                  initialValue: _schoolId,
                   isExpanded: true,
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
                   decoration: _dialogInputDecoration('Địa điểm'),
@@ -1666,7 +1669,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                 ),
                 const SizedBox(height: 14),
                 DropdownButtonFormField<String>(
-                  value: _hostId,
+                  initialValue: _hostId,
                   isExpanded: true,
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
                   decoration: _dialogInputDecoration('Người chủ trì (Main Host)'),
@@ -1718,16 +1721,19 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                       tooltip: 'Lấy vị trí hiện tại',
                       icon: const Icon(Icons.my_location, color: _kTeal),
                       onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         try {
                           final pos = await Geolocator.getCurrentPosition(
-                            desiredAccuracy: LocationAccuracy.high,
+                            locationSettings: const LocationSettings(
+                              accuracy: LocationAccuracy.high,
+                            ),
                           );
                           setState(() {
                             _latController.text = pos.latitude.toString();
                             _lngController.text = pos.longitude.toString();
                           });
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             SnackBar(content: Text('Lỗi định vị: $e')),
                           );
                         }
@@ -3308,6 +3314,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
 
     String targetType = 'student';
     String? selectedTargetId;
+    bool isSaving = false;
 
     final initialSchool = event.schoolIds.isNotEmpty ? event.schoolIds.first : null;
     String? selectedSchoolId = initialSchool;
@@ -3324,7 +3331,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final isExisting = selectedTargetId != null;
-            bool isSaving = false;
 
             // Filter target lists based on search query
             final query = searchTargetController.text.toLowerCase().trim();
