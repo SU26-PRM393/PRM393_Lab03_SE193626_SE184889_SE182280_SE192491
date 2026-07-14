@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('us1-core-map', 'us1-search-filter-sort', 'us1-province-selection', 'dashboard-stats', 'admin-campaign-crud', 'admin-login-auth', 'host-complete-event-campaign', 'logout', 'google-auth', 'staff-checkin-interaction', 'all')]
+    [ValidateSet('us1-core-map', 'us1-search-filter-sort', 'us1-province-selection', 'dashboard-stats', 'admin-campaign-crud', 'admin-login-auth', 'profile-navigation', 'remote-config', 'pdf-export', 'host-complete-event-campaign', 'logout', 'google-auth', 'staff-checkin-interaction', 'all')]
     [string]$Suite = 'us1-core-map',
     [string]$EnvFile = '.env.test',
     [string]$Device
@@ -145,6 +145,9 @@ $suiteToTests = @{
     'dashboard-stats' = @('patrol_test/dashboard_statistics_test.dart')
     'admin-campaign-crud' = @('patrol_test/admin_campaign_crud_test.dart')
     'admin-login-auth' = @('patrol_test/admin_gate_login_authorization_test.dart')
+    'profile-navigation' = @('patrol_test/profile_navigation_test.dart')
+    'remote-config' = @('patrol_test/remote_config_values_test.dart')
+    'pdf-export' = @('patrol_test/pdf_export_upload_test.dart')
     'host-complete-event-campaign' = @('patrol_test/host_complete_event_campaign_test.dart')
     'logout' = @('patrol_test/logout_test.dart')
     'google-auth' = @('patrol_test/google_login_auth_test.dart')
@@ -156,6 +159,9 @@ $suiteToTests = @{
         'patrol_test/dashboard_statistics_test.dart',
         'patrol_test/admin_campaign_crud_test.dart',
         'patrol_test/admin_gate_login_authorization_test.dart',
+        'patrol_test/profile_navigation_test.dart',
+        'patrol_test/remote_config_values_test.dart',
+        'patrol_test/pdf_export_upload_test.dart',
         'patrol_test/host_complete_event_campaign_test.dart',
         'patrol_test/logout_test.dart',
         'patrol_test/google_login_auth_test.dart',

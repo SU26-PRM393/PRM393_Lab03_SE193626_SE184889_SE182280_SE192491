@@ -9,7 +9,7 @@ import 'package:patrol/src/platform/contracts/contracts.dart';
 import 'package:test_api/src/backend/invoker.dart';
 
 // START: GENERATED TEST IMPORTS
-import 'host_complete_event_campaign_test.dart' as __host_complete_event_campaign_test;
+import 'pdf_export_upload_test.dart' as __pdf_export_upload_test;
 // END: GENERATED TEST IMPORTS
 
 Future<void> main() async {
@@ -72,7 +72,7 @@ Future<void> main() async {
   });
 
 // START: GENERATED TEST GROUPS
-  group('.host_complete_event_campaign_test', __host_complete_event_campaign_test.main);
+  group('.pdf_export_upload_test', __pdf_export_upload_test.main);
 // END: GENERATED TEST GROUPS
 
   final dartTestGroup = await testExplorationCompleter.future;

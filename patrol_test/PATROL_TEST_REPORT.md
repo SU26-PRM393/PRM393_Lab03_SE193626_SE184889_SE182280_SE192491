@@ -6,7 +6,7 @@ Date: 2026-07-14
 
 This report summarizes the implemented Patrol end-to-end and widget-driven integration tests under `patrol_test/`.
 
-- Total implemented Patrol test files: 11
+- Total implemented Patrol test files: 14
 - Source inventory basis: `patrol_test/*.dart`
 - Execution evidence basis: recent local terminal runs captured in the workspace context
 
@@ -26,7 +26,10 @@ Source code screenshots are embedded below from `patrol_test/screenshots/code` i
 | `patrol_test/map_search_filter_sort_test.dart` | ![Map search filter sort source code](screenshots/code/Test_case_8.png) |
 | `patrol_test/province_selection_lower_level_reveal_test.dart` | ![Province selection source code](screenshots/code/Test_case_9.png) |
 | `patrol_test/user_campaigns_display_test.dart` | ![User campaigns display source code](screenshots/code/Test_case_10.png) |
-| `patrol_test/logout_test.dart` | ![Logout source code](screenshots/code/Test_case_11.png) |
+| `patrol_test/profile_navigation_test.dart` | ![Profile navigation source code](screenshots/code/Test_case_11.png) |
+| `patrol_test/remote_config_values_test.dart` | ![Remote Config source code](screenshots/code/Test_case_12.png) |
+| `patrol_test/pdf_export_upload_test.dart` | ![PDF export source code](screenshots/code/Test_case_13.png) |
+| `patrol_test/logout_test.dart` | ![Logout source code](screenshots/code/Test_case_14.png) |
 
 ## Test Execution Screenshots
 
@@ -44,7 +47,10 @@ Execution screenshots are embedded below from `patrol_test/screenshots/execution
 | `.\scripts\run_patrol_e2e.ps1 -Suite us1-search-filter-sort` | ![Map search filter sort execution](screenshots/execution/Test_case_8.png) |
 | `.\scripts\run_patrol_e2e.ps1 -Suite us1-province-selection` | ![Province selection execution](screenshots/execution/Test_case_9.png) |
 | `.\scripts\run_patrol_e2e.ps1 -Suite user-campaigns-display` | ![User campaigns display execution](screenshots/execution/Test_case_10.png) |
-| `.\scripts\run_patrol_e2e.ps1 -Suite logout` | ![Logout execution](screenshots/execution/Test_case_11.png) |
+| `.\scripts\run_patrol_e2e.ps1 -Suite profile-navigation` | ![Profile navigation execution](screenshots/execution/Test_case_11.png) |
+| `.\scripts\run_patrol_e2e.ps1 -Suite remote-config` | ![Remote Config execution](screenshots/execution/Test_case_12.png) |
+| `.\scripts\run_patrol_e2e.ps1 -Suite pdf-export` | ![PDF export execution](screenshots/execution/Test_case_13.png) |
+| `.\scripts\run_patrol_e2e.ps1 -Suite logout` | ![Logout execution](screenshots/execution/Test_case_14.png) |
 
 ## Test Results Summary
 
@@ -62,7 +68,10 @@ Execution screenshots are embedded below from `patrol_test/screenshots/execution
 | 8 | Map search, filter, and sort |
 | 9 | Province selection and lower-level reveal |
 | 10 | User campaigns display |
-| 11 | Logout |
+| 11 | Profile navigation |
+| 12 | Remote Config values |
+| 13 | PDF export and Firebase Storage upload |
+| 14 | Logout |
 
 ### Observed execution evidence
 
@@ -70,11 +79,14 @@ Execution screenshots are embedded below from `patrol_test/screenshots/execution
 | --- | --- | --- |
 | `.\scripts\run_patrol_e2e.ps1 -Suite staff-checkin-interaction -Device emulator-5554` | Pass | Final rerun in this session passed after replacing brittle campaign/event taps with keyed selectors, skipping Crashlytics test-mode hooks, and accepting both `AlertDialog` and custom `Dialog` in the shared wait helper. |
 | `.\scripts\run_patrol_e2e.ps1 -Suite host-complete-event-campaign -Device emulator-5554` | Pass | Final rerun in this session passed after waiting for the `Đã tạo event.` snackbar to clear and returning from `EventDetailScreen` before checking campaign completion controls. |
+| `.\scripts\run_patrol_e2e.ps1 -Suite profile-navigation -Device emulator-5554` | Pass | Passed on emulator-5554 after signing in as the admin test account, opening the account menu, and verifying the profile screen renders the expected authenticated user information. |
+| `.\scripts\run_patrol_e2e.ps1 -Suite remote-config -Device emulator-5554` | Pass | Passed on emulator-5554 after opening Firebase Demo and verifying the Remote Config keys and displayed values for chart count, PDF toggle, and check-in distance. |
+| `.\scripts\run_patrol_e2e.ps1 -Suite pdf-export -Device emulator-5554` | Pass | Passed on emulator-5554 after generating the PDF report from Firebase Demo, uploading it to Firebase Storage, and confirming the success state and download URL. |
 | `flutter analyze lib/services/auth_service.dart lib/viewmodels/auth_controller.dart` | Not a Patrol result | Included in terminal history, but it is static analysis rather than Patrol execution. |
 
 ### Current summary statement
 
-The Patrol suite contains 11 implemented test files. Based on the execution evidence captured in this session, the two repaired workflow suites in the current campaign lifecycle both pass on `emulator-5554`: staff check-in and interaction, followed by host event and campaign completion.
+The Patrol suite contains 14 implemented test files. Based on the execution evidence captured in this session, the repaired campaign lifecycle suites and the newly added profile navigation, Remote Config, and PDF export flows all pass on `emulator-5554`.
 
 ## Brief Explanation Of Each Implemented Test Case
 
@@ -90,6 +102,9 @@ The Patrol suite contains 11 implemented test files. Based on the execution evid
 | `patrol_test/map_search_filter_sort_test.dart` | `search filter sort for province and lower level works` | Verifies the search UI logic for both province and district levels by checking filter selection, search text handling, and ascending/descending sort behavior against the controller's filtered results. |
 | `patrol_test/province_selection_lower_level_reveal_test.dart` | `province selection and lower level reveal works by click` | Confirms that selecting a province from search results updates the selected province state, loads lower-level administrative places, and reveals the lower-level section in the UI. |
 | `patrol_test/user_campaigns_display_test.dart` | `user can view campaigns screen` | Creates a fresh end-user account, authenticates into the user shell, opens the campaign section, and verifies that the campaign screen loads a valid empty state or content without exposing admin creation controls. |
+| `patrol_test/profile_navigation_test.dart` | `profile navigation displays authenticated user information` | Signs in as the admin test user, opens the account menu, navigates to Hồ sơ cá nhân, and verifies the profile screen shows the expected authenticated user details and admin role state. |
+| `patrol_test/remote_config_values_test.dart` | `remote config values are displayed in firebase demo` | Signs in as an admin, opens the Firebase Demo section, refreshes configuration when available, and verifies the expected Remote Config keys and rendered values are visible in the UI. |
+| `patrol_test/pdf_export_upload_test.dart` | `pdf export uploads report to firebase storage` | Signs in as an admin, opens Firebase Demo, generates the PDF report, uploads it to Firebase Storage, and verifies the success message and resulting storage URL are displayed. |
 | `patrol_test/logout_test.dart` | `authenticated admin can log out` | Ensures that an authenticated admin session can be terminated through the account menu and that the app returns to the login screen with the authenticated shell removed. |
 
 ## Notes
