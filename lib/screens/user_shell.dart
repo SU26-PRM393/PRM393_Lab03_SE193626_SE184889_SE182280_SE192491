@@ -77,7 +77,7 @@ class _UserShellState extends State<UserShell> {
           ),
           const SizedBox(width: 24),
           _TabButton(
-            label: 'Thống Kê',
+            label: 'Tổng Quan',
             icon: Icons.dashboard_outlined,
             selected: _tab == _UserTab.dashboard,
             onTap: () => _setCurrentTab(_UserTab.dashboard),
@@ -207,7 +207,7 @@ class _UserShellState extends State<UserShell> {
         BottomNavigationBarItem(
           icon: Icon(Icons.dashboard_outlined),
           activeIcon: Icon(Icons.dashboard),
-          label: 'Thống Kê',
+          label: 'Tổng Quan',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.map_outlined),

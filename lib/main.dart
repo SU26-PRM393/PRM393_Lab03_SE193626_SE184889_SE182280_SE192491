@@ -200,55 +200,52 @@ Future<void> _checkAndCreateSchools() async {
             .collection('events')
             .where('campaignId', isEqualTo: campaignId)
             .get();
-            
-        // Delete existing events to prevent duplicates and seed clean ones
-        for (var doc in eventsQuery.docs) {
-          await doc.reference.delete();
-        }
-        
-        // Define the 4 events
-        final eventSpecs = [
-          {
-            'name': 'Sự kiện ngoại khóa số 1 (CD 2)',
-            'schoolCode': 'TH-DongHoa-CS1',
-            'status': 'in-progress',
-          },
-          {
-            'name': 'Sự kiện ngoại khóa số 2 (CD 2)',
-            'schoolCode': 'THCS-DongHoa',
-            'status': 'completed',
-          },
-          {
-            'name': 'Sự kiện ngoại khóa lần thứ 3',
-            'schoolCode': 'TH-DongHoaB',
-            'status': 'in-progress',
-          },
-          {
-            'name': 'Sự kiện ngoại khóa số 4 (CD 2)',
-            'schoolCode': 'THPT-GiaDinh',
-            'status': 'in-progress',
-          },
-        ];
-        
-        // Find employee id to assign
-        final userQuery = await FirebaseFirestore.instance.collection('users').limit(1).get();
-        final employeeId = userQuery.docs.isNotEmpty ? userQuery.docs.first.id : 'mock_employee_id';
-        
-        for (var spec in eventSpecs) {
-          final schoolId = schoolMap[spec['schoolCode']];
-          if (schoolId != null) {
-            final ref = FirebaseFirestore.instance.collection('events').doc();
-            await ref.set({
-              'id': ref.id,
-              'campaignId': campaignId,
-              'name': spec['name'],
-              'date': Timestamp.now(),
-              'schoolIds': [schoolId],
-              'assignedEmployeeIds': [employeeId],
-              'totalInteractions': 0,
-              'status': spec['status'],
-              'createdAt': FieldValue.serverTimestamp(),
-            });
+
+        if (eventsQuery.docs.isEmpty) {
+          // Define the 4 events
+          final eventSpecs = [
+            {
+              'name': 'Sự kiện ngoại khóa số 1 (CD 2)',
+              'schoolCode': 'TH-DongHoa-CS1',
+              'status': 'in-progress',
+            },
+            {
+              'name': 'Sự kiện ngoại khóa số 2 (CD 2)',
+              'schoolCode': 'THCS-DongHoa',
+              'status': 'completed',
+            },
+            {
+              'name': 'Sự kiện ngoại khóa lần thứ 3',
+              'schoolCode': 'TH-DongHoaB',
+              'status': 'in-progress',
+            },
+            {
+              'name': 'Sự kiện ngoại khóa số 4 (CD 2)',
+              'schoolCode': 'THPT-GiaDinh',
+              'status': 'in-progress',
+            },
+          ];
+
+          // Find employee id to assign
+          final userQuery = await FirebaseFirestore.instance.collection('users').limit(1).get();
+          final employeeId = userQuery.docs.isNotEmpty ? userQuery.docs.first.id : 'mock_employee_id';
+
+          for (var spec in eventSpecs) {
+            final schoolId = schoolMap[spec['schoolCode']];
+            if (schoolId != null) {
+              final ref = FirebaseFirestore.instance.collection('events').doc();
+              await ref.set({
+                'id': ref.id,
+                'campaignId': campaignId,
+                'name': spec['name'],
+                'date': Timestamp.now(),
+                'schoolIds': [schoolId],
+                'assignedEmployeeIds': [employeeId],
+                'totalInteractions': 0,
+                'status': spec['status'],
+                'createdAt': FieldValue.serverTimestamp(),
+              });
+            }
           }
         }
       }

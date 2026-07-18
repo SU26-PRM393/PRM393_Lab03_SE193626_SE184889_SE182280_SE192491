@@ -10,7 +10,7 @@ import 'package:vietnam_map_flutter/viewmodels/notification_viewmodel.dart';
 
 enum _UserSection { overview, campaigns, notifications }
 
-const _kOverviewLabel = 'Thống Kê';
+const _kOverviewLabel = 'Tổng Quan';
 const _kNotificationsLabel = 'Thông báo';
 
 /// Dashboard layout cho user thường: sidebar có thể thu gọn + vùng nội dung
@@ -422,7 +422,7 @@ class _DashboardOverview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Thống Kê',
+            'Tổng Quan',
             style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),

@@ -22,7 +22,7 @@ enum AdminSection {
 }
 
 const _kUserManagementLabel = 'Người dùng';
-const _kOverviewLabel = 'Thống Kê';
+const _kOverviewLabel = 'Tổng Quan';
 const _kNotificationsLabel = 'Thông báo';
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
@@ -559,7 +559,7 @@ class _DashboardOverviewState extends State<_DashboardOverview> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Thống Kê',
+            'Tổng Quan',
             style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
