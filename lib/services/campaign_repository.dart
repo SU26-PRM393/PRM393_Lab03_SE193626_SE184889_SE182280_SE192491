@@ -6,6 +6,7 @@ import 'package:vietnam_map_flutter/models/event_interaction.dart';
 import 'package:vietnam_map_flutter/models/school.dart';
 import 'package:vietnam_map_flutter/models/interaction.dart';
 import 'package:vietnam_map_flutter/models/checkin.dart';
+import 'package:vietnam_map_flutter/models/checkout.dart';
 import 'package:vietnam_map_flutter/firebase/notification_repository.dart';
 
 String? _targetCollection(String targetType) {
@@ -505,6 +506,29 @@ class CampaignRepository {
         .map((snapshot) {
       final list = snapshot.docs
           .map((doc) => CheckIn.fromMap(doc.id, doc.data()))
+          .toList();
+      list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return list;
+    });
+  }
+
+  Future<void> submitCheckOut(CheckOut checkOut) async {
+    final docRef = _db.collection('checkouts').doc();
+    await docRef.set({
+      ...checkOut.toMap(),
+      'id': docRef.id,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<List<CheckOut>> watchCheckOutsForEvent(String eventId) {
+    return _db
+        .collection('checkouts')
+        .where('eventId', isEqualTo: eventId)
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => CheckOut.fromMap(doc.id, doc.data()))
           .toList();
       list.sort((a, b) => b.timestamp.compareTo(a.timestamp));
       return list;

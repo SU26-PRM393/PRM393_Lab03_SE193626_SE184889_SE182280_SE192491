@@ -19,6 +19,7 @@ import 'package:vietnam_map_flutter/models/interaction.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/models/event_interaction.dart';
 import 'package:vietnam_map_flutter/models/checkin.dart';
+import 'package:vietnam_map_flutter/models/checkout.dart';
 
 // ── Design Tokens & Palette ──────────────────────────────────────────
 const _kTeal = Color(0xFF1B6C6A);
@@ -2756,7 +2757,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                 controller: _tabController,
                                 children: [
                                   _buildTimelineSection(context, event, interactions, employeeNameMap),
-                                  _buildCheckInSection(context, event, employeeNameMap),
+                                  _buildCheckInSection(context, event, interactions, employeeNameMap),
                                 ],
                               ),
                             ),
@@ -5093,9 +5094,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     );
   }
 
-  Widget _buildCheckInSection(BuildContext context, Event event, Map<String, String> employeeNameMap) {
+  Widget _buildCheckInSection(BuildContext context, Event event, List<Interaction> interactions, Map<String, String> employeeNameMap) {
     final isAssigned = event.assignedEmployeeIds.contains(widget.currentUser.uid) ||
         event.hostId == widget.currentUser.uid;
+
+    // Count how many interactions the current user contributed to this event
+    final myInteractionCount = interactions
+        .where((i) => i.employeeId == widget.currentUser.uid)
+        .length;
 
     return StreamBuilder<List<CheckIn>>(
       stream: _repo.watchCheckInsForEvent(event.id),
@@ -5106,14 +5112,38 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           orElse: () => null,
         );
 
-        return ListView(
-          children: [
-            if (isAssigned) ...[
-              _buildMyCheckInCard(context, event, myCheckIn),
-              const SizedBox(height: 20),
-            ],
-            _buildAllCheckInsCard(context, event, checkIns, employeeNameMap),
-          ],
+        return StreamBuilder<List<CheckOut>>(
+          stream: _repo.watchCheckOutsForEvent(event.id),
+          builder: (context, checkoutSnapshot) {
+            final checkOuts = checkoutSnapshot.data ?? [];
+            final CheckOut? myCheckOut = checkOuts.cast<CheckOut?>().firstWhere(
+              (c) => c?.employeeId == widget.currentUser.uid,
+              orElse: () => null,
+            );
+
+            // myInteractionCount was computed above (closure)
+            final interactionCount = myInteractionCount;
+
+            return ListView(
+              children: [
+                if (isAssigned) ...[
+                  _buildMyCheckInCard(context, event, myCheckIn),
+                  const SizedBox(height: 20),
+                  _buildMyCheckOutCard(
+                    context,
+                    event,
+                    myCheckIn,
+                    myCheckOut,
+                    interactionCount,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                _buildAllCheckInsCard(context, event, checkIns, employeeNameMap),
+                const SizedBox(height: 20),
+                _buildAllCheckOutsCard(context, event, checkOuts, employeeNameMap),
+              ],
+            );
+          },
         );
       },
     );
@@ -5829,7 +5859,737 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
     );
   }
 
+  // ── Checkout UI ───────────────────────────────────────────────────
+
+  /// Returns true if today matches the event's date (same calendar day).
+  bool _isEventDay(Event event) {
+    final eventDate = event.date;
+    if (eventDate == null) return false;
+    final now = DateTime.now();
+    return now.year == eventDate.year &&
+        now.month == eventDate.month &&
+        now.day == eventDate.day;
+  }
+
+  Widget _buildMyCheckOutCard(
+    BuildContext context,
+    Event event,
+    CheckIn? myCheckIn,
+    CheckOut? myCheckOut,
+    int myInteractionCount,
+  ) {
+    final hasCheckedOut = myCheckOut != null;
+    final isCompleted = event.status == 'completed';
+    final isEventDay = _isEventDay(event);
+    final hasCheckedIn = myCheckIn != null;
+    final hasInteraction = myInteractionCount > 0;
+
+    // Reasons why checkout is not yet available
+    final List<String> blockers = [];
+    if (!hasCheckedIn) blockers.add('Chưa check-in');
+    if (!isEventDay) blockers.add('Không phải ngày diễn ra sự kiện');
+    if (!hasInteraction) blockers.add('Chưa có tương tác nào');
+
+    final canCheckOut = hasCheckedIn && isEventDay && hasInteraction && !isCompleted;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasCheckedOut ? Colors.orange.withValues(alpha: 0.5) : Colors.grey.shade200,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                hasCheckedOut ? Icons.exit_to_app : Icons.logout_outlined,
+                color: hasCheckedOut ? Colors.orange : Colors.grey,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                hasCheckedOut ? 'Bạn đã check-out thành công!' : 'Check-out sự kiện',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (hasCheckedOut) ...[
+            Text(
+              'Thời gian: ${myCheckOut.timestamp.hour.toString().padLeft(2, '0')}:${myCheckOut.timestamp.minute.toString().padLeft(2, '0')} - ngày ${myCheckOut.timestamp.day}/${myCheckOut.timestamp.month}/${myCheckOut.timestamp.year}',
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Vị trí check-out: ${myCheckOut.latitude.toStringAsFixed(5)}, ${myCheckOut.longitude.toStringAsFixed(5)} (Khoảng cách: ${(myCheckOut.distanceMeters / 1000.0).toStringAsFixed(2)} km)',
+            ),
+            const SizedBox(height: 12),
+            if (myCheckOut.photoUrl.isNotEmpty) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (dialogCtx) => Dialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        clipBehavior: Clip.antiAlias,
+                        child: Container(
+                          constraints: const BoxConstraints(maxWidth: 600),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AppBar(
+                                title: Text('Ảnh minh chứng check-out: ${myCheckOut.employeeName}'),
+                                automaticallyImplyLeading: false,
+                                actions: [
+                                  IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () => Navigator.pop(dialogCtx),
+                                  ),
+                                ],
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black87,
+                                elevation: 0.5,
+                              ),
+                              Container(
+                                constraints: BoxConstraints(
+                                  maxHeight: MediaQuery.of(dialogCtx).size.height * 0.7,
+                                ),
+                                child: _buildCheckInImage(
+                                  myCheckOut.photoUrl,
+                                  fit: BoxFit.contain,
+                                  interactive: true,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  child: _buildCheckInImage(
+                    myCheckOut.photoUrl,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => _deleteMyCheckOut(context, myCheckOut),
+                icon: const Icon(Icons.delete_forever_outlined, color: Colors.red),
+                label: const Text('Xóa lượt check-out (Để test lại)', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ] else ...[
+            if (blockers.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.orange, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Điều kiện cần để check-out:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Colors.orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    for (final b in blockers)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.cancel_outlined, size: 14, color: Colors.red),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(b, style: const TextStyle(fontSize: 13)),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ] else ...[
+              const Text(
+                'Yêu cầu:\n- Phải trong ngày sự kiện diễn ra.\n- Phải có ít nhất 1 tương tác.\n- Phải trong phạm vi 1km tính từ địa điểm sự kiện.\n- Chụp ảnh minh chứng tại địa điểm.',
+                style: TextStyle(color: Colors.black87, height: 1.4, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+            ],
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: isCompleted || !canCheckOut ? Colors.grey : Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: (!canCheckOut || isCompleted)
+                    ? null
+                    : () => _startCheckOutFlow(context, event),
+                icon: const Icon(Icons.exit_to_app),
+                label: Text(
+                  isCompleted ? 'Sự kiện đã kết thúc' : 'Tiến hành Check-out',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _startCheckOutFlow(BuildContext context, Event event) async {
+    final imagePicker = ImagePicker();
+    XFile? image;
+    Position? currentPos;
+    bool isLocating = true;
+    double? calculatedDistance;
+    String? error;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setDialogState) {
+            if (currentPos == null && isLocating && error == null) {
+              _getCurrentLocation(
+                defaultLat: event.latitude,
+                defaultLng: event.longitude,
+              ).then((pos) {
+                setDialogState(() {
+                  currentPos = pos;
+                  isLocating = false;
+                  if (pos != null && event.latitude != null && event.longitude != null) {
+                    calculatedDistance = Geolocator.distanceBetween(
+                      pos.latitude,
+                      pos.longitude,
+                      event.latitude!,
+                      event.longitude!,
+                    );
+                  } else if (pos == null) {
+                    error = 'Không thể lấy vị trí hiện tại. Vui lòng bật định vị.';
+                  }
+                });
+              }).catchError((err) {
+                setDialogState(() {
+                  error = err.toString();
+                  isLocating = false;
+                });
+              });
+            }
+
+            final distKm = calculatedDistance != null ? (calculatedDistance! / 1000.0) : null;
+            final isNear = calculatedDistance != null && calculatedDistance! <= 1000.0;
+            final canSubmit =
+              (_kEnablePatrolTestCheckIn || image != null) &&
+              currentPos != null &&
+              isNear &&
+              !isLocating;
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Xác thực Check-out', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (isLocating) ...[
+                        const Row(
+                          children: [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: _kTeal),
+                            ),
+                            SizedBox(width: 12),
+                            Text('Đang lấy vị trí GPS...', style: TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                      ] else if (error != null) ...[
+                        Text('Lỗi: $error', style: const TextStyle(color: Colors.red, fontSize: 14)),
+                      ] else if (currentPos != null) ...[
+                        Row(
+                          children: [
+                            const Icon(Icons.my_location, color: Colors.orange, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Vị trí hiện tại: ${currentPos!.latitude.toStringAsFixed(5)}, ${currentPos!.longitude.toStringAsFixed(5)}',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              isNear ? Icons.check_circle_outline : Icons.error_outline,
+                              color: isNear ? Colors.green : Colors.red,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                distKm != null
+                                    ? 'Khoảng cách: ${distKm.toStringAsFixed(2)} km '
+                                        '(${isNear ? 'Hợp lệ (<1km)' : 'Ngoài phạm vi 1km'})'
+                                    : 'Không có thông tin tọa độ sự kiện',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isNear ? Colors.green : Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      const Text('Ảnh chụp minh chứng địa điểm:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 8),
+                      if (image != null)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: kIsWeb
+                                  ? Image.network(image!.path, height: 160, width: double.infinity, fit: BoxFit.cover)
+                                  : Image.file(File(image!.path), height: 160, width: double.infinity, fit: BoxFit.cover),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: Colors.black.withValues(alpha: 0.5),
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(Icons.close, size: 16, color: Colors.white),
+                                  onPressed: () => setDialogState(() => image = null),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 80),
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          onPressed: () async {
+                            final source = await showModalBottomSheet<ImageSource>(
+                              context: dialogCtx,
+                              backgroundColor: Colors.white,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                              ),
+                              builder: (sheetCtx) => SafeArea(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Chọn nguồn ảnh minh chứng',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      ListTile(
+                                        leading: const CircleAvatar(
+                                          backgroundColor: Color(0xFFF3F4F6),
+                                          child: Icon(Icons.photo_library_outlined, color: Colors.orange),
+                                        ),
+                                        title: const Text(
+                                          'Chọn từ thư viện (Gallery)',
+                                          style: TextStyle(fontWeight: FontWeight.w600),
+                                        ),
+                                        subtitle: const Text('Chọn ảnh screenshot vị trí đã chụp'),
+                                        onTap: () => Navigator.pop(sheetCtx, ImageSource.gallery),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ListTile(
+                                        leading: const CircleAvatar(
+                                          backgroundColor: Color(0xFFF3F4F6),
+                                          child: Icon(Icons.camera_alt_outlined, color: Colors.orange),
+                                        ),
+                                        title: const Text(
+                                          'Chụp ảnh trực tiếp (Camera)',
+                                          style: TextStyle(fontWeight: FontWeight.w600),
+                                        ),
+                                        subtitle: const Text('Chụp ảnh thực tế tại địa điểm'),
+                                        onTap: () => Navigator.pop(sheetCtx, ImageSource.camera),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+
+                            if (source != null) {
+                              final file = await imagePicker.pickImage(
+                                source: source,
+                                maxWidth: 640,
+                                imageQuality: 40,
+                              );
+                              if (file != null) {
+                                setDialogState(() => image = file);
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.add_a_photo_outlined, color: Colors.orange),
+                          label: const Text('Chọn / Chụp ảnh minh chứng', style: TextStyle(color: Colors.orange)),
+                        ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  child: const Text('Hủy'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: Colors.orange),
+                  onPressed: !canSubmit
+                      ? null
+                      : () async {
+                          final navigator = Navigator.of(context);
+                          final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                          navigator.pop(); // Close checkout dialog
+
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => const Center(child: CircularProgressIndicator(color: Colors.orange)),
+                          );
+
+                          String photoUrl = '';
+                          try {
+                            if (image != null) {
+                              final rawBytes = await File(image!.path).readAsBytes();
+                              List<int> bytes = rawBytes;
+                              try {
+                                final decoded = img_pkg.decodeImage(rawBytes);
+                                if (decoded != null) {
+                                  var resized = decoded;
+                                  if (decoded.width > 600) {
+                                    resized = img_pkg.copyResize(decoded, width: 600);
+                                  }
+                                  bytes = img_pkg.encodeJpg(resized, quality: 40);
+                                }
+                              } catch (compErr) {
+                                debugPrint('Dart image compression failed: $compErr');
+                              }
+                              photoUrl = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                            }
+                          } catch (e) {
+                            photoUrl = 'https://picsum.photos/400/300';
+                          }
+
+                          final checkOut = CheckOut(
+                            id: '',
+                            eventId: event.id,
+                            employeeId: widget.currentUser.uid,
+                            employeeName: widget.currentUser.name,
+                            photoUrl: photoUrl,
+                            latitude: currentPos!.latitude,
+                            longitude: currentPos!.longitude,
+                            distanceMeters: calculatedDistance ?? 0.0,
+                            timestamp: DateTime.now(),
+                          );
+
+                          try {
+                            await _repo.submitCheckOut(checkOut).timeout(const Duration(seconds: 15));
+                          } catch (e) {
+                            debugPrint('Check-out submission failed: $e');
+                            navigator.pop();
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Lỗi check-out: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
+                          navigator.pop();
+
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(content: Text('Check-out thành công!')),
+                          );
+                        },
+                  child: const Text('Check-out'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteMyCheckOut(BuildContext context, CheckOut myCheckOut) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: const Text('Bạn có chắc chắn muốn xóa lượt check-out này?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Xóa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      if (!context.mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.orange)),
+      );
+
+      try {
+        await FirebaseFirestore.instance.collection('checkouts').doc(myCheckOut.id).delete();
+        if (!Platform.isWindows && myCheckOut.photoUrl.isNotEmpty && !myCheckOut.photoUrl.contains('picsum.photos') && myCheckOut.photoUrl.startsWith('http')) {
+          try {
+            await FirebaseStorage.instance.refFromURL(myCheckOut.photoUrl).delete();
+          } catch (_) {}
+        }
+      } catch (_) {}
+
+      navigator.pop();
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Đã xóa lượt check-out thành công!')),
+      );
+    }
+  }
+
+  Widget _buildAllCheckOutsCard(BuildContext context, Event event, List<CheckOut> checkOuts, Map<String, String> employeeNameMap) {
+    final isHostOrAdmin = widget.currentUser.isAdmin || event.hostId == widget.currentUser.uid;
+    final isAssignee = event.assignedEmployeeIds.contains(widget.currentUser.uid);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Danh sách check-out',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${checkOuts.length} nhân viên',
+                  style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (checkOuts.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Text(
+                  'Chưa có nhân viên nào check-out.',
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                ),
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: checkOuts.length,
+              separatorBuilder: (_, __) => const Divider(height: 16),
+              itemBuilder: (context, idx) {
+                final checkOut = checkOuts[idx];
+                final employee = widget.employees.firstWhere(
+                  (e) => e['id'] == checkOut.employeeId,
+                  orElse: () => <String, String>{},
+                );
+                final email = employee['email'] ?? '';
+                final isSelf = checkOut.employeeId == widget.currentUser.uid;
+
+                return Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: isSelf ? Colors.orange : Colors.grey.shade100,
+                      child: Text(
+                        checkOut.employeeName.isNotEmpty ? checkOut.employeeName[0].toUpperCase() : '?',
+                        style: TextStyle(
+                          color: isSelf ? Colors.white : Colors.black87,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            checkOut.employeeName + (isSelf ? ' (Bạn)' : ''),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            email,
+                            style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'K/cách: ${(checkOut.distanceMeters / 1000.0).toStringAsFixed(2)} km - lúc '
+                            '${checkOut.timestamp.hour.toString().padLeft(2, '0')}:${checkOut.timestamp.minute.toString().padLeft(2, '0')}',
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isHostOrAdmin || isSelf || isAssignee)
+                      IconButton(
+                        tooltip: 'Xem minh chứng ảnh',
+                        icon: const Icon(Icons.image_outlined, color: Colors.orange),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => Dialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              clipBehavior: Clip.antiAlias,
+                              child: Container(
+                                constraints: const BoxConstraints(maxWidth: 600),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AppBar(
+                                      title: Text('Ảnh check-out: ${checkOut.employeeName}'),
+                                      automaticallyImplyLeading: false,
+                                      actions: [
+                                        IconButton(
+                                          icon: const Icon(Icons.close),
+                                          onPressed: () => Navigator.pop(context),
+                                        ),
+                                      ],
+                                      backgroundColor: Colors.white,
+                                      foregroundColor: Colors.black87,
+                                      elevation: 0.5,
+                                    ),
+                                    Container(
+                                      constraints: BoxConstraints(
+                                        maxHeight: MediaQuery.of(context).size.height * 0.7,
+                                      ),
+                                      child: _buildCheckInImage(
+                                        checkOut.photoUrl,
+                                        fit: BoxFit.contain,
+                                        interactive: true,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildToolbar() {
+
     final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
