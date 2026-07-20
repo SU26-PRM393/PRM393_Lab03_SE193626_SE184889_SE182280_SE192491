@@ -23,6 +23,13 @@ class AuthController extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLoading => _status == AuthStatus.loading;
 
+  void clearError() {
+    if (_errorMessage != null) {
+      _errorMessage = null;
+      notifyListeners();
+    }
+  }
+
   /// Lắng nghe auth stream khi khởi tạo
   /// Tương tự @PostConstruct trong Spring — chạy tự động sau khi tạo object
   void _init() {
@@ -171,6 +178,12 @@ class AuthController extends ChangeNotifier {
     }
     if (raw.contains('network-request-failed')) {
       return 'Không có kết nối mạng.';
+    }
+    if (raw.contains('keychain-error')) {
+      return 'Lỗi hệ thống xác thực. Vui lòng thử lại.';
+    }
+    if (raw.contains('too-many-requests')) {
+      return 'Quá nhiều lần thử. Vui lòng đợi vài phút.';
     }
     if (clean.contains('Không thể trao đổi') ||
         clean.contains('cấu hình') ||

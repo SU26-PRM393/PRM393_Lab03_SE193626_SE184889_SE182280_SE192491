@@ -356,16 +356,27 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
     );
     if (saved == null) return;
 
-    await _repo.saveCampaign(saved);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(campaign == null
-            ? 'Đã tạo chiến dịch.'
-            : 'Đã cập nhật chiến dịch.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    try {
+      await _repo.saveCampaign(saved);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(campaign == null
+              ? 'Đã tạo chiến dịch.'
+              : 'Đã cập nhật chiến dịch.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi lưu chiến dịch. Vui lòng thử lại.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _confirmDeleteCampaign(Campaign campaign) async {
@@ -963,14 +974,25 @@ class _EventPaneState extends State<_EventPane> {
     );
     if (saved == null) return;
 
-    await _repo.saveEvent(saved);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(event == null ? 'Đã tạo event.' : 'Đã cập nhật event.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    try {
+      await _repo.saveEvent(saved);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(event == null ? 'Đã tạo event.' : 'Đã cập nhật event.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi lưu event. Vui lòng thử lại.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _confirmDeleteEvent(Event event) async {
@@ -1502,6 +1524,7 @@ class _CampaignFormDialogState extends State<_CampaignFormDialog> {
                 TextFormField(
                   controller: _nameController,
                   style: const TextStyle(fontSize: 15),
+                  maxLength: 100,
                   decoration: _dialogInputDecoration('Tên chiến dịch'),
                   validator: (value) =>
                       value == null || value.trim().isEmpty ? 'Nhập tên' : null,
@@ -1526,6 +1549,14 @@ class _CampaignFormDialogState extends State<_CampaignFormDialog> {
                   value: _endDate,
                   onPick: (value) => setState(() => _endDate = value),
                 ),
+                if (_startDate != null && _endDate != null && _endDate!.isBefore(_startDate!))
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu',
+                      style: TextStyle(color: Colors.red, fontSize: 13),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1551,6 +1582,9 @@ class _CampaignFormDialogState extends State<_CampaignFormDialog> {
           ),
           onPressed: () {
             if (!_formKey.currentState!.validate()) return;
+            if (_startDate != null && _endDate != null && _endDate!.isBefore(_startDate!)) {
+              return;
+            }
             Navigator.pop(
               context,
               Campaign(
@@ -2016,6 +2050,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                 TextFormField(
                   controller: _nameController,
                   style: const TextStyle(fontSize: 15),
+                  maxLength: 100,
                   decoration: _dialogInputDecoration('Tên event'),
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Nhập tên event'
@@ -2096,6 +2131,13 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                         style: const TextStyle(fontSize: 15),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: _dialogInputDecoration('Vĩ độ (Lat)'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return null;
+                          final lat = double.tryParse(value);
+                          if (lat == null) return 'Không hợp lệ';
+                          if (lat < 8.0 || lat > 24.0) return 'Phải thuộc VN (8-24)';
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2105,6 +2147,13 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                         style: const TextStyle(fontSize: 15),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         decoration: _dialogInputDecoration('Kinh độ (Lng)'),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return null;
+                          final lng = double.tryParse(value);
+                          if (lng == null) return 'Không hợp lệ';
+                          if (lng < 102.0 || lng > 110.0) return 'Phải thuộc VN (102-110)';
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -2124,8 +2173,15 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                             _lngController.text = pos.longitude.toString();
                           });
                         } catch (e) {
+                          final msg = e.toString();
+                          String friendly = 'Không thể lấy vị trí. Vui lòng cấp quyền.';
+                          if (msg.contains('Permission definitions not found') || msg.contains('denied')) {
+                            friendly = 'Ứng dụng chưa được cấp quyền truy cập vị trí.';
+                          } else if (msg.contains('Location services are disabled')) {
+                            friendly = 'Dịch vụ định vị đang bị tắt.';
+                          }
                           messenger.showSnackBar(
-                            SnackBar(content: Text('Lỗi định vị: $e')),
+                            SnackBar(content: Text(friendly), backgroundColor: Colors.red),
                           );
                         }
                       },

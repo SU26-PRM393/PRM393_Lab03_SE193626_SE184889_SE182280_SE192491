@@ -53,7 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _validateEmail(String? v) {
     if (v == null || v.trim().isEmpty) return 'Nhập email';
-    if (!v.contains('@')) return 'Email không hợp lệ';
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(v)) return 'Email không hợp lệ';
     return null;
   }
 
@@ -111,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     TextFormField(
                       controller: _nameCtrl,
                       focusNode: _nameFocus,
+                      maxLength: 50,
                       keyboardType: TextInputType.name,
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
@@ -265,7 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ? null
                         : () => setState(() {
                               _isSignUp = !_isSignUp;
-                              widget.controller.errorMessage == null;
+                              widget.controller.clearError();
                             }),
                     child: Text(
                       _isSignUp

@@ -84,9 +84,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final raw = e.toString();
+        String friendly = 'Đã xảy ra lỗi. Vui lòng thử lại.';
+        if (raw.contains('wrong-password') || raw.contains('invalid-credential')) {
+          friendly = 'Mật khẩu hiện tại không đúng.';
+        } else if (raw.contains('requires-recent-login')) {
+          friendly = 'Phiên đăng nhập hết hạn. Vui lòng đăng xuất và đăng nhập lại.';
+        } else if (raw.contains('network-request-failed')) {
+          friendly = 'Không có kết nối mạng.';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi: $e'),
+            content: Text(friendly),
             backgroundColor: Colors.red,
           ),
         );
