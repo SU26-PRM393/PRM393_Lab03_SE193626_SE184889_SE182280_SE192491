@@ -105,10 +105,10 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
                 _buildLeftPanel(cs),
                 Expanded(
                   child: _selectedCampaign == null
-                      ? const _EmptyPanel(
+                      ? _EmptyPanel(
                           icon: Icons.event_note_outlined,
-                          title: 'Chọn một chiến dịch',
-                          subtitle: 'Danh sách sự kiện và thống kê chi tiết sẽ hiển thị ở đây.',
+                          title: context.l10n.selectCampaign,
+                          subtitle: context.l10n.campaignListAndStatsHint,
                         )
                       : Padding(
                           padding: const EdgeInsets.all(24),
@@ -150,8 +150,8 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
           return Column(
             children: [
               _HeaderBar(
-                title: 'Chiến dịch',
-                actionLabel: 'Tạo chiến dịch',
+                title: context.l10n.campaign,
+                actionLabel: context.l10n.createCampaign,
                 icon: Icons.add,
                 onAction: () => _openCampaignForm(),
                 showAction: widget.currentUser.isAdmin,
@@ -182,8 +182,8 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Chiến dịch',
+                Text(
+                  context.l10n.campaign,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -192,7 +192,7 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
                 ),
                 if (widget.currentUser.isAdmin)
                   IconButton(
-                    tooltip: 'Tạo chiến dịch mới',
+                    tooltip: context.l10n.createNewCampaignTitle,
                     style: IconButton.styleFrom(
                       backgroundColor: cs.primary.withValues(alpha: 0.1),
                       foregroundColor: cs.primary,
@@ -223,7 +223,7 @@ class _CampaignManagementScreenState extends State<CampaignManagementScreen> {
         },
         style: const TextStyle(fontSize: 15),
         decoration: InputDecoration(
-          hintText: 'Tìm kiếm chiến dịch...',
+          hintText: context.l10n.searchCampaignHint,
           hintStyle: const TextStyle(fontSize: 15),
           prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
           isDense: true,
@@ -2536,11 +2536,11 @@ String _formatRange(BuildContext context, DateTime? start, DateTime? end) {
 }
 
 String _statusLabel(BuildContext context, String status) => switch (status) {
-      'active' => 'Hoạt động',
-      _kInProgressStatus => 'Đang diễn ra',
+      'active' => context.l10n.statusActive,
+      _kInProgressStatus => context.l10n.statusInProgress,
       'completed' => _kCompletedLabel(context),
-      'canceled' => 'Đã hủy',
-      'preparing' => 'Chuẩn bị',
+      'canceled' => context.l10n.statusCanceled,
+      'preparing' => context.l10n.statusPreparing,
       _ => status,
     };
 

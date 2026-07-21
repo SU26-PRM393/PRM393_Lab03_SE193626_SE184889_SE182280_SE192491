@@ -6,6 +6,7 @@ import 'package:vietnam_map_flutter/models/interaction.dart';
 import 'package:vietnam_map_flutter/models/checkin.dart';
 import 'package:vietnam_map_flutter/services/campaign_repository.dart';
 import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 import 'map_segmented_control.dart';
 
 // ── Brand palette ──────────────────────────────────────────────────────
@@ -583,7 +584,7 @@ class _CampaignListViewState extends State<_CampaignListView> {
             border: Border(bottom: BorderSide(color: Colors.grey.shade100))),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           _SearchField(
-              hint: 'Tìm kiếm chiến dịch...',
+              hint: context.l10n.searchCampaignHint,
               value: _search,
               onChanged: (v) => setState(() => _search = v)),
           const SizedBox(height: 12),
@@ -782,7 +783,7 @@ class _EventListViewState extends State<_EventListView> {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _SearchField(
-                  hint: 'Tìm kiếm sự kiện...',
+                  hint: context.l10n.searchEventHint,
                   value: _search,
                   onChanged: (v) => setState(() => _search = v)),
               const SizedBox(height: 12),

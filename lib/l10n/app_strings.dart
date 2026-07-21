@@ -116,6 +116,11 @@ abstract class AppStrings {
   String get campaignStatus;
   String get campaignDescription;
   String get selectCampaign;
+  String get searchCampaignHint;
+  String get campaignListAndStatsHint;
+  String get createNewCampaignTitle;
+  String get statusActive;
+  String get searchEventHint;
   String get selectCampaignHint;
   String get noCampaigns;
 
@@ -307,6 +312,11 @@ class _Vi extends AppStrings {
   @override String get campaignStatus => 'Trạng thái';
   @override String get campaignDescription => 'Mô tả';
   @override String get selectCampaign => 'Chọn một chiến dịch';
+  @override String get searchCampaignHint => 'Tìm kiếm chiến dịch...';
+  @override String get campaignListAndStatsHint => 'Danh sách sự kiện và thống kê chi tiết sẽ hiển thị ở đây.';
+  @override String get createNewCampaignTitle => 'Tạo chiến dịch mới';
+  @override String get statusActive => 'Hoạt động';
+  @override String get searchEventHint => 'Tìm kiếm sự kiện...';
   @override String get selectCampaignHint => 'Danh sách sự kiện và thống kê chi tiết sẽ hiển thị ở đây.';
   @override String get noCampaigns => 'Chưa có chiến dịch nào';
 
@@ -485,6 +495,11 @@ class _En extends AppStrings {
   @override String get campaignStatus => 'Status';
   @override String get campaignDescription => 'Description';
   @override String get selectCampaign => 'Select a campaign';
+  @override String get searchCampaignHint => 'Search campaign...';
+  @override String get campaignListAndStatsHint => 'Events and detailed statistics will be displayed here.';
+  @override String get createNewCampaignTitle => 'Create new campaign';
+  @override String get statusActive => 'Active';
+  @override String get searchEventHint => 'Search event...';
   @override String get selectCampaignHint => 'Event list and details will appear here.';
   @override String get noCampaigns => 'No campaigns yet';
 
