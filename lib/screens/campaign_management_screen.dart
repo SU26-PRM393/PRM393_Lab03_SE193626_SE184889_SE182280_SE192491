@@ -20,6 +20,7 @@ import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/models/event_interaction.dart';
 import 'package:vietnam_map_flutter/models/checkin.dart';
 import 'package:vietnam_map_flutter/models/checkout.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 
 // ── Design Tokens & Palette ──────────────────────────────────────────
 const _kTeal = Color(0xFF1B6C6A);
@@ -1974,6 +1975,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
   late final TextEditingController _schoolController;
   late final TextEditingController _latController;
   late final TextEditingController _lngController;
+  late final TextEditingController _employeeSearchController;
   late String _status;
   DateTime? _date;
   String? _schoolId;
@@ -2006,6 +2008,8 @@ class _EventFormDialogState extends State<_EventFormDialog> {
     }
     _latController = TextEditingController(text: initialLat?.toString() ?? '');
     _lngController = TextEditingController(text: initialLng?.toString() ?? '');
+    _employeeSearchController = TextEditingController();
+    _employeeSearchController.addListener(() => setState(() {}));
 
     final selectedSchool = widget.schools.firstWhereOrNull((s) => s.id == _schoolId);
     _schoolController = TextEditingController(
@@ -2021,17 +2025,28 @@ class _EventFormDialogState extends State<_EventFormDialog> {
     _schoolController.dispose();
     _latController.dispose();
     _lngController.dispose();
+    _employeeSearchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    
+    final searchQuery = _employeeSearchController.text.trim().toLowerCase();
+    final filteredEmployees = widget.employees.where((emp) {
+      if (searchQuery.isEmpty) return true;
+      final name = (emp['name'] ?? '').toLowerCase();
+      final email = (emp['email'] ?? '').toLowerCase();
+      return name.contains(searchQuery) || email.contains(searchQuery);
+    }).toList();
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
       title: Padding(
         padding: const EdgeInsets.only(top: 8.0, left: 4.0),
         child: Text(
-          widget.event == null ? 'Tạo event' : 'Sửa event',
+          widget.event == null ? l10n.createEvent : l10n.editEvent,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
       ),
@@ -2051,15 +2066,15 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                   controller: _nameController,
                   style: const TextStyle(fontSize: 15),
                   maxLength: 100,
-                  decoration: _dialogInputDecoration('Tên event'),
+                  decoration: _dialogInputDecoration(l10n.eventName),
                   validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Nhập tên event'
+                      ? l10n.eventName
                       : null,
                 ),
 
                 const SizedBox(height: 16),
                 _DateRow(
-                  label: 'Ngày diễn ra',
+                  label: l10n.eventDate,
                   value: _date,
                   onPick: (value) => setState(() => _date = value),
                 ),
@@ -2086,10 +2101,10 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                     child: TextFormField(
                       controller: _schoolController,
                       style: const TextStyle(fontSize: 15),
-                      decoration: _dialogInputDecoration('Địa điểm').copyWith(
+                      decoration: _dialogInputDecoration(l10n.eventLocation).copyWith(
                         suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                       ),
-                      validator: (value) => _schoolId == null ? 'Chọn địa điểm' : null,
+                      validator: (value) => _schoolId == null ? l10n.eventLocation : null,
                     ),
                   ),
                 ),
@@ -2130,12 +2145,12 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                         controller: _latController,
                         style: const TextStyle(fontSize: 15),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: _dialogInputDecoration('Vĩ độ (Lat)'),
+                        decoration: _dialogInputDecoration(l10n.latitude),
                         validator: (value) {
                           if (value == null || value.isEmpty) return null;
                           final lat = double.tryParse(value);
-                          if (lat == null) return 'Không hợp lệ';
-                          if (lat < 8.0 || lat > 24.0) return 'Phải thuộc VN (8-24)';
+                          if (lat == null) return l10n.error;
+                          if (lat < 8.0 || lat > 24.0) return l10n.error;
                           return null;
                         },
                       ),
@@ -2146,19 +2161,19 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                         controller: _lngController,
                         style: const TextStyle(fontSize: 15),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: _dialogInputDecoration('Kinh độ (Lng)'),
+                        decoration: _dialogInputDecoration(l10n.longitude),
                         validator: (value) {
                           if (value == null || value.isEmpty) return null;
                           final lng = double.tryParse(value);
-                          if (lng == null) return 'Không hợp lệ';
-                          if (lng < 102.0 || lng > 110.0) return 'Phải thuộc VN (102-110)';
+                          if (lng == null) return l10n.error;
+                          if (lng < 102.0 || lng > 110.0) return l10n.error;
                           return null;
                         },
                       ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      tooltip: 'Lấy vị trí hiện tại',
+                      tooltip: l10n.useCurrentLocation,
                       icon: const Icon(Icons.my_location, color: _kTeal),
                       onPressed: () async {
                         final messenger = ScaffoldMessenger.of(context);
@@ -2189,26 +2204,46 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                const Align(
+                const SizedBox(height: 20),
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Nhân viên phụ trách',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    l10n.assignedEmployees,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _employeeSearchController,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: _dialogInputDecoration(l10n.employeeSearch).copyWith(
+                    prefixIcon: const Icon(Icons.search, size: 20, color: Colors.grey),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Container(
+                  constraints: const BoxConstraints(maxHeight: 200),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade200),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: widget.employees.length,
-                    separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
+                  child: filteredEmployees.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Center(
+                            child: Text(
+                              l10n.noEmployeeFound,
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: filteredEmployees.length,
+                          separatorBuilder: (_, __) => Divider(height: 1, color: Colors.grey.shade200),
                     itemBuilder: (context, idx) {
-                      final employee = widget.employees[idx];
+                      final employee = filteredEmployees[idx];
                       final id = employee['id'] ?? '';
                       final isHost = id == _hostId;
                       return CheckboxListTile(
@@ -2225,7 +2260,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                         ),
                         subtitle: Text(
                           isHost 
-                              ? 'Đang là Người chủ trì (Host)' 
+                              ? l10n.isHost
                               : (employee['email'] ?? ''),
                           style: TextStyle(
                             fontSize: 13,
@@ -2260,7 +2295,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
           onPressed: () => Navigator.pop(context),
-          child: const Text('Hủy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          child: Text(l10n.cancel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         ),
         FilledButton(
           style: FilledButton.styleFrom(
@@ -2301,7 +2336,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
               ),
             );
           },
-          child: const Text('Lưu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          child: Text(l10n.save, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
         ),
       ],
     );

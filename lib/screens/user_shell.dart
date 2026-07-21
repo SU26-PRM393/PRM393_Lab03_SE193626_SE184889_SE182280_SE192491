@@ -4,6 +4,7 @@ import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/vietnam_map_screen.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 import 'user_dashboard.dart';
 
 enum _UserTab { dashboard, vietmap }
@@ -47,6 +48,12 @@ class _UserShellState extends State<UserShell> {
       return;
     }
 
+    if (value == 'language') {
+      final notifier = context.localeNotifier;
+      notifier.value = notifier.value == localeEn ? localeVi : localeEn;
+      return;
+    }
+
     if (value == 'profile') {
       Navigator.push(
         context,
@@ -77,7 +84,7 @@ class _UserShellState extends State<UserShell> {
           ),
           const SizedBox(width: 24),
           _TabButton(
-            label: 'Tổng Quan',
+            label: context.l10n.overview,
             icon: Icons.dashboard_outlined,
             selected: _tab == _UserTab.dashboard,
             onTap: () => _setCurrentTab(_UserTab.dashboard),
@@ -143,27 +150,37 @@ class _UserShellState extends State<UserShell> {
     return [
       PopupMenuButton<String>(
         offset: const Offset(0, 48),
-        tooltip: 'Tài khoản',
+        tooltip: context.l10n.account,
         onSelected: _handleAccountAction,
         itemBuilder: (context) => [
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'profile',
             child: Row(
               children: [
-                Icon(Icons.person_outline, color: Colors.black87, size: 18),
-                SizedBox(width: 8),
-                Text('Hồ sơ cá nhân'),
+                const Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.profile),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'language',
+            child: Row(
+              children: [
+                const Icon(Icons.language, color: Colors.black87, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.switchLanguage),
               ],
             ),
           ),
           const PopupMenuDivider(),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'logout',
             child: Row(
               children: [
-                Icon(Icons.logout, color: Colors.red, size: 18),
-                SizedBox(width: 8),
-                Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                const Icon(Icons.logout, color: Colors.red, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.logout, style: const TextStyle(color: Colors.red)),
               ],
             ),
           ),
@@ -227,7 +244,7 @@ class _UserShellState extends State<UserShell> {
       );
     }
 
-    return const VietnamMapScreen();
+    return VietnamMapScreen(appUser: _user);
   }
 
   @override

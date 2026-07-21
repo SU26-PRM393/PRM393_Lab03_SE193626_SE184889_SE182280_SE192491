@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 
 enum _SortField { name, email, role, status }
 
-const _kDisabled = 'Đã tắt';
-const _kAllUsersLabel = 'Tất cả';
-const _kRoleFilterOptions = {
-  'all': _kAllUsersLabel,
-  'admin': 'Admin',
-  'user': 'User',
-};
-const _kStatusFilterOptions = {
-  'all': _kAllUsersLabel,
-  'active': 'Hoạt động',
-  'disabled': _kDisabled,
-};
+// Filter options are generated dynamically via l10n in build methods
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({
@@ -136,30 +126,31 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   }
 
   Future<void> _toggleDisable(UserRecord record) async {
+    final l10n = context.l10n;
     try {
       await _svc.setUserDisabled(record.uid, disabled: !record.disabled);
       await _load();
     } catch (e) {
-      _snack('Không thể cập nhật: $e', isError: true);
+      _snack(l10n.cannotUpdate.replaceFirst('{error}', e.toString()), isError: true);
     }
   }
 
   Future<void> _delete(UserRecord record) async {
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Xác nhận xóa'),
-        content: Text(
-            'Xóa người dùng "${record.email}"?\n\nHành động này không thể hoàn tác.'),
+        title: Text(l10n.confirmDelete),
+        content: Text(l10n.deleteUserConfirmText.replaceFirst('{email}', record.email)),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Hủy')),
+              child: Text(l10n.cancel)),
           FilledButton(
             style: FilledButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Xóa'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -168,10 +159,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
 
     try {
       await _svc.deleteUserDocument(record.uid);
-      _snack('Đã xóa ${record.email}');
+      _snack(l10n.deletedUser.replaceFirst('{email}', record.email));
       await _load();
     } catch (e) {
-      _snack('Không thể xóa: $e', isError: true);
+      _snack(l10n.cannotDelete.replaceFirst('{error}', e.toString()), isError: true);
     }
   }
 
@@ -205,6 +196,18 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     final cs = Theme.of(context).colorScheme;
     final filtered = _filtered;
 
+    final roleFilterOptions = {
+      'all': context.l10n.all,
+      'admin': 'Admin',
+      'user': 'User',
+    };
+
+    final statusFilterOptions = {
+      'all': context.l10n.all,
+      'active': context.l10n.active,
+      'disabled': context.l10n.disabled,
+    };
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -217,7 +220,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               Icon(Icons.group, color: cs.primary),
               const SizedBox(width: 10),
               Text(
-                'Quản lí người dùng',
+                context.l10n.manageUsers,
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -244,7 +247,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               IconButton(
                 icon: const Icon(Icons.refresh),
                 hoverColor: cs.primary.withValues(alpha: 0.1),
-                tooltip: 'Tải lại',
+                tooltip: context.l10n.refresh,
                 onPressed: _loading ? null : _load,
               ),
             ],
@@ -263,7 +266,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               TextField(
                 controller: _searchCtrl,
                 decoration: InputDecoration(
-                  hintText: 'Tìm kiếm theo email hoặc tên...',
+                  hintText: context.l10n.searchByEmailOrName,
                   prefixIcon: const Icon(Icons.search, size: 20),
                   suffixIcon: _searchText.isNotEmpty
                       ? IconButton(
@@ -290,12 +293,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               if (MediaQuery.of(context).size.width < 700) ...[
                 Row(
                   children: [
-                    Text('Role:',
+                    Text('${context.l10n.role}:',
                         style: TextStyle(
                             fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6))),
                     const SizedBox(width: 12),
                     ..._buildFilterChips(
-                      options: _kRoleFilterOptions,
+                      options: roleFilterOptions,
                       current: _roleFilter,
                       onSelect: (v) => setState(() => _roleFilter = v),
                     ),
@@ -304,12 +307,12 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Text('Trạng thái:',
+                    Text('${context.l10n.status}:',
                         style: TextStyle(
                             fontSize: 13, color: cs.onSurface.withValues(alpha: 0.6))),
                     const SizedBox(width: 12),
                     ..._buildFilterChips(
-                      options: _kStatusFilterOptions,
+                      options: statusFilterOptions,
                       current: _statusFilter,
                       onSelect: (v) => setState(() => _statusFilter = v),
                     ),
@@ -321,20 +324,20 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   runSpacing: 6,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Text('Role:',
+                    Text('${context.l10n.role}:',
                         style: TextStyle(
                             fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                     ..._buildFilterChips(
-                      options: _kRoleFilterOptions,
+                      options: roleFilterOptions,
                       current: _roleFilter,
                       onSelect: (v) => setState(() => _roleFilter = v),
                     ),
                     const SizedBox(width: 8),
-                    Text('Trạng thái:',
+                    Text('${context.l10n.status}:',
                         style: TextStyle(
                             fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                     ..._buildFilterChips(
-                      options: _kStatusFilterOptions,
+                      options: statusFilterOptions,
                       current: _statusFilter,
                       onSelect: (v) => setState(() => _statusFilter = v),
                     ),
@@ -346,7 +349,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               // Sort row
               Row(
                 children: [
-                  Text('Sắp xếp:',
+                  Text('${context.l10n.sortBy}:',
                       style: TextStyle(
                           fontSize: 14, color: cs.onSurface.withValues(alpha: 0.6))),
                   const SizedBox(width: 8),
@@ -357,15 +360,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       underline: const SizedBox(),
                       style:
                           TextStyle(fontSize: 14, color: cs.onSurface),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
-                            value: _SortField.name, child: Text('Họ và tên')),
+                            value: _SortField.name, child: Text(context.l10n.fullName)),
                         DropdownMenuItem(
-                            value: _SortField.email, child: Text('Email')),
+                            value: _SortField.email, child: Text(context.l10n.email)),
                         DropdownMenuItem(
-                            value: _SortField.role, child: Text('Role')),
+                            value: _SortField.role, child: Text(context.l10n.role)),
                         DropdownMenuItem(
-                            value: _SortField.status, child: Text('Trạng thái')),
+                            value: _SortField.status, child: Text(context.l10n.status)),
                       ],
                       onChanged: (v) =>
                           setState(() => _sortField = v ?? _SortField.email),
@@ -378,7 +381,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       size: 16,
                     ),
                     hoverColor: cs.primary.withValues(alpha: 0.1),
-                    tooltip: _sortAsc ? 'Tăng dần' : 'Giảm dần',
+                    tooltip: _sortAsc ? context.l10n.sortAsc : context.l10n.sortDesc,
                     onPressed: () => setState(() => _sortAsc = !_sortAsc),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -427,7 +430,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             FilledButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Thử lại'),
+              label: Text(context.l10n.retry),
             ),
           ],
         ),
@@ -447,8 +450,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
             const SizedBox(height: 12),
             Text(
               _allUsers?.isEmpty == true
-                  ? 'Chưa có người dùng nào khác.'
-                  : 'Không tìm thấy kết quả phù hợp.',
+                  ? context.l10n.noOtherUsers
+                  : context.l10n.noResultsFound,
               style: TextStyle(
                   color: Theme.of(context)
                       .colorScheme
@@ -520,7 +523,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                record.name.isNotEmpty ? record.name : 'Chưa có tên',
+                                record.name.isNotEmpty ? record.name : context.l10n.unnamed,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
@@ -538,7 +541,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                           _Chip(label: isAdmin ? 'Admin' : 'User', bg: chipBg, fg: chipFg),
                           if (isDisabled) ...[
                             const SizedBox(width: 6),
-                            _Chip(label: _kDisabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
+                            _Chip(label: context.l10n.disabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
                           ],
                         ],
                       ),
@@ -697,7 +700,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         _Chip(label: isAdmin ? 'Admin' : 'User', bg: chipBg, fg: chipFg),
                         if (isDisabled) ...[
                           const SizedBox(width: 6),
-                          _Chip(label: _kDisabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
+                          _Chip(label: context.l10n.disabled, bg: cs.errorContainer, fg: cs.onErrorContainer),
                         ],
                       ],
                     ),

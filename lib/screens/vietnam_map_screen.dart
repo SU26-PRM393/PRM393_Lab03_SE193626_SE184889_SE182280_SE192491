@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:vietnam_map_flutter/utils/map_startup_trace.dart';
 import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
-import 'package:vietnam_map_flutter/screens/user_management_dialog.dart';
 import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
 import 'package:vietnam_map_flutter/widgets/choropleth_layer.dart';
 import 'package:vietnam_map_flutter/widgets/map_control_panel.dart';
@@ -66,15 +65,6 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     _controller.removeListener(_onMapControllerChanged);
     _controller.dispose();
     super.dispose();
-  }
-
-  void _showUserManagement() {
-    showDialog(
-      context: context,
-      builder: (_) => UserManagementDialog(
-        currentUserId: widget.appUser!.uid,
-      ),
-    );
   }
 
   void _closeSearchPanel() {
@@ -345,37 +335,6 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
     );
   }
 
-  Widget _buildDraggableUserBadge(BoxConstraints constraints) {
-    return ValueListenableBuilder<Offset?>(
-      valueListenable: _avatarOffset,
-      builder: (context, offset, child) {
-        final left = offset?.dx ?? (constraints.maxWidth - 52);
-        final top = offset?.dy ?? 12;
-        return Positioned(
-          left: left,
-          top: top,
-          child: GestureDetector(
-            onPanUpdate: (details) {
-              final cur =
-                  _avatarOffset.value ?? Offset(constraints.maxWidth - 52, 12);
-              _avatarOffset.value = Offset(
-                (cur.dx + details.delta.dx)
-                    .clamp(0.0, constraints.maxWidth - 40),
-                (cur.dy + details.delta.dy)
-                    .clamp(0.0, constraints.maxHeight - 40),
-              );
-            },
-            child: child,
-          ),
-        );
-      },
-      child: _UserBadge(
-        user: widget.appUser!,
-        onManageUsers: _showUserManagement,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -409,8 +368,6 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
               ],
               if (!_isSearchExpanded && !_controller.isCampaignPanelExpanded)
                 _buildExpandButtons(context),
-              if (widget.appUser != null)
-                _buildDraggableUserBadge(constraints),
             ],
           );
         },
@@ -470,114 +427,6 @@ class _MapSurface extends StatelessWidget {
     );
   }
 }
-
-/// Avatar tròn — bấm để hiện dropdown, kéo để di chuyển
-class _UserBadge extends StatelessWidget {
-  const _UserBadge({required this.user, required this.onManageUsers});
-
-  final AppUser user;
-  final VoidCallback onManageUsers;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isAdmin = user.isAdmin;
-
-    // Admin dùng primaryContainer để nổi bật nhưng không chói
-    final avatarBg = isAdmin ? cs.primary : cs.secondaryContainer;
-    final avatarFg = isAdmin ? cs.onPrimary : cs.onSecondaryContainer;
-    final chipBg = isAdmin ? cs.primaryContainer : cs.secondaryContainer;
-    final chipFg = isAdmin ? cs.onPrimaryContainer : cs.onSecondaryContainer;
-
-    return PopupMenuButton<_UserMenuAction>(
-      offset: const Offset(0, 52),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      tooltip: '',
-      onSelected: (action) async {
-        switch (action) {
-          case _UserMenuAction.manageUsers:
-            onManageUsers();
-          case _UserMenuAction.logout:
-            await AuthService.instance.signOut();
-        }
-      },
-      itemBuilder: (context) => [
-        // ── Header: thông tin user (không click được) ──
-        PopupMenuItem(
-          enabled: false,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                user.email,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: cs.onSurface,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: chipBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  isAdmin ? 'Admin' : 'User',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: chipFg,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-
-        // ── Admin only: Quản lí người dùng ──
-        if (isAdmin)
-          PopupMenuItem(
-            value: _UserMenuAction.manageUsers,
-            child: Row(
-              children: [
-                Icon(Icons.manage_accounts_outlined,
-                    size: 18, color: cs.primary),
-                const SizedBox(width: 10),
-                const Text('Quản lí người dùng'),
-              ],
-            ),
-          ),
-
-        // ── Đăng xuất ──
-        PopupMenuItem(
-          value: _UserMenuAction.logout,
-          child: Row(
-            children: [
-              Icon(Icons.logout, size: 18, color: cs.error),
-              const SizedBox(width: 10),
-              Text('Đăng xuất', style: TextStyle(color: cs.error)),
-            ],
-          ),
-        ),
-      ],
-      child: CircleAvatar(
-        radius: 18,
-        backgroundColor: avatarBg,
-        child: Icon(
-          isAdmin ? Icons.admin_panel_settings : Icons.person,
-          color: avatarFg,
-          size: 18,
-        ),
-      ),
-    );
-  }
-}
-
-enum _UserMenuAction { manageUsers, logout }
 
 class _CompactFAB extends StatelessWidget {
   const _CompactFAB({

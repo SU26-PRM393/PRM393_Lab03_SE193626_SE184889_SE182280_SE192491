@@ -12,6 +12,7 @@ import 'campaign_management_screen.dart';
 import 'user_management_screen.dart';
 
 import 'admin_shell.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 
 enum AdminSection {
   overview,
@@ -21,9 +22,6 @@ enum AdminSection {
   notifications,
 }
 
-const _kUserManagementLabel = 'Người dùng';
-const _kOverviewLabel = 'Tổng Quan';
-const _kNotificationsLabel = 'Thông báo';
 
 /// Dashboard layout: sidebar có thể thu gọn + vùng nội dung chính
 class AdminDashboard extends StatefulWidget {
@@ -116,13 +114,14 @@ class AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
-  String _currentSectionTitle() {
+  String _currentSectionTitle(BuildContext context) {
+    final l10n = context.l10n;
     return switch (_section) {
-      AdminSection.overview => _kOverviewLabel,
-      AdminSection.campaigns => 'Chiến dịch',
-      AdminSection.userManagement => _kUserManagementLabel,
+      AdminSection.overview => l10n.overview,
+      AdminSection.campaigns => l10n.campaign,
+      AdminSection.userManagement => l10n.manageUsers,
       AdminSection.firebaseDemo => 'Firebase Demo',
-      AdminSection.notifications => _kNotificationsLabel,
+      AdminSection.notifications => l10n.notifications,
     };
   }
 
@@ -132,7 +131,7 @@ class AdminDashboardState extends State<AdminDashboard> {
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           color: cs.onPrimary,
-          tooltip: _kNotificationsLabel,
+          tooltip: context.l10n.notifications,
           onPressed: () => setState(() => _section = AdminSection.notifications),
         ),
         if (unread > 0)
@@ -204,27 +203,27 @@ class AdminDashboardState extends State<AdminDashboard> {
       _buildNotificationButton(cs, unread),
       PopupMenuButton<String>(
         offset: const Offset(0, 48),
-        tooltip: 'Tài khoản',
+        tooltip: context.l10n.account,
         onSelected: _handleAccountAction,
         itemBuilder: (context) => [
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'profile',
             child: Row(
               children: [
-                Icon(Icons.person_outline, color: Colors.black87, size: 18),
-                SizedBox(width: 8),
-                Text('Hồ sơ cá nhân'),
+                const Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.profile),
               ],
             ),
           ),
           const PopupMenuDivider(),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'logout',
             child: Row(
               children: [
-                Icon(Icons.logout, color: Colors.red, size: 18),
-                SizedBox(width: 8),
-                Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                const Icon(Icons.logout, color: Colors.red, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.logout, style: const TextStyle(color: Colors.red)),
               ],
             ),
           ),
@@ -252,12 +251,7 @@ class AdminDashboardState extends State<AdminDashboard> {
         ),
       ),
       appBar: AppBar(
-        backgroundColor: cs.primary,
-        foregroundColor: cs.onPrimary,
-        title: Text(
-          _currentSectionTitle(),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        title: Text(_currentSectionTitle(context)),
         actions: _buildMobileActions(cs, unread, hasPhoto, displayName, firstLetter),
       ),
       body: _buildBody(),
@@ -356,32 +350,30 @@ class _Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Container(
-      color: cs.surfaceContainerLow,
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 12),
-
           _SidebarItem(
             icon: Icons.dashboard_outlined,
-            label: _kOverviewLabel,
+            label: l10n.overview,
             selected: section == AdminSection.overview,
             expanded: true,
             onTap: () => onSelect(AdminSection.overview),
           ),
           _SidebarItem(
-            icon: Icons.campaign_outlined,
-            label: 'Chiến dịch',
+            icon: Icons.assignment_outlined,
+            label: l10n.campaign,
             selected: section == AdminSection.campaigns,
             expanded: true,
             onTap: () => onSelect(AdminSection.campaigns),
           ),
           _SidebarItem(
             icon: Icons.group_outlined,
-            label: _kUserManagementLabel,
+            label: l10n.manageUsers,
             selected: section == AdminSection.userManagement,
             expanded: true,
             onTap: () => onSelect(AdminSection.userManagement),
@@ -395,7 +387,7 @@ class _Sidebar extends StatelessWidget {
           ),
           _SidebarItem(
             icon: Icons.notifications_outlined,
-            label: _kNotificationsLabel,
+            label: l10n.notifications,
             selected: section == AdminSection.notifications,
             expanded: true,
             badge: unread > 0 ? unread : null,

@@ -1,9 +1,11 @@
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/profile_screen.dart';
 import 'package:vietnam_map_flutter/screens/vietnam_map_screen.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
+import 'package:vietnam_map_flutter/screens/user_management_dialog.dart';
 import 'admin_dashboard.dart';
 
 enum AdminTab { dashboard, vietmap }
@@ -57,9 +59,29 @@ class AdminShellState extends State<AdminShell> {
     setState(() => _admin = updated);
   }
 
+  void _showUserManagement() {
+    showDialog(
+      context: context,
+      builder: (_) => UserManagementDialog(
+        currentUserId: _admin.uid,
+      ),
+    );
+  }
+
   void _handleAccountAction(String value) {
     if (value == 'logout') {
       widget.onLogout();
+      return;
+    }
+
+    if (value == 'language') {
+      final notifier = context.localeNotifier;
+      notifier.value = notifier.value == localeEn ? localeVi : localeEn;
+      return;
+    }
+
+    if (value == 'manage_users') {
+      _showUserManagement();
       return;
     }
 
@@ -93,7 +115,7 @@ class AdminShellState extends State<AdminShell> {
           ),
           const SizedBox(width: 24),
           _TabButton(
-            label: 'Tổng Quan',
+            label: context.l10n.overview,
             icon: Icons.dashboard_outlined,
             selected: _tab == AdminTab.dashboard,
             onTap: () => _setCurrentTab(AdminTab.dashboard),
@@ -159,27 +181,47 @@ class AdminShellState extends State<AdminShell> {
     return [
       PopupMenuButton<String>(
         offset: const Offset(0, 48),
-        tooltip: 'Tài khoản',
+        tooltip: context.l10n.account,
         onSelected: _handleAccountAction,
         itemBuilder: (context) => [
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'profile',
             child: Row(
               children: [
-                Icon(Icons.person_outline, color: Colors.black87, size: 18),
-                SizedBox(width: 8),
-                Text('Hồ sơ cá nhân'),
+                const Icon(Icons.person_outline, color: Colors.black87, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.profile),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'manage_users',
+            child: Row(
+              children: [
+                Icon(Icons.manage_accounts_outlined, color: Colors.black87, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.manageUsers),
+              ],
+            ),
+          ),
+          PopupMenuItem<String>(
+            value: 'language',
+            child: Row(
+              children: [
+                const Icon(Icons.language, color: Colors.black87, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.switchLanguage),
               ],
             ),
           ),
           const PopupMenuDivider(),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'logout',
             child: Row(
               children: [
-                Icon(Icons.logout, color: Colors.red, size: 18),
-                SizedBox(width: 8),
-                Text('Đăng xuất', style: TextStyle(color: Colors.red)),
+                const Icon(Icons.logout, color: Colors.red, size: 18),
+                const SizedBox(width: 8),
+                Text(context.l10n.logout, style: const TextStyle(color: Colors.red)),
               ],
             ),
           ),
@@ -219,16 +261,16 @@ class AdminShellState extends State<AdminShell> {
       selectedItemColor: cs.primary,
       unselectedItemColor: cs.onSurface.withValues(alpha: 0.6),
       onTap: _handleBottomNavTap,
-      items: const [
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard_outlined),
-          activeIcon: Icon(Icons.dashboard),
-          label: 'Tổng Quan',
+          icon: const Icon(Icons.dashboard_outlined),
+          activeIcon: const Icon(Icons.dashboard),
+          label: context.l10n.overview,
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.map_outlined),
-          activeIcon: Icon(Icons.map),
-          label: 'VietMap',
+          icon: const Icon(Icons.map_outlined),
+          activeIcon: const Icon(Icons.map),
+          label: context.l10n.map, // 'VietMap' is specific enough but 'map' is "Bản đồ" in Vi, "Map" in En. Let's use context.l10n.map. Wait, the screenshot says "VietMap" for the tab button. Let's just use 'VietMap' as the product name.
         ),
       ],
     );
@@ -243,7 +285,7 @@ class AdminShellState extends State<AdminShell> {
       );
     }
 
-    return const VietnamMapScreen();
+    return VietnamMapScreen(appUser: _admin);
   }
 
   @override

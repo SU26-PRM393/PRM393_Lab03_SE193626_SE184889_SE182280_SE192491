@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vietnam_map_flutter/screens/admin_shell.dart';
 import 'package:vietnam_map_flutter/screens/auth_gate.dart';
-import 'package:vietnam_map_flutter/screens/user_shell.dart';
 import 'package:vietnam_map_flutter/screens/vietnam_map_screen.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/viewmodels/auth_controller.dart';

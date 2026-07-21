@@ -9,6 +9,7 @@ import 'package:vietnam_map_flutter/firebase/analytics_service.dart';
 import 'package:vietnam_map_flutter/services/pdf_export_service.dart';
 import 'package:vietnam_map_flutter/firebase/remote_config_service.dart';
 import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 import 'package:vietnam_map_flutter/models/province.dart';
 
 const _regionDisplayNames = {
@@ -160,7 +161,7 @@ class _StatsBody extends StatelessWidget {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.picture_as_pdf_outlined),
-            label: Text(exporting ? 'Đang xuất...' : 'Xuất PDF'),
+            label: Text(exporting ? context.l10n.exporting : context.l10n.exportPdf),
           ),
         ),
       if (showExportButton) const SizedBox(height: 16),
@@ -172,7 +173,7 @@ class _StatsBody extends StatelessWidget {
         showMapCard: showMapCard,
       ),
       const SizedBox(height: 28),
-      const _SectionTitle('Top 10 tỉnh/thành theo dân số'),
+      _SectionTitle(context.l10n.top10Population),
       const SizedBox(height: 12),
       _TopProvincesBarChart(
         provinces: vm.top10Population,
@@ -181,7 +182,7 @@ class _StatsBody extends StatelessWidget {
         color: const Color(0xFF378ADD),
       ),
       const SizedBox(height: 28),
-      const _SectionTitle('Top 10 tỉnh/thành theo diện tích'),
+      _SectionTitle(context.l10n.top10Area),
       const SizedBox(height: 12),
       _TopProvincesBarChart(
         provinces: vm.top10Area,
@@ -190,7 +191,7 @@ class _StatsBody extends StatelessWidget {
         color: const Color(0xFF1D9E75),
       ),
       const SizedBox(height: 28),
-      const _SectionTitle('Top 10 tỉnh/thành theo mật độ dân số'),
+      _SectionTitle(context.l10n.top10Density),
       const SizedBox(height: 12),
       _TopProvincesBarChart(
         provinces: vm.top10Density,
@@ -210,7 +211,7 @@ class _StatsBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _SectionTitle('Phân bố vùng miền'),
+                      _SectionTitle(context.l10n.regionDistribution),
                       const SizedBox(height: 12),
                       _RegionPieChart(regionStats: vm.regionStats),
                     ],
@@ -221,7 +222,7 @@ class _StatsBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const _SectionTitle('Phân loại đơn vị'),
+                      _SectionTitle(context.l10n.unitClassification),
                       const SizedBox(height: 12),
                       _TypePieChart(typeStats: vm.typeStats),
                     ],
@@ -233,11 +234,11 @@ class _StatsBody extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _SectionTitle('Phân bố vùng miền'),
+              _SectionTitle(context.l10n.regionDistribution),
               const SizedBox(height: 12),
               _RegionPieChart(regionStats: vm.regionStats),
               const SizedBox(height: 28),
-              const _SectionTitle('Phân loại đơn vị'),
+              _SectionTitle(context.l10n.unitClassification),
               const SizedBox(height: 12),
               _TypePieChart(typeStats: vm.typeStats),
             ],
@@ -271,7 +272,7 @@ Widget _buildStatsCards(
       if (showUserCard)
         _StatCard(
           icon: Icons.group_outlined,
-          label: 'Người dùng',
+          label: context.l10n.users,
           value: userCount == null ? '...' : '$userCount',
           color: cs.primaryContainer,
           iconColor: cs.onPrimaryContainer,
@@ -279,35 +280,36 @@ Widget _buildStatsCards(
       if (showMapCard)
         _StatCard(
           icon: Icons.map_outlined,
-          label: 'Bản đồ',
-          value: 'Việt Nam',
+          label: context.l10n.map,
+          value: context.l10n.map == 'Map' ? 'Vietnam' : 'Việt Nam', // Quick logic for dynamic string
+
           color: cs.secondaryContainer,
           iconColor: cs.onSecondaryContainer,
         ),
       _StatCard(
         icon: Icons.location_city_outlined,
-        label: 'Tỉnh/Thành',
+        label: context.l10n.provinces,
         value: vm.totalProvinces.toString(),
         color: cs.tertiaryContainer,
         iconColor: cs.onTertiaryContainer,
       ),
       _StatCard(
         icon: Icons.people_outline,
-        label: 'Dân số (triệu)',
+        label: context.l10n.populationMillions,
         value: (vm.totalPopulation / 1e6).toStringAsFixed(1),
         color: cs.surfaceContainerHighest,
         iconColor: cs.onSurface,
       ),
       _StatCard(
         icon: Icons.map_outlined,
-        label: 'Diện tích (km²)',
+        label: context.l10n.areaSqKm,
         value: _fmt(vm.totalAreaKm2),
         color: cs.primaryContainer,
         iconColor: cs.onPrimaryContainer,
       ),
       _StatCard(
         icon: Icons.people_alt_outlined,
-        label: 'Mật độ TB (ng/km²)',
+        label: context.l10n.avgDensity,
         value: vm.avgDensity.toStringAsFixed(0),
         color: cs.secondaryContainer,
         iconColor: cs.onSecondaryContainer,
