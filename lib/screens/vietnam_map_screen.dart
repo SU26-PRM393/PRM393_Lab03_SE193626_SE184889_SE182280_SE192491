@@ -5,7 +5,9 @@ import 'package:vietnam_map_flutter/utils/responsive_breakpoints.dart';
 import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/screens/user_management_dialog.dart';
 import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
+import 'package:vietnam_map_flutter/widgets/choropleth_layer.dart';
 import 'package:vietnam_map_flutter/widgets/map_control_panel.dart';
+import 'package:vietnam_map_flutter/widgets/map_filter_sheet.dart';
 import 'package:vietnam_map_flutter/widgets/map_overlay_controls.dart';
 import 'package:vietnam_map_flutter/widgets/map_viewport.dart';
 import 'package:vietnam_map_flutter/widgets/campaign_control_panel.dart';
@@ -110,7 +112,23 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
   }
 
   Widget _buildMapSurface() {
-    return _MapSurface(controller: _controller);
+    return _MapSurface(
+      controller: _controller,
+      onOpenFilter: _openFilterSheet,
+    );
+  }
+
+  void _openFilterSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => MapFilterSheet(
+        selectedStatuses: _controller.eventStatusFilter,
+        onStatusFilterChanged: _controller.setEventStatusFilter,
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    );
   }
 
   Widget _buildSearchPanel() {
@@ -402,9 +420,13 @@ class _VietnamMapScreenState extends State<VietnamMapScreen> {
 }
 
 class _MapSurface extends StatelessWidget {
-  const _MapSurface({required this.controller});
+  const _MapSurface({
+    required this.controller,
+    required this.onOpenFilter,
+  });
 
   final VietnamMapController controller;
+  final VoidCallback onOpenFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -424,9 +446,22 @@ class _MapSurface extends StatelessWidget {
                       onZoomOut: controller.zoomOut,
                       onCurrentLocation: controller.requestCurrentLocation,
                       onRecenter: controller.recenterOnVietnam,
+                      activeMapStyle: controller.activeMapStyle,
+                      onMapStyleChanged: controller.setMapStyle,
+                      choroplethEnabled: controller.choroplethEnabled,
+                      onToggleChoropleth: controller.toggleChoropleth,
+                      hasEventFilter: controller.hasEventStatusFilter,
+                      onOpenFilter: onOpenFilter,
                     ),
                   ),
                 ),
+                // Choropleth legend — bottom-left of map
+                if (controller.choroplethEnabled)
+                  const Positioned(
+                    left: 12,
+                    bottom: 40,
+                    child: ChoroplethLegend(),
+                  ),
               ],
             );
           });

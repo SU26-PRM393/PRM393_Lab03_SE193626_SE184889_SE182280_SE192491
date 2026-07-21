@@ -9,6 +9,7 @@ import 'package:vietnam_map_flutter/utils/platform_utils.dart';
 import 'package:vietnam_map_flutter/models/current_location_state.dart';
 import 'package:vietnam_map_flutter/viewmodels/vietnam_map_controller.dart';
 import 'current_location_indicator.dart';
+import 'choropleth_layer.dart';
 import 'island_feature_overlay.dart';
 import 'island_label_overlay.dart';
 import 'lower_level_place_layer.dart';
@@ -110,7 +111,7 @@ class _MapViewportState extends State<MapViewport> {
   }
 
   List<CircleMarker> _buildEventCircles(VietnamMapController controller) {
-    return controller.selectedCampaignEvents.map((event) {
+    return controller.visibleCampaignEvents.map((event) {
       final coord = controller.eventCoordinates[event.id];
       if (coord == null) {
         return null;
@@ -234,6 +235,7 @@ class _MapViewportState extends State<MapViewport> {
   }
 
   List<Widget> _buildEventLayers(VietnamMapController controller) {
+    final visible = controller.visibleCampaignEvents;
     if (controller.eventCoordinates.isEmpty ||
         controller.eventVisibility == MapEventVisibility.hide) {
       return const [];
@@ -242,7 +244,7 @@ class _MapViewportState extends State<MapViewport> {
     return [
       CircleLayer(circles: _buildEventCircles(controller)),
       MarkerLayer(
-        markers: controller.selectedCampaignEvents
+        markers: visible
             .map((event) => _buildEventMarker(controller, event))
             .whereType<Marker>()
             .toList(),
@@ -258,6 +260,12 @@ class _MapViewportState extends State<MapViewport> {
         boundaries: controller.provinceBoundaries,
         selectedBoundary: controller.selectedProvince,
       ),
+      // Choropleth fills: rendered above boundary lines
+      if (controller.choroplethEnabled)
+        ChoroplethLayer(
+          boundaries: controller.provinceBoundaries,
+          densityMap: controller.provinceCampaignDensity,
+        ),
       if (controller.showProvinceLabels)
         ProvinceLabelLayer(
           boundaries: controller.provinceBoundaries,

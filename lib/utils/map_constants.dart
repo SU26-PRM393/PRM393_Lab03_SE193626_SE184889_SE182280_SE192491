@@ -12,6 +12,21 @@ class MapConstants {
       'voyager_nolabels/{z}/{x}/{y}.png';
   static const String noLabelAttribution =
       '(C) OpenStreetMap contributors, (C) CARTO';
+  /// CARTO Voyager with labels — used as the "light" style.
+  static const String lightTileUrl =
+      'https://a.basemaps.cartocdn.com/rastertiles/'
+      'voyager/{z}/{x}/{y}.png';
+  /// CARTO Dark All — used as the "dark" style.
+  static const String darkTileUrl =
+      'https://a.basemaps.cartocdn.com/rastertiles/'
+      'dark_all/{z}/{x}/{y}.png';
+  /// Esri World Imagery — used as the "satellite" style.
+  static const String satelliteTileUrl =
+      'https://server.arcgisonline.com/ArcGIS/rest/services/'
+      'World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  static const String satelliteAttribution =
+      'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, '
+      'and the GIS User Community';
   static const String ndaMapsApiKey = String.fromEnvironment(
     'NDAMAPS_API_KEY',
     defaultValue: 'anonymous-apikey',

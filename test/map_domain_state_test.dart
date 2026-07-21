@@ -199,6 +199,7 @@ void main() {
       expect(MapTileSources.defaultBasemap.isVector, isTrue);
 
       const offline = MapTileSource(
+        id: 'test_offline',
         name: 'Offline',
         type: MapTileSourceType.localMbtiles,
         attribution: 'Local',

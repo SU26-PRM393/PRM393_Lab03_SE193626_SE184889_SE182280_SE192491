@@ -19,6 +19,7 @@ import 'package:vietnam_map_flutter/models/island_label_override.dart';
 import 'package:vietnam_map_flutter/models/lower_level_place.dart';
 import 'package:vietnam_map_flutter/models/map_boundary.dart';
 import 'package:vietnam_map_flutter/models/map_scope.dart';
+import 'package:vietnam_map_flutter/models/map_style.dart';
 import 'package:vietnam_map_flutter/models/map_tile_source.dart';
 import 'package:vietnam_map_flutter/models/map_view_state.dart';
 import 'package:vietnam_map_flutter/models/province_hover_state.dart';
@@ -97,7 +98,8 @@ class VietnamMapController extends ChangeNotifier {
   Commune? _selectedCommuneDetails;
   bool _isLoadingDetails = false;
   CommuneVisibilityMode _communeVisibilityMode = CommuneVisibilityMode.details;
-  final MapTileSource _tileSource = MapTileSources.defaultBasemap;
+  MapTileSource _tileSource = MapTileSources.defaultBasemap;
+  MapStyle _activeMapStyle = MapStyle.light; // tracks current raster style
   DateTime? _lastTileFailureNoticeAt;
   bool _isLoadingBoundaryData = false;
   bool _isLoadingLowerLevelPlaces = false;
@@ -136,6 +138,10 @@ class VietnamMapController extends ChangeNotifier {
   bool _isLoadingInteractions = false;
   String? _selectedEmployeeFilterId;
   StreamSubscription<List<Interaction>>? _interactionsSubscription;
+  // --- Map style / choropleth / filter ---
+  bool _choroplethEnabled = false;
+  Map<String, int> _provinceDensityMap = {};
+  Set<String> _eventStatusFilter = {};
   // -----------------------
 
   MapViewport get viewport => _viewport;
@@ -183,6 +189,22 @@ class VietnamMapController extends ChangeNotifier {
   String? get selectedEmployeeFilterId => _selectedEmployeeFilterId;
   String? get campaignActionMessage => _campaignActionMessage;
   AppUser? get appUser => _appUser;
+
+  // --- Map style / choropleth / filter getters ---
+  MapStyle get activeMapStyle => _activeMapStyle;
+  bool get choroplethEnabled => _choroplethEnabled;
+  /// `provinceCode → activeEventCount` across all loaded campaign events.
+  Map<String, int> get provinceCampaignDensity => _provinceDensityMap;
+  Set<String> get eventStatusFilter => Set.unmodifiable(_eventStatusFilter);
+
+  /// Events currently visible on the map (filtered by status if any filter active).
+  List<Event> get visibleCampaignEvents {
+    if (_eventStatusFilter.isEmpty) return _selectedCampaignEvents;
+    return _selectedCampaignEvents
+        .where((e) => _eventStatusFilter.contains(e.status))
+        .toList();
+  }
+  // -----------------------------------------------
 
   void toggleCampaignPanel(bool expanded) {
     if (_isCampaignPanelExpanded == expanded) return;
@@ -520,6 +542,66 @@ class VietnamMapController extends ChangeNotifier {
     notifyListeners();
   }
   // ------------------------
+
+  // ── Map style ──────────────────────────────────────────────────────────────
+
+  /// Switches the basemap to the raster tile source corresponding to [style].
+  /// The NDA Maps vector default is preserved separately; calling this only
+  /// switches among the light / dark / satellite raster options.
+  void setMapStyle(MapStyle style) {
+    if (_activeMapStyle == style) return;
+    _activeMapStyle = style;
+    _tileSource = MapTileSources.forStyle(style);
+    notifyListeners();
+  }
+
+  // ── Choropleth ─────────────────────────────────────────────────────────────
+
+  void toggleChoropleth() {
+    _choroplethEnabled = !_choroplethEnabled;
+    if (_choroplethEnabled) {
+      _recomputeProvinceDensity();
+    }
+    notifyListeners();
+  }
+
+  /// Rebuilds [_provinceDensityMap] from all currently loaded events +
+  /// their school province codes.
+  void _recomputeProvinceDensity() {
+    final density = <String, int>{};
+    // Count active events (in-progress or preparing) per province.
+    for (final event in _selectedCampaignEvents) {
+      if (event.status != 'in-progress' && event.status != 'preparing') {
+        continue;
+      }
+      for (final schoolId in event.schoolIds) {
+        final school = _eventSchools[schoolId];
+        if (school != null && school.provinceCode.isNotEmpty) {
+          density[school.provinceCode] =
+              (density[school.provinceCode] ?? 0) + 1;
+        }
+      }
+    }
+    _provinceDensityMap = density;
+  }
+
+  // ── Event status filter ─────────────────────────────────────────────────────
+
+  void setEventStatusFilter(Set<String> statuses) {
+    _eventStatusFilter = Set<String>.from(statuses);
+    notifyListeners();
+  }
+
+  void clearEventStatusFilter() {
+    if (_eventStatusFilter.isEmpty) return;
+    _eventStatusFilter = {};
+    notifyListeners();
+  }
+
+  bool get hasEventStatusFilter => _eventStatusFilter.isNotEmpty;
+
+  // ---------------------------------------------------------------------------
+
 
   bool get isBoundaryDataReady =>
       _boundaryData.status == VietnamBoundaryDataStatus.ready;

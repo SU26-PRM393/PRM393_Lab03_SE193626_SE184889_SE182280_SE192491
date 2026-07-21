@@ -8,6 +8,7 @@ enum MapTileSourceType {
 
 class MapTileSource {
   const MapTileSource({
+    required this.id,
     required this.name,
     required this.type,
     required this.attribution,
@@ -16,6 +17,9 @@ class MapTileSource {
     this.urlTemplate,
   });
 
+  /// Stable identifier used to compare tile sources (e.g., to avoid
+  /// unnecessary tile reloads when the same source is reselected).
+  final String id;
   final String name;
   final MapTileSourceType type;
   final String? urlTemplate;
