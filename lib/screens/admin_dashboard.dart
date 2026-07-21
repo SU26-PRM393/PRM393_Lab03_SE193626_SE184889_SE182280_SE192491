@@ -120,7 +120,7 @@ class AdminDashboardState extends State<AdminDashboard> {
       AdminSection.overview => l10n.overview,
       AdminSection.campaigns => l10n.campaign,
       AdminSection.userManagement => l10n.manageUsers,
-      AdminSection.firebaseDemo => 'Firebase Demo',
+      AdminSection.firebaseDemo => l10n.firebaseDemo,
       AdminSection.notifications => l10n.notifications,
     };
   }
@@ -380,7 +380,7 @@ class _Sidebar extends StatelessWidget {
           ),
           _SidebarItem(
             icon: Icons.local_fire_department_outlined,
-            label: 'Firebase Demo',
+            label: l10n.firebaseDemo,
             selected: section == AdminSection.firebaseDemo,
             expanded: true,
             onTap: () => onSelect(AdminSection.firebaseDemo),

@@ -9,6 +9,7 @@ import 'package:vietnam_map_flutter/services/auth_service.dart';
 import 'package:vietnam_map_flutter/services/campaign_repository.dart';
 import 'package:vietnam_map_flutter/viewmodels/notification_viewmodel.dart';
 import 'package:vietnam_map_flutter/screens/campaign_management_screen.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 
 class NotificationCenterScreen extends StatelessWidget {
   const NotificationCenterScreen({
@@ -53,11 +54,11 @@ class _NotificationBodyState extends State<_NotificationBody> {
               n.type.contains('deleted'),
       };
 
-  String _filterLabel(_NotifFilter f) => switch (f) {
-        _NotifFilter.all => 'Tất cả',
-        _NotifFilter.created => 'Tạo mới',
-        _NotifFilter.updated => 'Cập nhật',
-        _NotifFilter.ended => 'Kết thúc',
+  String _filterLabel(BuildContext context, _NotifFilter f) => switch (f) {
+        _NotifFilter.all => context.l10n.all,
+        _NotifFilter.created => context.l10n.filterCreated,
+        _NotifFilter.updated => context.l10n.filterUpdated,
+        _NotifFilter.ended => context.l10n.filterEnded,
       };
 
   @override
@@ -69,13 +70,13 @@ class _NotificationBodyState extends State<_NotificationBody> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Thông báo'),
+        title: Text(context.l10n.notificationsTitle),
         actions: [
           if (vm.unreadCount > 0)
             TextButton.icon(
               onPressed: vm.markAllAsRead,
               icon: const Icon(Icons.done_all, size: 18),
-              label: const Text('Đọc tất cả'),
+              label: Text(context.l10n.markAllAsRead),
             ),
         ],
       ),
@@ -89,7 +90,7 @@ class _NotificationBodyState extends State<_NotificationBody> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(_filterLabel(f)),
+                    label: Text(_filterLabel(context, f)),
                     selected: _filter == f,
                     selectedColor: cs.primaryContainer,
                     checkmarkColor: cs.onPrimaryContainer,
@@ -119,8 +120,8 @@ class _NotificationBodyState extends State<_NotificationBody> {
                         const SizedBox(height: 12),
                         Text(
                           _filter == _NotifFilter.all
-                              ? 'Chưa có thông báo'
-                              : 'Không có thông báo loại này',
+                              ? context.l10n.noNotifications
+                              : context.l10n.noNotificationsOfType,
                           style: TextStyle(color: cs.onSurfaceVariant),
                         ),
                       ],
@@ -203,7 +204,7 @@ class _NotificationBodyState extends State<_NotificationBody> {
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không thể mở chiến dịch: $e')),
+          SnackBar(content: Text(context.l10n.cannotOpenCampaign.replaceAll('{error}', e.toString()))),
         );
       }
     }
@@ -273,7 +274,7 @@ class _CampaignDetailPage extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         _formatDateRange(
-                            campaign.startDate, campaign.endDate),
+                            context, campaign.startDate, campaign.endDate),
                         style: TextStyle(
                             fontSize: 13, color: cs.onSurfaceVariant),
                       ),
@@ -284,7 +285,7 @@ class _CampaignDetailPage extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-            Text('Sự kiện (${events.length})',
+            Text('${context.l10n.eventsListTitle} (${events.length})',
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -295,7 +296,7 @@ class _CampaignDetailPage extends StatelessWidget {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32),
-                  child: Text('Chưa có sự kiện nào',
+                  child: Text(context.l10n.noEventsYet,
                       style: TextStyle(color: cs.onSurfaceVariant)),
                 ),
               )
@@ -340,11 +341,11 @@ class _CampaignDetailPage extends StatelessWidget {
     }
   }
 
-  String _formatDateRange(DateTime? start, DateTime? end) {
+  String _formatDateRange(BuildContext context, DateTime? start, DateTime? end) {
     String fmt(DateTime d) => '${d.day}/${d.month}/${d.year}';
     if (start != null && end != null) return '${fmt(start)} – ${fmt(end)}';
-    if (start != null) return 'Từ ${fmt(start)}';
-    if (end != null) return 'Đến ${fmt(end)}';
+    if (start != null) return context.l10n.fromDate.replaceAll('{date}', fmt(start));
+    if (end != null) return context.l10n.toDate.replaceAll('{date}', fmt(end));
     return '';
   }
 }
@@ -392,7 +393,7 @@ class _EventCard extends StatelessWidget {
                           color: cs.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text('Thông báo liên quan',
+                        child: Text(context.l10n.relatedNotification,
                             style: TextStyle(
                                 fontSize: 10,
                                 color: cs.primary,

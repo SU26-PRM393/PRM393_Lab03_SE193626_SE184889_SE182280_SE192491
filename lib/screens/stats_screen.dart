@@ -12,14 +12,17 @@ import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
 import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 import 'package:vietnam_map_flutter/models/province.dart';
 
-const _regionDisplayNames = {
-  'red_river_delta': 'ĐB sông Hồng',
-  'northern_midlands': 'Miền núi Bắc Bộ',
-  'central_coast': 'DH Trung Bộ',
-  'central_highlands': 'Tây Nguyên',
-  'southeast': 'Đông Nam Bộ',
-  'mekong_delta': 'ĐB sông Cửu Long',
-};
+Map<String, String> _getRegionDisplayNames(BuildContext context) {
+  final l10n = context.l10n;
+  return {
+    'red_river_delta': l10n.regionRedRiverDelta,
+    'northern_midlands': l10n.regionNorthernMidlands,
+    'central_coast': l10n.regionCentralCoast,
+    'central_highlands': l10n.regionCentralHighlands,
+    'southeast': l10n.regionSoutheast,
+    'mekong_delta': l10n.regionMekongDelta,
+  };
+}
 
 const _chartColors = [
   Color(0xFF378ADD),
@@ -54,11 +57,12 @@ class _StatsScreenState extends State<StatsScreen> {
     try {
       final url = await PdfExportService.instance.exportAndUpload(vm);
       if (!mounted) return;
+      final l10n = context.l10n;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Xuất PDF thành công!'),
+          content: Text(l10n.exportPdfSuccess),
           action: SnackBarAction(
-            label: 'Mở PDF',
+            label: l10n.openPdf,
             onPressed: () => launchUrl(
               Uri.parse(url),
               mode: LaunchMode.externalApplication,
@@ -69,8 +73,9 @@ class _StatsScreenState extends State<StatsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
+      final errorMsg = context.l10n.exportPdfError.replaceAll('{error}', e.toString());
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi xuất PDF: $e'), backgroundColor: Colors.red),
+        SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -577,7 +582,7 @@ class _RegionPieChart extends StatelessWidget {
                 _LegendItem(
                   color: _chartColors[i % _chartColors.length],
                   label:
-                      '${_regionDisplayNames[regionStats[i].name] ?? regionStats[i].name} (${regionStats[i].count})',
+                      '${_getRegionDisplayNames(context)[regionStats[i].name] ?? regionStats[i].name} (${regionStats[i].count})',
                 ),
             ],
           ),

@@ -197,6 +197,54 @@ abstract class AppStrings {
   String get cannotUpdate;
   String get cannotDelete;
   String get deletedUser;
+
+  // ── Regional Names (Stats) ────────────────────────────────────────────────
+  String get regionRedRiverDelta;
+  String get regionNorthernMidlands;
+  String get regionCentralCoast;
+  String get regionCentralHighlands;
+  String get regionSoutheast;
+  String get regionMekongDelta;
+  String get exportPdfSuccess;
+  String get openPdf;
+  String get exportPdfError;
+
+  // ── Firebase Demo ─────────────────────────────────────────────────────────
+  String get crashlyticsMobileOnly;
+  String get crashlyticsTestSent;
+  String get crashlyticsHandledSuccess;
+
+  // ── Campaign Management ───────────────────────────────────────────────────
+  String get employee;
+  String get unknown;
+  String get unknownDate;
+  String get unknownTime;
+  String get student;
+  String get parent;
+  String get schoolStaff;
+  String get teacher;
+  String get principal;
+  String get school;
+  String get phoneNumber;
+  String get notUpdated;
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+  String get filterCreated;
+  String get filterUpdated;
+  String get filterEnded;
+  String get markAllAsRead;
+  String get notificationsTitle;
+  
+  // Sidebar
+  String get firebaseDemo;
+  String get noNotifications;
+  String get noNotificationsOfType;
+  String get cannotOpenCampaign;
+  String get eventsListTitle;
+  String get noEventsYet;
+  String get fromDate;
+  String get toDate;
+  String get relatedNotification;
 }
 
 // ── Vietnamese ────────────────────────────────────────────────────────────────
@@ -333,6 +381,48 @@ class _Vi extends AppStrings {
   @override String get cannotUpdate => 'Không thể cập nhật: {error}';
   @override String get cannotDelete => 'Không thể xóa: {error}';
   @override String get deletedUser => 'Đã xóa {email}';
+
+  @override String get regionRedRiverDelta => 'ĐB sông Hồng';
+  @override String get regionNorthernMidlands => 'Miền núi Bắc Bộ';
+  @override String get regionCentralCoast => 'DH Trung Bộ';
+  @override String get regionCentralHighlands => 'Tây Nguyên';
+  @override String get regionSoutheast => 'Đông Nam Bộ';
+  @override String get regionMekongDelta => 'ĐB sông Cửu Long';
+  @override String get exportPdfSuccess => 'Xuất PDF thành công!';
+  @override String get openPdf => 'Mở PDF';
+  @override String get exportPdfError => 'Lỗi xuất PDF: {error}';
+
+  @override String get crashlyticsMobileOnly => 'Crashlytics chỉ hoạt động trên Android/iOS';
+  @override String get crashlyticsTestSent => 'Handled test exception — gửi từ Firebase Demo screen';
+  @override String get crashlyticsHandledSuccess => 'Handled exception đã gửi lên Crashlytics!';
+
+  @override String get employee => 'Nhân viên';
+  @override String get unknown => 'Không rõ';
+  @override String get unknownDate => 'Chưa xác định';
+  @override String get unknownTime => 'Chưa xác định thời gian';
+  @override String get student => 'Học sinh';
+  @override String get parent => 'Phụ huynh';
+  @override String get schoolStaff => 'Cán bộ trường';
+  @override String get teacher => 'Giáo viên';
+  @override String get principal => 'Hiệu trưởng';
+  @override String get school => 'Trường học';
+  @override String get phoneNumber => 'Số điện thoại';
+  @override String get notUpdated => '(Chưa cập nhật)';
+
+  @override String get filterCreated => 'Tạo mới';
+  @override String get filterUpdated => 'Cập nhật';
+  @override String get filterEnded => 'Kết thúc';
+  @override String get markAllAsRead => 'Đọc tất cả';
+  @override String get notificationsTitle => 'Thông báo';
+  @override String get firebaseDemo => 'Firebase Demo';
+  @override String get noNotifications => 'Chưa có thông báo';
+  @override String get noNotificationsOfType => 'Không có thông báo loại này';
+  @override String get cannotOpenCampaign => 'Không thể mở chiến dịch: {error}';
+  @override String get eventsListTitle => 'Sự kiện';
+  @override String get noEventsYet => 'Chưa có sự kiện nào';
+  @override String get fromDate => 'Từ {date}';
+  @override String get toDate => 'Đến {date}';
+  @override String get relatedNotification => 'Thông báo liên quan';
 }
 
 // ── English ───────────────────────────────────────────────────────────────────
@@ -469,6 +559,48 @@ class _En extends AppStrings {
   @override String get cannotUpdate => 'Cannot update: {error}';
   @override String get cannotDelete => 'Cannot delete: {error}';
   @override String get deletedUser => 'Deleted {email}';
+
+  @override String get regionRedRiverDelta => 'Red River Delta';
+  @override String get regionNorthernMidlands => 'Northern Midlands';
+  @override String get regionCentralCoast => 'Central Coast';
+  @override String get regionCentralHighlands => 'Central Highlands';
+  @override String get regionSoutheast => 'Southeast';
+  @override String get regionMekongDelta => 'Mekong Delta';
+  @override String get exportPdfSuccess => 'Export PDF successful!';
+  @override String get openPdf => 'Open PDF';
+  @override String get exportPdfError => 'Error exporting PDF: {error}';
+
+  @override String get crashlyticsMobileOnly => 'Crashlytics only works on Android/iOS';
+  @override String get crashlyticsTestSent => 'Handled test exception — sent from Firebase Demo screen';
+  @override String get crashlyticsHandledSuccess => 'Handled exception sent to Crashlytics!';
+
+  @override String get employee => 'Employee';
+  @override String get unknown => 'Unknown';
+  @override String get unknownDate => 'Undetermined';
+  @override String get unknownTime => 'Undetermined time';
+  @override String get student => 'Student';
+  @override String get parent => 'Parent';
+  @override String get schoolStaff => 'School staff';
+  @override String get teacher => 'Teacher';
+  @override String get principal => 'Principal';
+  @override String get school => 'School';
+  @override String get phoneNumber => 'Phone number';
+  @override String get notUpdated => '(Not updated)';
+
+  @override String get filterCreated => 'Created';
+  @override String get filterUpdated => 'Updated';
+  @override String get filterEnded => 'Ended';
+  @override String get markAllAsRead => 'Mark all as read';
+  @override String get notificationsTitle => 'Notifications';
+  @override String get firebaseDemo => 'Firebase Demo';
+  @override String get noNotifications => 'No notifications yet';
+  @override String get noNotificationsOfType => 'No notifications of this type';
+  @override String get cannotOpenCampaign => 'Cannot open campaign: {error}';
+  @override String get eventsListTitle => 'Events';
+  @override String get noEventsYet => 'No events yet';
+  @override String get fromDate => 'From {date}';
+  @override String get toDate => 'To {date}';
+  @override String get relatedNotification => 'Related notification';
 }
 
 // ── Singletons ────────────────────────────────────────────────────────────────

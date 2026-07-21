@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vietnam_map_flutter/firebase/remote_config_service.dart';
 import 'package:vietnam_map_flutter/services/pdf_export_service.dart';
 import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
+import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 
 class FirebaseDemoScreen extends StatefulWidget {
   const FirebaseDemoScreen({super.key, this.isAdmin = false});
@@ -41,22 +42,23 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
 
   Future<void> _sendHandledException() async {
     if (!_isMobile) {
-      setState(() => _crashlyticsStatus = 'Crashlytics chỉ hoạt động trên Android/iOS');
+      setState(() => _crashlyticsStatus = context.l10n.crashlyticsMobileOnly);
       return;
     }
     try {
-      throw Exception('Handled test exception — gửi từ Firebase Demo screen');
+      final msg = context.l10n.crashlyticsTestSent;
+      throw Exception(msg);
     } catch (e, stack) {
       await FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
       if (mounted) {
-        setState(() => _crashlyticsStatus = 'Handled exception đã gửi lên Crashlytics!');
+        setState(() => _crashlyticsStatus = context.l10n.crashlyticsHandledSuccess);
       }
     }
   }
 
   void _forceCrash() {
     if (!_isMobile) {
-      setState(() => _crashlyticsStatus = 'Crashlytics chỉ hoạt động trên Android/iOS');
+      setState(() => _crashlyticsStatus = context.l10n.crashlyticsMobileOnly);
       return;
     }
     FirebaseCrashlytics.instance.crash();
@@ -68,11 +70,12 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
       final url = await PdfExportService.instance.exportAndUpload(vm);
       if (mounted) {
         setState(() => _lastPdfUrl = url);
+        final l10n = context.l10n;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Xuất PDF thành công!'),
+            content: Text(l10n.exportPdfSuccess),
             action: SnackBarAction(
-              label: 'Mở PDF',
+              label: l10n.openPdf,
               onPressed: () => launchUrl(Uri.parse(url),
                   mode: LaunchMode.externalApplication),
             ),
@@ -82,9 +85,10 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = context.l10n.exportPdfError.replaceAll('{error}', e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lỗi xuất PDF: $e'),
+            content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );
@@ -173,7 +177,7 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
       title: 'Crashlytics Demo',
       subtitle: _isMobile
           ? 'Test báo cáo lỗi lên Firebase Crashlytics (chỉ Android/iOS)'
-          : 'Crashlytics chỉ hoạt động trên Android/iOS — đang chạy trên desktop',
+          : '${context.l10n.crashlyticsMobileOnly} — đang chạy trên desktop',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

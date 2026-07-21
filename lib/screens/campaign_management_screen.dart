@@ -28,25 +28,27 @@ const _kTealLight = Color(0xFFD0EDEC);
 const _kCardBg = Colors.white;
 const _kRadius = 14.0;
 const _kBorderRadius = 12.0;
-const _kConfirmLabel = 'Xác nhận';
-const _kBackLabel = 'Quay lại';
-const _kCompletedLabel = 'Hoàn thành';
-const _kEmployeeLabel = 'Nhân viên';
-const _kUnknownLabel = 'Không rõ';
-const _kUnknownDateLabel = 'Chưa xác định';
-const _kUnknownTimeLabel = 'Chưa xác định thời gian';
 const _kInProgressStatus = 'in-progress';
 const _kEnablePatrolTestCheckIn = bool.fromEnvironment(
   'PATROL_ENABLE_TEST_CHECKIN',
 );
-const _kStudentLabel = 'Học sinh';
-const _kRelativeLabel = 'Phụ huynh';
-const _kSchoolPersonLabel = 'Cán bộ trường';
-const _kTeacherLabel = 'Giáo viên';
-const _kPrincipalLabel = 'Hiệu trưởng';
-const _kSchoolLabel = 'Trường học';
-const _kPhoneLabel = 'Số điện thoại';
-const _kNotUpdatedLabel = '(Chưa cập nhật)';
+
+// Localization helpers instead of constants
+String _kConfirmLabel(BuildContext c) => c.l10n.confirm;
+String _kBackLabel(BuildContext c) => c.l10n.back;
+String _kCompletedLabel(BuildContext c) => c.l10n.statusCompleted;
+String _kEmployeeLabel(BuildContext c) => c.l10n.employee;
+String _kUnknownLabel(BuildContext c) => c.l10n.unknown;
+String _kUnknownDateLabel(BuildContext c) => c.l10n.unknownDate;
+String _kUnknownTimeLabel(BuildContext c) => c.l10n.unknownTime;
+String _kStudentLabel(BuildContext c) => c.l10n.student;
+String _kRelativeLabel(BuildContext c) => c.l10n.parent;
+String _kSchoolPersonLabel(BuildContext c) => c.l10n.schoolStaff;
+String _kTeacherLabel(BuildContext c) => c.l10n.teacher;
+String _kPrincipalLabel(BuildContext c) => c.l10n.principal;
+String _kSchoolLabel(BuildContext c) => c.l10n.school;
+String _kPhoneLabel(BuildContext c) => c.l10n.phoneNumber;
+String _kNotUpdatedLabel(BuildContext c) => c.l10n.notUpdated;
 
 InputDecoration _dialogInputDecoration(String labelText) {
   return InputDecoration(
@@ -543,7 +545,7 @@ class _EventPaneState extends State<_EventPane> {
                           ),
                           FilledButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: const Text(_kConfirmLabel),
+                            child: Text(_kConfirmLabel(context)),
                           ),
                         ],
                       ),
@@ -626,7 +628,7 @@ class _EventPaneState extends State<_EventPane> {
                           ),
                           FilledButton(
                             onPressed: () => Navigator.pop(context, true),
-                            child: const Text(_kConfirmLabel),
+                            child: Text(_kConfirmLabel(context)),
                           ),
                         ],
                       ),
@@ -711,7 +713,7 @@ class _EventPaneState extends State<_EventPane> {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              _formatRange(campaign.startDate, campaign.endDate),
+                              _formatRange(context, campaign.startDate, campaign.endDate),
                               style: TextStyle(
                                 color: cs.onSurfaceVariant,
                                 fontSize: 15,
@@ -1177,7 +1179,7 @@ class _CampaignTileState extends State<_CampaignTile> {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  _formatRange(widget.campaign.startDate, widget.campaign.endDate),
+                                  _formatRange(context, widget.campaign.startDate, widget.campaign.endDate),
                                   style: TextStyle(
                                     color: Colors.grey.shade600,
                                     fontSize: 13,
@@ -1319,7 +1321,7 @@ class _EventTile extends StatelessWidget {
                         Icon(Icons.calendar_today_outlined, size: 15, color: Colors.grey.shade500),
                         const SizedBox(width: 6),
                         Text(
-                          _formatDate(event.date),
+                          _formatDate(context, event.date),
                           style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                         ),
                         const SizedBox(width: 16),
@@ -2115,7 +2117,7 @@ class _EventFormDialogState extends State<_EventFormDialog> {
                   style: const TextStyle(fontSize: 15, color: Colors.black87),
                   decoration: _dialogInputDecoration('Người chủ trì (Main Host)'),
                   items: [
-                    const DropdownMenuItem<String>(
+                    DropdownMenuItem<String>(
                       value: null,
                       child: Text('Chưa phân công host'),
                     ),
@@ -2363,7 +2365,7 @@ class _MobileBackBar extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: onBack,
-            tooltip: _kBackLabel,
+            tooltip: _kBackLabel(context),
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -2457,7 +2459,7 @@ class _StatusPill extends StatelessWidget {
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
-            _statusLabel(status),
+            _statusLabel(context, status),
             style: TextStyle(
               color: color,
               fontSize: 13,
@@ -2522,21 +2524,21 @@ class _EventFormOptions {
   final List<Map<String, String>> employees;
 }
 
-String _formatDate(DateTime? date) {
-  if (date == null) return _kUnknownDateLabel;
+String _formatDate(BuildContext context, DateTime? date) {
+  if (date == null) return _kUnknownDateLabel(context);
   return '${date.day}/${date.month}/${date.year}';
 }
 
-String _formatRange(DateTime? start, DateTime? end) {
-  if (start == null && end == null) return _kUnknownTimeLabel;
-  if (end == null) return _formatDate(start);
-  return '${_formatDate(start)} - ${_formatDate(end)}';
+String _formatRange(BuildContext context, DateTime? start, DateTime? end) {
+  if (start == null && end == null) return _kUnknownTimeLabel(context);
+  if (end == null) return _formatDate(context, start);
+  return '${_formatDate(context, start)} - ${_formatDate(context, end)}';
 }
 
-String _statusLabel(String status) => switch (status) {
+String _statusLabel(BuildContext context, String status) => switch (status) {
       'active' => 'Hoạt động',
       _kInProgressStatus => 'Đang diễn ra',
-      'completed' => _kCompletedLabel,
+      'completed' => _kCompletedLabel(context),
       'canceled' => 'Đã hủy',
       'preparing' => 'Chuẩn bị',
       _ => status,
@@ -2572,7 +2574,7 @@ class _DateRow extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 TextSpan(
-                  text: value != null ? _formatDate(value) : 'Chưa chọn',
+                  text: value != null ? _formatDate(context, value) : 'Chưa chọn',
                   style: TextStyle(
                     color: value != null ? Colors.black87 : Colors.grey.shade600,
                     fontWeight: value != null ? FontWeight.w600 : FontWeight.w400,
@@ -2934,7 +2936,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                 children: [
                   _StatusPill(status: event.status),
                   Text(
-                    _formatDate(event.date),
+                    _formatDate(context, event.date),
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontWeight: FontWeight.w600,
@@ -2967,7 +2969,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                 _buildDetailRow(
                   Icons.person_pin_circle_outlined,
                   'Người chủ trì (Host)',
-                  employeeNameMap[event.hostId] ?? _kUnknownLabel,
+                  employeeNameMap[event.hostId] ?? _kUnknownLabel(context),
                 ),
               ],
               if (isHostOrAdmin) ...[
@@ -3122,7 +3124,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                   ),
                                   FilledButton(
                                     onPressed: () => Navigator.pop(context, true),
-                                    child: const Text(_kConfirmLabel),
+                                    child: Text(_kConfirmLabel(context)),
                                   ),
                                 ],
                               ),
@@ -3229,7 +3231,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                               ),
                               FilledButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text(_kConfirmLabel),
+                                child: Text(_kConfirmLabel(context)),
                               ),
                             ],
                           ),
@@ -3335,7 +3337,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           const SizedBox(height: 12),
           Builder(
             builder: (context) {
-              final hostName = employeeNameMap[event.hostId] ?? _kUnknownLabel;
+              final hostName = employeeNameMap[event.hostId] ?? _kUnknownLabel(context);
               final hostMap = widget.employees.firstWhere((e) => e['id'] == event.hostId, orElse: () => <String, String>{});
               final hostEmail = hostMap['email'] ?? '';
               final isSelected = _selectedEmployeeFilterId == event.hostId;
@@ -3404,7 +3406,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
         else
           Column(
             children: event.assignedEmployeeIds.map((empId) {
-              final name = employeeNameMap[empId] ?? _kUnknownLabel;
+              final name = employeeNameMap[empId] ?? _kUnknownLabel(context);
               final employeeMap = widget.employees.firstWhere((e) => e['id'] == empId, orElse: () => <String, String>{});
               final email = employeeMap['email'] ?? '';
               final isSelected = _selectedEmployeeFilterId == empId;
@@ -3623,8 +3625,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                         final interaction = groupList[idx];
                         final tName = interaction.targetName.isNotEmpty
                             ? interaction.targetName
-                            : (_targetNames[interaction.targetId] ?? _kUnknownLabel);
-                          final eName = employeeNameMap[interaction.employeeId] ?? _kUnknownLabel;
+                            : (_targetNames[interaction.targetId] ?? _kUnknownLabel(context));
+                          final eName = employeeNameMap[interaction.employeeId] ?? _kUnknownLabel(context);
                         final isLast = gIdx == grouped.length - 1 && idx == groupList.length - 1;
                         final canDelete = widget.currentUser.isAdmin || interaction.employeeId == widget.currentUser.uid;
                         return _TimelineItem(
@@ -3701,7 +3703,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           .get();
       studentsList = studentsSnap.docs.map((doc) => {
         'id': doc.id,
-        'name': doc.data()['name'] ?? _kUnknownLabel,
+        'name': doc.data()['name'] ?? _kUnknownLabel(context),
         'className': doc.data()['className'] ?? '',
         'studentCode': doc.data()['studentCode'] ?? '',
         'schoolId': doc.data()['schoolId'] ?? '',
@@ -3713,7 +3715,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           .get();
       personsList = pSnap.docs.map((doc) => {
         'id': doc.id,
-        'name': doc.data()['name'] ?? _kUnknownLabel,
+        'name': doc.data()['name'] ?? _kUnknownLabel(context),
         'email': doc.data()['email'] ?? '',
         'phone': doc.data()['phone'] ?? '',
         'roleType': doc.data()['roleType'] ?? '',
@@ -3740,7 +3742,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
           .get();
       relativesList = rSnap.docs.map((doc) => {
         'id': doc.id,
-        'name': doc.data()['name'] ?? _kUnknownLabel,
+        'name': doc.data()['name'] ?? _kUnknownLabel(context),
         'phone': doc.data()['phone'] ?? '',
         'relationship': doc.data()['relationship'] ?? '',
         'studentId': doc.data()['studentId'] ?? '',
@@ -4023,10 +4025,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                               DropdownButtonFormField<String>(
                                 initialValue: targetType,
                                 decoration: premiumInputDecoration(hintText: 'Chọn đối tượng'),
-                                items: const [
-                                  DropdownMenuItem(value: 'student', child: Text(_kStudentLabel)),
-                                  DropdownMenuItem(value: 'relative', child: Text(_kRelativeLabel)),
-                                  DropdownMenuItem(value: 'person', child: Text(_kSchoolPersonLabel)),
+                                items: [
+                                  DropdownMenuItem(value: 'student', child: Text(_kStudentLabel(context))),
+                                  DropdownMenuItem(value: 'relative', child: Text(_kRelativeLabel(context))),
+                                  DropdownMenuItem(value: 'person', child: Text(_kSchoolPersonLabel(context))),
                                 ],
                                 onChanged: (val) {
                                   if (val != null) {
@@ -4367,12 +4369,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                   ],
                                 ),
                                 const SizedBox(height: 14),
-                                buildFieldLabel(_kSchoolLabel, isRequired: true),
+                                buildFieldLabel(_kSchoolLabel(context), isRequired: true),
                                 if (selectedSchoolId != null) ...[
                                   (() {
                                     final sch = _cachedSchools.firstWhere(
                                       (s) => s.id == selectedSchoolId,
-                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: _kUnknownLabel, address: '', region: ''),
+                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: _kUnknownLabel(context), address: '', region: ''),
                                     );
                                     return Container(
                                       padding: const EdgeInsets.all(16),
@@ -4550,7 +4552,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          buildFieldLabel(_kPhoneLabel, isRequired: true),
+                                          buildFieldLabel(_kPhoneLabel(context), isRequired: true),
                                           TextFormField(
                                             controller: personPhoneController,
                                             enabled: !isExisting,
@@ -4571,11 +4573,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                           DropdownButtonFormField<String>(
                                             initialValue: roleType,
                                             decoration: premiumInputDecoration(hintText: 'Chọn vai trò'),
-                                            items: const [
-                                              DropdownMenuItem(value: 'principal', child: Text(_kPrincipalLabel)),
-                                              DropdownMenuItem(value: 'teacher', child: Text(_kTeacherLabel)),
-                                              DropdownMenuItem(value: 'staff', child: Text(_kEmployeeLabel)),
-                                              DropdownMenuItem(value: 'other', child: Text('Khác')),
+                                            items: [
+                                              DropdownMenuItem(value: 'principal', child: Text(_kPrincipalLabel(context))),
+                                              DropdownMenuItem(value: 'teacher', child: Text(_kTeacherLabel(context))),
+                                              DropdownMenuItem(value: 'staff', child: Text(_kEmployeeLabel(context))),
+                                              const DropdownMenuItem(value: 'other', child: Text('Khác')),
                                             ],
                                             onChanged: !isExisting
                                                 ? (val) {
@@ -4605,12 +4607,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                   onChanged: (_) => setDialogState(() {}),
                                 ),
                                 const SizedBox(height: 14),
-                                buildFieldLabel(_kSchoolLabel, isRequired: true),
+                                buildFieldLabel(_kSchoolLabel(context), isRequired: true),
                                 if (selectedSchoolId != null) ...[
                                   (() {
                                     final sch = _cachedSchools.firstWhere(
                                       (s) => s.id == selectedSchoolId,
-                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: _kUnknownLabel, address: '', region: ''),
+                                      orElse: () => School(id: '', provinceCode: '', provinceName: '', communeCode: '', communeName: '', schoolCode: '', schoolName: _kUnknownLabel(context), address: '', region: ''),
                                     );
                                     return Container(
                                       padding: const EdgeInsets.all(16),
@@ -4784,7 +4786,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          buildFieldLabel(_kPhoneLabel, isRequired: true),
+                                          buildFieldLabel(_kPhoneLabel(context), isRequired: true),
                                           TextFormField(
                                             controller: phoneController,
                                             enabled: !isExisting,
@@ -6912,6 +6914,7 @@ class _TimelineItemState extends State<_TimelineItem> {
   Future<Map<String, dynamic>> _fetchTargetDetails() async {
     final interaction = widget.interaction;
     final Map<String, dynamic> details = {};
+    final String unknownLabel = _kUnknownLabel(context);
     
     if (interaction.targetId.isEmpty || interaction.targetType.isEmpty) {
       return details;
@@ -6954,7 +6957,7 @@ class _TimelineItemState extends State<_TimelineItem> {
               .doc(studentId)
               .get();
           if (studentDoc.exists && studentDoc.data() != null) {
-            details['studentName'] = studentDoc.data()!['name'] ?? _kUnknownLabel;
+            details['studentName'] = studentDoc.data()!['name'] ?? unknownLabel;
             details['studentClass'] = studentDoc.data()!['className'] ?? '';
             details['studentCode'] = studentDoc.data()!['studentCode'] ?? '';
             
@@ -7169,7 +7172,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Lớp học',
                                         value: data['className']?.toString().isNotEmpty == true
                                             ? data['className']
-                                            : _kNotUpdatedLabel,
+                                            : _kNotUpdatedLabel(context),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -7179,7 +7182,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Mã học sinh',
                                         value: data['studentCode']?.toString().isNotEmpty == true
                                             ? data['studentCode']
-                                            : _kNotUpdatedLabel,
+                                            : _kNotUpdatedLabel(context),
                                       ),
                                     ),
                                   ],
@@ -7209,7 +7212,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                                     : data['roleType'] == 'staff'
                                                         ? 'Nhân viên'
                                                         : data['roleType'])
-                                            : _kNotUpdatedLabel,
+                                            : _kNotUpdatedLabel(context),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -7219,7 +7222,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Số điện thoại',
                                         value: data['phone']?.toString().isNotEmpty == true
                                             ? data['phone']
-                                            : _kNotUpdatedLabel,
+                                            : _kNotUpdatedLabel(context),
                                       ),
                                     ),
                                   ],
@@ -7230,7 +7233,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                   label: 'Email liên hệ',
                                   value: data['email']?.toString().isNotEmpty == true
                                       ? data['email']
-                                      : _kNotUpdatedLabel,
+                                      : _kNotUpdatedLabel(context),
                                 ),
                                 if (data['schoolName']?.toString().isNotEmpty == true) ...[
                                   const SizedBox(height: 14),
@@ -7255,7 +7258,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                                 : data['relationship'] == 'father'
                                                     ? 'Bố'
                                                     : data['relationship'])
-                                            : _kNotUpdatedLabel,
+                                            : _kNotUpdatedLabel(context),
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -7265,7 +7268,7 @@ class _TimelineItemState extends State<_TimelineItem> {
                                         label: 'Số điện thoại',
                                         value: data['phone']?.toString().isNotEmpty == true
                                             ? data['phone']
-                                            : _kNotUpdatedLabel,
+                                            : _kNotUpdatedLabel(context),
                                       ),
                                     ),
                                   ],
