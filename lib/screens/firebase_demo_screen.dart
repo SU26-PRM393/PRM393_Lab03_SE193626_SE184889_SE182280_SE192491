@@ -9,6 +9,23 @@ import 'package:vietnam_map_flutter/services/pdf_export_service.dart';
 import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
 import 'package:vietnam_map_flutter/l10n/app_strings.dart';
 
+// ── Firebase Console URLs ─────────────────────────────────────────────────────
+const _kFcmUrl =
+    'https://console.firebase.google.com/u/0/project/vietmap-flutter/notification/compose';
+const _kRemoteConfigUrl =
+    'https://console.firebase.google.com/u/0/project/vietmap-flutter/config/env/firebase';
+const _kStorageUrl =
+    'https://console.firebase.google.com/u/0/project/vietmap-flutter/storage/vietmap-flutter.firebasestorage.app/files/~2Fpdf_exports';
+const _kCrashlyticsUrl =
+    'https://console.firebase.google.com/u/0/project/vietmap-flutter/crashlytics/app/android:com.example.vietnam_map_flutter/issues?time=7d&state=open&types=crash&tag=all&sort=eventCount';
+
+Future<void> _openUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    debugPrint('Could not open $url');
+  }
+}
+
 class FirebaseDemoScreen extends StatefulWidget {
   const FirebaseDemoScreen({super.key, this.isAdmin = false});
 
@@ -40,22 +57,6 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
     if (mounted) setState(() => _refreshing = false);
   }
 
-  Future<void> _sendHandledException() async {
-    if (!_isMobile) {
-      setState(() => _crashlyticsStatus = context.l10n.crashlyticsMobileOnly);
-      return;
-    }
-    try {
-      final msg = context.l10n.crashlyticsTestSent;
-      throw Exception(msg);
-    } catch (e, stack) {
-      await FirebaseCrashlytics.instance.recordError(e, stack, fatal: false);
-      if (mounted) {
-        setState(() => _crashlyticsStatus = context.l10n.crashlyticsHandledSuccess);
-      }
-    }
-  }
-
   void _forceCrash() {
     if (!_isMobile) {
       setState(() => _crashlyticsStatus = context.l10n.crashlyticsMobileOnly);
@@ -85,7 +86,8 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final errorMsg = context.l10n.exportPdfError.replaceAll('{error}', e.toString());
+        final errorMsg =
+            context.l10n.exportPdfError.replaceAll('{error}', e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMsg),
@@ -111,7 +113,10 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
               _remoteConfigSection(),
               const SizedBox(height: 28),
               _crashlyticsSection(context),
-              if (widget.isAdmin && RemoteConfigService.instance.isPdfExportEnabled) ...[
+              const SizedBox(height: 28),
+              _fcmSection(context),
+              if (widget.isAdmin &&
+                  RemoteConfigService.instance.isPdfExportEnabled) ...[
                 const SizedBox(height: 28),
                 _pdfExportSection(context, vm),
               ],
@@ -130,10 +135,14 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
     return _Section(
       icon: Icons.tune_outlined,
       title: 'Remote Config',
-      subtitle: 'Cấu hình động từ Firebase — thay đổi trên Console không cần cập nhật app',
+      subtitle:
+          'Cấu hình động từ Firebase — thay đổi trên Console không cần cập nhật app',
+      consoleUrl: _kRemoteConfigUrl,
+      consoleTip: 'Chỉnh sửa & xem Remote Config Dashboard',
       action: _refreshing
           ? const SizedBox(
-              width: 20, height: 20,
+              width: 20,
+              height: 20,
               child: CircularProgressIndicator(strokeWidth: 2))
           : IconButton(
               tooltip: 'Fetch config mới',
@@ -174,10 +183,12 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
     final cs = Theme.of(context).colorScheme;
     return _Section(
       icon: Icons.bug_report_outlined,
-      title: 'Crashlytics Demo',
+      title: 'Crashlytics',
       subtitle: _isMobile
           ? 'Test báo cáo lỗi lên Firebase Crashlytics (chỉ Android/iOS)'
-          : '${context.l10n.crashlyticsMobileOnly} — đang chạy trên desktop',
+          : '${context.l10n.crashlyticsMobileOnly} — đang chạy trên desktop/web',
+      consoleUrl: _kCrashlyticsUrl,
+      consoleTip: 'Xem báo cáo lỗi trên Firebase Crashlytics Dashboard',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -208,15 +219,6 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
             runSpacing: 8,
             children: [
               OutlinedButton.icon(
-                onPressed: _sendHandledException,
-                icon: const Icon(Icons.warning_amber_outlined, size: 18),
-                label: const Text('Gửi Handled Exception'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.orange,
-                  side: const BorderSide(color: Colors.orange),
-                ),
-              ),
-              OutlinedButton.icon(
                 onPressed: _isMobile ? _forceCrash : null,
                 icon: const Icon(Icons.dangerous_outlined, size: 18),
                 label: const Text('Force Crash (chỉ mobile)'),
@@ -237,6 +239,80 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
     );
   }
 
+  // ── FCM ────────────────────────────────────────────────────────────────────
+
+  Widget _fcmSection(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return _Section(
+      icon: Icons.notifications_active_outlined,
+      title: 'FCM — Firebase Cloud Messaging',
+      subtitle:
+          'Gửi thông báo push đến người dùng. Vì không thể gửi trực tiếp từ app, hãy dùng Firebase Console.',
+      consoleUrl: _kFcmUrl,
+      consoleTip: 'Mở Firebase Console để gửi thông báo FCM',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: cs.tertiaryContainer.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(10),
+              border:
+                  Border.all(color: cs.tertiary.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline,
+                    color: cs.tertiary, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cách gửi thông báo FCM',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: cs.onTertiaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '1. Nhấn nút "Mở Firebase Console" bên dưới\n'
+                        '2. Chọn "Create your first campaign"\n'
+                        '3. Điền tiêu đề, nội dung thông báo\n'
+                        '4. Chọn target: All apps hoặc theo topic\n'
+                        '5. Nhấn "Review" → "Publish"',
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.7,
+                          color: cs.onTertiaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          FilledButton.icon(
+            onPressed: () => _openUrl(_kFcmUrl),
+            icon: const Icon(Icons.open_in_new, size: 16),
+            label: const Text('Mở Firebase Console — Gửi thông báo'),
+            style: FilledButton.styleFrom(
+              backgroundColor: cs.tertiary,
+              foregroundColor: cs.onTertiary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── PDF Export ─────────────────────────────────────────────────────────────
 
   Widget _pdfExportSection(BuildContext context, ProvinceStatsViewModel vm) {
@@ -244,7 +320,10 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
     return _Section(
       icon: Icons.picture_as_pdf_outlined,
       title: 'Xuất Báo Cáo PDF',
-      subtitle: 'Tạo báo cáo thống kê tỉnh thành và lưu lên Firebase Storage',
+      subtitle:
+          'Tạo báo cáo thống kê tỉnh thành và lưu lên Firebase Storage',
+      consoleUrl: _kStorageUrl,
+      consoleTip: 'Xem các file PDF đã xuất trên Firebase Storage',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -254,7 +333,8 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
               decoration: BoxDecoration(
                 color: cs.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: cs.secondary.withValues(alpha: 0.35)),
+                border:
+                    Border.all(color: cs.secondary.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
@@ -281,9 +361,8 @@ class _FirebaseDemoScreenState extends State<FirebaseDemoScreen> {
             const SizedBox(height: 12),
           ],
           FilledButton.icon(
-            onPressed: (vm.isLoading || _exporting)
-                ? null
-                : () => _exportPdf(vm),
+            onPressed:
+                (vm.isLoading || _exporting) ? null : () => _exportPdf(vm),
             icon: _exporting
                 ? const SizedBox(
                     width: 16,
@@ -312,6 +391,8 @@ class _Section extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.action,
+    this.consoleUrl,
+    this.consoleTip,
   });
 
   final IconData icon;
@@ -319,6 +400,8 @@ class _Section extends StatelessWidget {
   final String subtitle;
   final Widget child;
   final Widget? action;
+  final String? consoleUrl;
+  final String? consoleTip;
 
   @override
   Widget build(BuildContext context) {
@@ -333,6 +416,7 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header row ──
           Row(
             children: [
               Icon(icon, color: cs.primary, size: 20),
@@ -347,6 +431,29 @@ class _Section extends StatelessWidget {
                 ),
               ),
               if (action != null) action!,
+              // ── Firebase Console quick-link ──
+              if (consoleUrl != null) ...[
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: consoleTip ?? 'Mở Firebase Console',
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openUrl(consoleUrl!),
+                    icon: const Icon(Icons.open_in_new, size: 14),
+                    label: const Text(
+                      'Firebase Console',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFFF8F00),
+                      side: const BorderSide(color: Color(0xFFFF8F00)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 4),

@@ -424,7 +424,7 @@ class _Vi extends AppStrings {
   @override String get filterEnded => 'Kết thúc';
   @override String get markAllAsRead => 'Đọc tất cả';
   @override String get notificationsTitle => 'Thông báo';
-  @override String get firebaseDemo => 'Firebase Demo';
+  @override String get firebaseDemo => 'Firebase';
   @override String get noNotifications => 'Chưa có thông báo';
   @override String get noNotificationsOfType => 'Không có thông báo loại này';
   @override String get cannotOpenCampaign => 'Không thể mở chiến dịch: {error}';
@@ -607,7 +607,7 @@ class _En extends AppStrings {
   @override String get filterEnded => 'Ended';
   @override String get markAllAsRead => 'Mark all as read';
   @override String get notificationsTitle => 'Notifications';
-  @override String get firebaseDemo => 'Firebase Demo';
+  @override String get firebaseDemo => 'Firebase';
   @override String get noNotifications => 'No notifications yet';
   @override String get noNotificationsOfType => 'No notifications of this type';
   @override String get cannotOpenCampaign => 'Cannot open campaign: {error}';
