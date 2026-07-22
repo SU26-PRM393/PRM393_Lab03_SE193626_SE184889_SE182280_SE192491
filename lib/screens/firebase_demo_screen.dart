@@ -8,16 +8,13 @@ import 'package:vietnam_map_flutter/firebase/remote_config_service.dart';
 import 'package:vietnam_map_flutter/services/pdf_export_service.dart';
 import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
 import 'package:vietnam_map_flutter/l10n/app_strings.dart';
+import 'package:vietnam_map_flutter/utils/api_endpoints.dart';
 
-// ── Firebase Console URLs ─────────────────────────────────────────────────────
-const _kFcmUrl =
-    'https://console.firebase.google.com/u/0/project/vietmap-flutter/notification/compose';
-const _kRemoteConfigUrl =
-    'https://console.firebase.google.com/u/0/project/vietmap-flutter/config/env/firebase';
-const _kStorageUrl =
-    'https://console.firebase.google.com/u/0/project/vietmap-flutter/storage/vietmap-flutter.firebasestorage.app/files/~2Fpdf_exports';
-const _kCrashlyticsUrl =
-    'https://console.firebase.google.com/u/0/project/vietmap-flutter/crashlytics/app/android:com.example.vietnam_map_flutter/issues?time=7d&state=open&types=crash&tag=all&sort=eventCount';
+// ── Firebase Console URLs — see lib/utils/api_endpoints.dart ─────────────────
+const _kFcmUrl = FirebaseConsoleUrls.fcm;
+const _kRemoteConfigUrl = FirebaseConsoleUrls.remoteConfig;
+const _kStorageUrl = FirebaseConsoleUrls.pdfExports;
+const _kCrashlyticsUrl = FirebaseConsoleUrls.crashlyticsAndroid;
 
 Future<void> _openUrl(String url) async {
   final uri = Uri.parse(url);

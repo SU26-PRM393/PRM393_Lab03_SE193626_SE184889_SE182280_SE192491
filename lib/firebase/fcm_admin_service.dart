@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:vietnam_map_flutter/utils/api_endpoints.dart';
 
 /// Gửi FCM push notification bằng HTTP v1 API với OAuth2 service account.
 /// Chỉ dùng cho môi trường học tập — không commit file này nếu có user thật.
@@ -9,12 +10,10 @@ class FcmAdminService {
   FcmAdminService._();
   static final instance = FcmAdminService._();
 
-  static const _projectId = 'vietmap-flutter';
   static const _clientEmail =
-      'firebase-adminsdk-fbsvc@vietmap-flutter.iam.gserviceaccount.com';
-  static const _tokenUri = 'https://oauth2.googleapis.com/token';
-  static const _fcmScope =
-      'https://www.googleapis.com/auth/firebase.messaging';
+      'firebase-adminsdk-fbsvc@${FirebaseProject.id}.iam.gserviceaccount.com';
+  static const _tokenUri = GoogleApiEndpoints.oauth2Token;
+  static const _fcmScope = GoogleApiEndpoints.fcmScope;
 
   // SECURITY: Private key must NEVER be hardcoded in source code.
   // Load from environment variables, secure storage, or configuration management system.
@@ -90,9 +89,7 @@ class FcmAdminService {
   }) async {
     try {
       final accessToken = await _getAccessToken();
-      final url = Uri.parse(
-        'https://fcm.googleapis.com/v1/projects/$_projectId/messages:send',
-      );
+      final url = Uri.parse(GoogleApiEndpoints.fcmSendDefault);
 
       final payload = {
         'message': {

@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import 'package:vietnam_map_flutter/viewmodels/province_stats_viewmodel.dart';
+import 'package:vietnam_map_flutter/utils/api_endpoints.dart';
 
 const _kProvinceHeaderLabel = 'Tỉnh/Thành';
 
@@ -242,7 +243,7 @@ class PdfExportService {
   Future<String> _uploadToStorage(Uint8List pdfBytes) async {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final path = 'pdf_exports/$uid/${timestamp}_stats.pdf';
+    final path = StoragePaths.pdfExport(uid, timestamp);
 
     final ref = FirebaseStorage.instance.ref(path);
     final task = await ref.putData(

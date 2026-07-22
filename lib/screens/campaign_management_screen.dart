@@ -21,6 +21,7 @@ import 'package:vietnam_map_flutter/models/event_interaction.dart';
 import 'package:vietnam_map_flutter/models/checkin.dart';
 import 'package:vietnam_map_flutter/models/checkout.dart';
 import 'package:vietnam_map_flutter/l10n/app_strings.dart';
+import 'package:vietnam_map_flutter/utils/api_endpoints.dart';
 
 // ── Design Tokens & Palette ──────────────────────────────────────────
 const _kTeal = Color(0xFF1B6C6A);
@@ -5643,7 +5644,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                             }
                           } catch (e) {
                             // Fallback to high quality mock URL if conversion fails
-                            photoUrl = 'https://picsum.photos/400/300';
+                            photoUrl = ExternalUrls.picsumPlaceholder;
                           }
 
                           final checkIn = CheckIn(
@@ -6431,7 +6432,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> with SingleTicker
                               photoUrl = 'data:image/jpeg;base64,${base64Encode(bytes)}';
                             }
                           } catch (e) {
-                            photoUrl = 'https://picsum.photos/400/300';
+                            photoUrl = ExternalUrls.picsumPlaceholder;
                           }
 
                           final checkOut = CheckOut(
